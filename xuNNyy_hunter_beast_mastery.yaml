@@ -1,0 +1,137 @@
+version: "1.1"
+author: xuNNyy
+patch: 12.0.1
+spec: 253
+name: xuNNyy_hunter_beast_mastery
+entry: main
+config:
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_trinkets:
+    label: "Use Trinkets"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_tag_defensives:
+    label: "Use Tag Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  auto_target:
+    label: "Auto Target Enemy"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE - Min Enemies (4+)"
+    type: slider
+    min: 3
+    max: 10
+    default: 4
+  cleave_threshold:
+    label: "Cleave - Min Enemies (2-3)"
+    type: slider
+    min: 2
+    max: 3
+    default: 2
+  funnel_mode:
+    label: "ST-While-AoE (Boss Focus)"
+    type: checkbox
+    default: true
+variables:
+  in_combat_valid: player.combat&target.exists&target.enemy&target.alive&!target.dead
+  target_invalid: target.exists=0|target.enemy=0|target.alive=0
+  want_aoe: active_enemies>=config.aoe_threshold
+  want_cleave: active_enemies>=config.cleave_threshold&active_enemies<config.aoe_threshold
+  want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
+  dangerous_any: player.dangerous_debuff.up
+  dangerous_magic: player.dangerous_debuff.magic.up
+  dangerous_physical: player.dangerous_debuff.physical.up
+  aoe_casting: nameplate.casting.aoe
+lists:
+  spell_queue:
+  - queue_spell
+  sanity_checks:
+  - return,if=player.dead
+  - return,if=mounted
+  - return,if=!state.rotation
+  - return,if=state.blocked_inputs
+  - return,if=player.cc
+  auto_target:
+  - target_enemy,if=config.auto_target&player.combat&var.target_invalid,delay=25
+  interrupts:
+  - counter_shot,interrupt=true,if=config.use_interrupts&interrupts.target.ready
+  defensives:
+  - exhilaration,if=config.use_defensives&health.pct<55
+  - survival_of_the_fittest,if=config.use_defensives&(var.dangerous_any|health.pct<35)
+  cooldowns:
+  - return,if=!config.use_cooldowns|!state.cds|!var.in_combat_valid
+  - call_of_the_wild,if=usable.call_of_the_wild
+  - bestial_wrath,if=usable.bestial_wrath
+  - aspect_of_the_wild,if=usable.aspect_of_the_wild
+  - bloodshed,if=usable.bloodshed
+  - dire_beast,if=usable.dire_beast
+  - trinket1,if=config.use_trinkets&(target.boss|var.want_aoe|var.want_cleave)
+  - trinket2,if=config.use_trinkets&(target.boss|var.want_aoe|var.want_cleave)
+  st:
+  - call_action_list,name=cooldowns
+  - kill_shot,if=usable.kill_shot
+  - dire_beast,if=usable.dire_beast
+  - barbed_shot,if=usable.barbed_shot&pet.buff.frenzy.remains<2
+  - kill_command,if=usable.kill_command
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  cleave:
+  - call_action_list,name=cooldowns
+  - kill_shot,if=usable.kill_shot
+  - multi_shot,if=usable.multi_shot
+  - barbed_shot,if=usable.barbed_shot&pet.buff.frenzy.remains<2
+  - kill_command,if=usable.kill_command
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  aoe:
+  - call_action_list,name=cooldowns
+  - kill_shot,if=usable.kill_shot
+  - beast_cleave,if=usable.beast_cleave
+  - multi_shot,if=usable.multi_shot
+  - barbed_shot,if=usable.barbed_shot&pet.buff.frenzy.remains<2
+  - kill_command,if=usable.kill_command
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  funnel:
+  - call_action_list,name=cooldowns
+  - kill_shot,if=usable.kill_shot
+  - barbed_shot,if=usable.barbed_shot&pet.buff.frenzy.remains<2
+  - kill_command,if=usable.kill_command
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  anti_idle:
+  - target_enemy,if=player.combat&var.target_invalid,delay=25
+  - kill_command,if=usable.kill_command
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  no_idle:
+  - target_enemy,if=player.combat&var.target_invalid,delay=25
+  - kill_command,if=usable.kill_command
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  fallback:
+  - target_enemy,if=player.combat&var.target_invalid,delay=25
+  - cobra_shot,ignore_queue=true,if=usable.cobra_shot
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - return,if=!player.combat
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=anti_idle,if=var.target_invalid
+  - return,if=!var.in_combat_valid
+  - call_action_list,name=interrupts
+  - call_action_list,name=defensives
+  - call_action_list,name=funnel,if=var.want_funnel
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=cleave,if=var.want_cleave
+  - call_action_list,name=st
+  - call_action_list,name=no_idle
+  - call_action_list,name=fallback
