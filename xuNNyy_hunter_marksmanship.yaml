@@ -45,7 +45,11 @@ variables:
   precise_shots_up: buff.precise_shots.up
   withering_fire_up: buff.withering_fire.up
   deathblow_up: buff.deathblow.react
+  lock_and_load: buff.lock_and_load.up
   in_execute: target.health.pct<=20
+
+  # Focus management
+  focus_dump: focus>=60
 
   # Sentinel's Mark is a target debuff
   sentinels_mark_up: debuff.sentinels_mark.up
@@ -86,6 +90,8 @@ lists:
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
   # Wailing Arrow: consume proc
   - wailing_arrow,if=buff.wailing_arrow.up
+  # Lock and Load: instant free Aimed Shot — high priority when proc is up
+  - aimed_shot,if=var.lock_and_load
   # Aimed Shot: overcap prevention (Double Tap benefits first Aimed after Trueshot)
   - aimed_shot,if=cooldown.aimed_shot.charges>=2
   # Rapid Fire: Withering Fire window
@@ -98,6 +104,8 @@ lists:
   - aimed_shot
   # Rapid Fire: normal
   - rapid_fire
+  # Arcane Shot: focus dump to prevent capping
+  - arcane_shot,if=var.focus_dump
   # Steady Shot: filler
   - steady_shot
 
@@ -116,6 +124,8 @@ lists:
   - wailing_arrow,if=buff.wailing_arrow.up
   # Volley: if talented
   - volley,if=talent.volley
+  # Lock and Load: instant free Aimed Shot with Trick Shots active
+  - aimed_shot,if=var.lock_and_load&var.trick_shots_up
   # Rapid Fire: Withering Fire + Trick Shots
   - rapid_fire,if=var.trick_shots_up&var.withering_fire_up
   # Aimed Shot: with Trick Shots (cleaves)
@@ -138,6 +148,8 @@ lists:
   - kill_shot,if=var.deathblow_up|var.in_execute
   # Moonlight Chakram: if talented
   - moonlight_chakram,if=talent.moonlight_chakram
+  # Lock and Load: instant free Aimed Shot
+  - aimed_shot,if=var.lock_and_load
   # Aimed Shot: overcap prevention
   - aimed_shot,if=cooldown.aimed_shot.charges>=2
   # Arcane Shot: always consume Precise Shots (drives Sentinel's Mark spread)
@@ -148,6 +160,8 @@ lists:
   - aimed_shot
   # Rapid Fire
   - rapid_fire
+  # Arcane Shot: focus dump to prevent capping
+  - arcane_shot,if=var.focus_dump
   # Steady Shot: filler
   - steady_shot
 
@@ -166,6 +180,8 @@ lists:
   - moonlight_chakram,if=talent.moonlight_chakram
   # Volley: if talented
   - volley,if=talent.volley
+  # Lock and Load: instant free Aimed Shot with Trick Shots
+  - aimed_shot,if=var.lock_and_load&var.trick_shots_up
   # Aimed Shot: with Trick Shots
   - aimed_shot,if=var.trick_shots_up
   # Rapid Fire: with Trick Shots
@@ -206,9 +222,11 @@ lists:
   # Generic fallback (no specific hero talent detected)
   - trueshot,if=config.use_cooldowns
   - kill_shot,if=var.deathblow_up|var.in_execute
+  - aimed_shot,if=var.lock_and_load
   - aimed_shot,if=cooldown.aimed_shot.charges>=2
   - arcane_shot,if=var.precise_shots_up
   - rapid_fire
   - aimed_shot
+  - arcane_shot,if=var.focus_dump
   - call_action_list,name=fallback
   - steady_shot
