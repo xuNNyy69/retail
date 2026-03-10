@@ -196,6 +196,7 @@ lists:
   - spirit_bomb,if=soul_fragments>=4
   - shear,if=soul_fragments<4
   - sigil_of_flame
+  - sigil_of_doom
 
   anni_fillers:
   # Fiery demise window outside meta
@@ -207,9 +208,11 @@ lists:
   - immolation_aura,if=var.want_aoe
   - shear
   - sigil_of_flame,if=var.want_aoe
+  - sigil_of_doom,if=var.want_aoe
   - felblade
   - immolation_aura
   - sigil_of_flame
+  - sigil_of_doom
   # Guide #9: Soul Cleave at 3+ souls before filler use
   - soul_cleave,if=soul_fragments>=3
   - soul_cleave

@@ -91,7 +91,7 @@ variables:
   mana_ok: mana.pct>=60
 
   # Safe to contribute damage
-  safe_to_damage: !var.need_emergency&!var.need_major_heal&!var.need_aoe_heal
+  safe_to_damage: "!var.need_emergency&!var.need_major_heal&!var.need_aoe_heal"
 
 lists:
 

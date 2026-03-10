@@ -36,11 +36,6 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   in_melee: target.range<=8
-  trinket_1_buffs: trinket.1.has_stat.strength|trinket.1.has_stat.mastery|trinket.1.has_stat.versatility|trinket.1.has_stat.haste|trinket.1.has_stat.crit
-  trinket_2_buffs: trinket.2.has_stat.strength|trinket.2.has_stat.mastery|trinket.2.has_stat.versatility|trinket.2.has_stat.haste|trinket.2.has_stat.crit
-  trinket_1_sync: trinket.1.cooldown.duration>=90&trinket.1.cooldown.duration<=120
-  trinket_2_sync: trinket.2.cooldown.duration>=90&trinket.2.cooldown.duration<=120
-  trinket_priority: trinket_1_sync&!trinket_2_sync
   ds_castable: (active_enemies>=3|(active_enemies>=2&talent.tempest_of_lightbringer&!talent.rush_of_light)|buff.empyrean_power.up|(!talent.final_verdict&talent.tempest))&!buff.empyrean_legacy.up&!(debuff.divine_arbiter.stack>24)
   hp5: holy_power>=5
   hp4: holy_power>=4
@@ -61,7 +56,7 @@ variables:
 lists:
   interrupts:
   - return,if=!config.use_interrupts
-  - rebuke,if=target.casting&var.in_melee,use_off_gcd=1,ignore_movement=true
+  - rebuke,if=target.casting.interruptible&var.in_melee,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - return,if=!config.use_defensives
@@ -70,10 +65,8 @@ lists:
 
   items:
   - return,if=!config.use_trinkets
-  - use_item,slot=trinket1,use_off_gcd=1,if=var.trinket_1_buffs&var.trinket_1_sync&(buff.crusade.stack>=10|var.in_avenging_wrath)&cooldown.trinket1.ready
-  - use_item,slot=trinket2,use_off_gcd=1,if=var.trinket_2_buffs&var.trinket_2_sync&(buff.crusade.stack>=10|var.in_avenging_wrath)&cooldown.trinket2.ready
-  - use_item,slot=trinket1,use_off_gcd=1,if=!var.trinket_1_sync&(var.in_avenging_wrath|var.in_crusade)
-  - use_item,slot=trinket2,use_off_gcd=1,if=!var.trinket_2_sync&(var.in_avenging_wrath|var.in_crusade)
+  - use_item,slot=trinket1,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
+  - use_item,slot=trinket2,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
 
   cooldowns:
   - return,if=!config.use_cooldowns|!state.cds

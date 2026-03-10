@@ -87,6 +87,7 @@ lists:
   opener:
   - charge
   - bloodthirst,if=var.need_enrage
+  - bloodbath,if=var.need_enrage
   - recklessness,if=usable.recklessness
   - avatar,if=usable.avatar
   - call_action_list,name=cooldowns,if=config.use_cooldowns
