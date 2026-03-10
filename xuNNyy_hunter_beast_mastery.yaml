@@ -1,4 +1,4 @@
-﻿version: "2.0"
+version: "2.0"
 author: xuNNyy
 patch: 12.1
 spec: 253
@@ -22,8 +22,12 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  auto_target:
-    label: "Auto Target"
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
     type: checkbox
     default: true
   aoe_threshold:
@@ -32,321 +36,105 @@ config:
     min: 2
     max: 8
     default: 3
-  funnel_mode:
-    label: "Funnel (Boss Focus)"
-    type: checkbox
-    default: true
-  barbed_refresh:
-    label: "Barbed Shot Refresh (s)"
-    type: slider
-    min: 2
-    max: 8
-    default: 5
 
 variables:
-  # --- core validity ---
-  valid: player.combat&target.exists&target.enemy&target.alive
-  opener_done: state.combat_time>6|!state.combat
-  # --- range ---
-  in_range: target.range<=40
-  in_melee: target.range<=8
-  # --- targets ---
-  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
-  want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
-  want_cleave: active_enemies>=2&active_enemies<config.aoe_threshold
-  # --- hero trees ---
-  is_pack_leader: hero_tree.pack_leader
-  is_dark_ranger: hero_tree.dark_ranger
-  # --- focus ---
-  focus_low: focus<=40
-  focus_high: focus>=70
-  focus_cap: focus>=100
-  focus_for_kc: focus>=35
-  # --- Frenzy / Barbed Shot ---
-  frenzy_up: buff.frenzy.up
-  frenzy_refresh: buff.frenzy.remains<config.barbed_refresh
-  frenzy_3: buff.frenzy.stack>=3
-  barbed_2: cooldown.barbed_shot.charges>=2
-  # --- major CDs ---
-  bw_up: buff.bestial_wrath.up
-  bw_ready: usable.bestial_wrath
-  cotw_up: buff.call_of_the_wild.up
-  cotw_ready: usable.call_of_the_wild&talent.call_of_the_wild
-  in_burst: var.bw_up|var.cotw_up
-  # --- proc tracking ---
-  thrill_up: buff.thrill_of_the_hunt.up
-  hunters_prey_up: buff.hunters_prey.up
-  # --- Pack Leader ---
-  vicious_hunt: var.is_pack_leader&buff.vicious_hunt.up
-  pack_coord: var.is_pack_leader&buff.pack_coordination.up
-  frenzied_tear: var.is_pack_leader&buff.frenzied_tear.up
-  # --- Dark Ranger ---
-  ba_ready: var.is_dark_ranger&usable.black_arrow
-  shadow_surge: var.is_dark_ranger&buff.shadow_surge.up
-  dark_empower: var.is_dark_ranger&buff.dark_empowerment.up
-  # --- execute ---
-  in_execute: target.health.pct<=20|var.hunters_prey_up
-  # --- talent checks ---
-  has_bloody_frenzy: talent.bloody_frenzy
-  has_savagery: talent.savagery
+  in_bw: buff.bestial_wrath.up
+  want_aoe: active_enemies>=config.aoe_threshold
+  is_dr: talent.black_arrow
 
 lists:
-  # ============================
-  #   SANITY
-  # ============================
-  sanity:
-  - return,if=player.dead
-  - return,if=mounted
-  - return,if=!state.rotation
-  - return,if=state.blocked_inputs
-  - return,if=player.cc
-
-  # ============================
-  #   TARGETING
-  # ============================
-  targeting:
-  - target_enemy,if=config.auto_target&player.combat&(target.exists=0|target.enemy=0|target.alive=0)&player.casting=0&player.channeling=0,delay=25
-
-  # ============================
-  #   INTERRUPTS
-  # ============================
   interrupts:
-  - counter_shot,if=config.use_interrupts&interrupts.target.ready,ignore_movement=true
+  - counter_shot,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
 
-  # ============================
-  #   DEFENSIVES
-  # ============================
   defensives:
-  - exhilaration,if=config.use_defensives&health.pct<=35,ignore_movement=true
-  - aspect_of_the_turtle,if=config.use_defensives&health.pct<=15,ignore_movement=true
-  - feign_death,if=config.use_defensives&health.pct<=10,ignore_movement=true
-  - mend_pet,if=config.use_defensives&pet.health.pct<=50&pet.exists,ignore_movement=true
+  - exhilaration,if=health.pct<=55
+  - survival_of_the_fittest,if=health.pct<=45
+  - aspect_of_the_turtle,if=health.pct<=25
 
-  # ============================
-  #   PET MANAGEMENT
-  # ============================
-  pet:
-  - call_pet,if=!pet.exists&!pet.dead,ignore_movement=true
-  - revive_pet,if=pet.dead&!player.moving
+  cds:
+  - berserking,use_off_gcd=1,if=var.in_bw
+  - blood_fury,use_off_gcd=1,if=var.in_bw
+  - ancestral_call,use_off_gcd=1,if=var.in_bw
+  - fireblood,use_off_gcd=1,if=var.in_bw
+  - potion,if=config.use_potions&var.in_bw
 
-  # ============================
-  #   ITEMS
-  # ============================
-  items:
-  - return,if=!state.cds
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.bw_up|var.cotw_up|target.boss&target.health.pct<=20)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.bw_up|var.cotw_up|target.boss&target.health.pct<=20)
-  - potion,if=config.use_potions&(var.bw_up|target.boss&target.health.pct<=20)
+  trinkets:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_bw
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_bw
 
-  # ============================
-  #   RACIALS
-  # ============================
-  racials:
-  - return,if=!state.cds
-  - berserking,if=usable.berserking&var.in_burst,use_off_gcd=1,ignore_movement=true
-  - blood_fury,if=usable.blood_fury&var.in_burst,use_off_gcd=1,ignore_movement=true
-  - fireblood,if=usable.fireblood&var.in_burst,use_off_gcd=1,ignore_movement=true
-  - ancestral_call,if=usable.ancestral_call&var.in_burst,use_off_gcd=1,ignore_movement=true
-  - lights_judgment,if=usable.lights_judgment&var.in_range,ignore_movement=true
-  - bag_of_tricks,if=usable.bag_of_tricks&var.in_range,ignore_movement=true
-  - arcane_torrent,if=usable.arcane_torrent,use_off_gcd=1,ignore_movement=true
-
-  # ============================
-  #   OPENER
-  # ============================
-  opener:
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
-  - call_action_list,name=cooldowns,if=state.cds
-  - kill_command,if=usable.kill_command,ignore_movement=true
-
-  # ============================
-  #   COOLDOWNS
-  # ============================
-  cooldowns:
-  - return,if=!state.cds
-  # Bestial Wrath — primary burst; delay slightly if CotW imminent
-  - bestial_wrath,if=var.bw_ready&(!var.cotw_ready|cooldown.call_of_the_wild.remains>15),ignore_movement=true
-  # Bestial Wrath — align with CotW
-  - bestial_wrath,if=var.bw_ready&var.cotw_ready,ignore_movement=true
-  # Call of the Wild — fire during BW for maximum overlap
-  - call_of_the_wild,if=var.cotw_ready&var.bw_up,ignore_movement=true
-  # Bloodshed — during burst preferred
-  - bloodshed,if=usable.bloodshed&talent.bloodshed&var.in_burst,ignore_movement=true
-  - bloodshed,if=usable.bloodshed&talent.bloodshed,ignore_movement=true
-  # A Murder of Crows
-  - a_murder_of_crows,if=usable.a_murder_of_crows&talent.a_murder_of_crows,ignore_movement=true
-  # Dire Beast — use during burst for extra pet
-  - dire_beast,if=usable.dire_beast&talent.dire_beast,ignore_movement=true
-  # Black Arrow (Dark Ranger)
-  - black_arrow,if=var.ba_ready,ignore_movement=true
-
-  # ============================
-  #   BARBED SHOT — smart charge management
-  # ============================
-  barbed:
-  # Emergency Frenzy refresh
-  - barbed_shot,if=usable.barbed_shot&var.frenzy_up&var.frenzy_refresh,ignore_movement=true
-  # Initial Frenzy application
-  - barbed_shot,if=usable.barbed_shot&!var.frenzy_up,ignore_movement=true
-  # Prevent charge cap
-  - barbed_shot,if=usable.barbed_shot&var.barbed_2,ignore_movement=true
-
-  # ============================
-  #   PACK LEADER — ST
-  # ============================
-  pack_leader_st:
-  # Vicious Hunt empowered Kill Command — TOP priority
-  - kill_command,if=usable.kill_command&var.vicious_hunt,ignore_movement=true
-  # Barbed Shot management
-  - call_action_list,name=barbed
-  # Kill Command primary
-  - kill_command,if=usable.kill_command&var.focus_for_kc,ignore_movement=true
-  # Kill Shot execute
-  - kill_shot,if=usable.kill_shot&var.in_execute,ignore_movement=true
-  # Cobra Shot with Pack Coordination buff
-  - cobra_shot,if=usable.cobra_shot&var.pack_coord&var.focus_high,ignore_movement=true
-  # Cobra Shot focus dump
-  - cobra_shot,if=usable.cobra_shot&var.focus_high,ignore_movement=true
-  # Kill Command if available
-  - kill_command,if=usable.kill_command,ignore_movement=true
-  # Cobra Shot filler
-  - cobra_shot,if=usable.cobra_shot&!var.focus_low,ignore_movement=true
-  # Barbed Shot filler
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
-
-  # ============================
-  #   DARK RANGER — ST
-  # ============================
-  dark_ranger_st:
-  # Barbed Shot management
-  - call_action_list,name=barbed
-  # Kill Command with Shadow Surge — empowered
-  - kill_command,if=usable.kill_command&var.shadow_surge,ignore_movement=true
-  # Black Arrow maintain
-  - black_arrow,if=var.ba_ready,ignore_movement=true
-  # Kill Command primary
-  - kill_command,if=usable.kill_command&var.focus_for_kc,ignore_movement=true
-  # Kill Shot execute
-  - kill_shot,if=usable.kill_shot&var.in_execute,ignore_movement=true
-  # Cobra Shot with Shadow Surge buff
-  - cobra_shot,if=usable.cobra_shot&var.shadow_surge&var.focus_high,ignore_movement=true
-  # Cobra Shot focus dump
-  - cobra_shot,if=usable.cobra_shot&var.focus_high,ignore_movement=true
-  # Kill Command if available
-  - kill_command,if=usable.kill_command,ignore_movement=true
-  # Cobra Shot filler
-  - cobra_shot,if=usable.cobra_shot&!var.focus_low,ignore_movement=true
-  # Barbed Shot filler
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
-
-  # ============================
-  #   SINGLE TARGET (generic fallback)
-  # ============================
   st:
-  - call_action_list,name=barbed
-  - kill_command,if=usable.kill_command&var.focus_for_kc,ignore_movement=true
-  - kill_shot,if=usable.kill_shot&var.in_execute,ignore_movement=true
-  - black_arrow,if=var.ba_ready,ignore_movement=true
-  - cobra_shot,if=usable.cobra_shot&var.focus_high,ignore_movement=true
-  - kill_command,if=usable.kill_command,ignore_movement=true
-  - cobra_shot,if=usable.cobra_shot&!var.focus_low,ignore_movement=true
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
+  - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
+  - kill_shot,if=target.health.pct<=20|var.in_bw
+  - bestial_wrath,if=config.use_cooldowns
+  - kill_command,if=buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up|buff.natures_ally.up
+  - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
+  - barbed_shot
+  - cobra_shot
 
-  # ============================
-  #   CLEAVE (2-3 targets)
-  # ============================
   cleave:
-  # Multi-Shot — maintain Beast Cleave
-  - multi_shot,if=usable.multi_shot&!buff.beast_cleave.up,ignore_movement=true
-  # Barbed Shot management
-  - call_action_list,name=barbed
-  # Vicious Hunt KC (Pack Leader)
-  - kill_command,if=usable.kill_command&var.vicious_hunt,ignore_movement=true
-  # Kill Command
-  - kill_command,if=usable.kill_command&var.focus_for_kc,ignore_movement=true
-  # Black Arrow
-  - black_arrow,if=var.ba_ready,ignore_movement=true
-  # Kill Shot
-  - kill_shot,if=usable.kill_shot&var.in_execute,ignore_movement=true
-  # Multi-Shot refresh
-  - multi_shot,if=usable.multi_shot&buff.beast_cleave.remains<2,ignore_movement=true
-  # Cobra Shot focus dump
-  - cobra_shot,if=usable.cobra_shot&var.focus_high,ignore_movement=true
-  # Barbed Shot filler
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
-  # Cobra Shot filler
-  - cobra_shot,if=usable.cobra_shot&!var.focus_low,ignore_movement=true
+  - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
+  - kill_shot,if=target.health.pct<=20|var.in_bw
+  - wild_thrash,if=talent.wild_thrash
+  - bestial_wrath,if=config.use_cooldowns
+  - kill_command
+  - cobra_shot,if=cooldown.wild_thrash.remains>gcd&buff.hogstrider.up&active_enemies<4
+  - barbed_shot
+  - cobra_shot,if=cooldown.wild_thrash.remains>gcd
 
-  # ============================
-  #   AoE (4+ targets)
-  # ============================
-  aoe:
-  # Multi-Shot — maintain Beast Cleave
-  - multi_shot,if=usable.multi_shot&!buff.beast_cleave.up,ignore_movement=true
-  # Barbed Shot — Frenzy is critical in AoE
-  - call_action_list,name=barbed
-  # Kill Command (cleaves with Beast Cleave)
-  - kill_command,if=usable.kill_command,ignore_movement=true
-  # Black Arrow (Dark Ranger AoE — Bleak Powder)
-  - black_arrow,if=var.ba_ready,ignore_movement=true
-  # Kill Shot
-  - kill_shot,if=usable.kill_shot&var.in_execute,ignore_movement=true
-  # Multi-Shot refresh early
-  - multi_shot,if=usable.multi_shot&buff.beast_cleave.remains<2,ignore_movement=true
-  # Cobra Shot focus cap prevention
-  - cobra_shot,if=usable.cobra_shot&var.focus_cap,ignore_movement=true
-  # Barbed Shot filler
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
+  drst:
+  - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
+  - kill_shot,if=target.health.pct<=20|var.in_bw
+  - bestial_wrath,if=config.use_cooldowns
+  - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
+  - black_arrow,if=buff.withering_fire.up
+  - wailing_arrow,if=buff.wailing_arrow.up
+  - cobra_shot,if=talent.killer_cobra&var.in_bw&cooldown.barbed_shot.charges<2
+  - barbed_shot
+  - black_arrow
+  - cobra_shot
 
-  # ============================
-  #   FUNNEL (Boss Focus in AoE)
-  # ============================
-  funnel:
-  - multi_shot,if=usable.multi_shot&active_enemies>=2&!buff.beast_cleave.up,ignore_movement=true
-  - call_action_list,name=barbed
-  - kill_command,if=usable.kill_command&var.vicious_hunt,ignore_movement=true
-  - kill_command,if=usable.kill_command&var.focus_for_kc,ignore_movement=true
-  - kill_shot,if=usable.kill_shot&var.in_execute,ignore_movement=true
-  - black_arrow,if=var.ba_ready,ignore_movement=true
-  - bloodshed,if=usable.bloodshed&talent.bloodshed,ignore_movement=true
-  - cobra_shot,if=usable.cobra_shot&var.focus_high,ignore_movement=true
-  - multi_shot,if=usable.multi_shot&active_enemies>=2&buff.beast_cleave.remains<2,ignore_movement=true
-  - barbed_shot,if=usable.barbed_shot,ignore_movement=true
-  - cobra_shot,if=usable.cobra_shot&!var.focus_low,ignore_movement=true
+  drcleave:
+  - wild_thrash,if=talent.wild_thrash&!buff.beast_cleave.up
+  - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
+  - kill_shot,if=target.health.pct<=20|var.in_bw
+  - bestial_wrath,if=config.use_cooldowns
+  - wailing_arrow,if=buff.wailing_arrow.up
+  - wild_thrash,if=talent.wild_thrash
+  - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
+  - black_arrow,if=buff.withering_fire.up
+  - barbed_shot
+  - wailing_arrow
+  - black_arrow
+  - cobra_shot
 
-  # ============================
-  #   ANTI-IDLE
-  # ============================
+  anti_idle:
+  - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
   fallback:
-  - target_enemy,if=config.auto_target&player.combat&(target.exists=0|target.enemy=0|target.alive=0)&player.casting=0&player.channeling=0,delay=25
-  - cobra_shot,if=var.valid&var.in_range,ignore_queue=true,ignore_movement=true
+  - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
-  # ============================
-  #   MAIN ENTRY
-  # ============================
   main:
-  - call_action_list,name=sanity
-  - call_action_list,name=targeting
-  - return,if=!var.valid
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
-  # Pet management
-  - call_action_list,name=pet
-  - call_action_list,name=interrupts
-  - call_action_list,name=defensives
-  - call_action_list,name=items,if=state.cds
-  # Opener
-  - call_action_list,name=opener,if=!var.opener_done
-  # Cooldowns + Racials
-  - call_action_list,name=cooldowns,if=state.cds
-  - call_action_list,name=racials,if=state.cds
-  # Funnel takes priority when configured
-  - call_action_list,name=funnel,if=var.want_funnel
-  # AoE / Cleave
-  - call_action_list,name=aoe,if=var.want_aoe
-  - call_action_list,name=cleave,if=var.want_cleave
-  # ST with hero tree specialization
-  - call_action_list,name=pack_leader_st,if=var.is_pack_leader
-  - call_action_list,name=dark_ranger_st,if=var.is_dark_ranger
-  # Generic ST fallback
+  - auto_attack
+  - call_action_list,name=cds,if=config.use_cooldowns
+  - call_action_list,name=trinkets,if=config.use_trinkets
+  - call_action_list,name=drst,if=var.is_dr&active_enemies<2
+  - call_action_list,name=drcleave,if=var.is_dr&active_enemies>1
+  - call_action_list,name=cleave,if=var.want_aoe
   - call_action_list,name=st
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

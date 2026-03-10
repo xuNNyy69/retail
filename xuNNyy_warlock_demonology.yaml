@@ -1,0 +1,112 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 266
+name: xuNNyy_warlock_demonology
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  in_tyrant: buff.demonic_tyrant.up
+  pool_for_tyrant: cooldown.summon_demonic_tyrant.remains<20&buff.demonic_core.stack<=2
+
+lists:
+  interrupts:
+  - axe_toss,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - unending_resolve,if=health.pct<=45
+  - dark_pact,if=health.pct<=55
+  - mortal_coil,if=health.pct<=50
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&buff.demonic_tyrant.up
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&buff.demonic_tyrant.up
+
+  racials:
+  - berserking,use_off_gcd=1,if=buff.demonic_tyrant.up
+  - blood_fury,use_off_gcd=1,if=buff.demonic_tyrant.up
+  - fireblood,use_off_gcd=1,if=buff.demonic_tyrant.up
+  - ancestral_call,use_off_gcd=1,if=buff.demonic_tyrant.up
+
+  precombat:
+  - power_siphon,if=talent.power_siphon
+  - demonbolt,if=talent.power_siphon&!buff.power_siphon.up
+  - shadow_bolt
+
+  default:
+  - potion,if=config.use_potions&var.in_tyrant
+  - call_action_list,name=racials,if=config.use_cooldowns&var.in_tyrant,use_off_gcd=1
+  - call_action_list,name=items,use_off_gcd=1
+  - grimoire_imp_lord,if=config.use_cooldowns&talent.grimoire_imp_lord
+  - grimoire_fel_ravager,if=config.use_cooldowns&talent.grimoire_fel_ravager
+  - summon_doomguard,if=config.use_cooldowns&talent.summon_doomguard
+  - call_dreadstalkers,if=config.use_cooldowns&!var.pool_for_tyrant
+  - power_siphon,if=talent.power_siphon&buff.demonic_core.stack<3&buff.wild_imps.stack>=4
+  - summon_demonic_tyrant,if=config.use_cooldowns&soul_shards>=4&buff.dreadstalkers.up
+  - implosion,if=buff.wild_imps.stack>=6&(var.in_tyrant|active_enemies>=2)
+  - ruination,if=talent.ruination
+  - demonbolt,if=debuff.doom.down&soul_shards<4&buff.demonic_core.stack>=3&talent.doom
+  - demonbolt,if=soul_shards<4&buff.demonic_core.stack>=3&!talent.doom
+  - infernal_bolt,if=soul_shards<3&talent.infernal_bolt
+  - hand_of_guldan,if=soul_shards>=3
+  - demonbolt,if=buff.demonic_core.stack>=2
+  - shadow_bolt
+  - infernal_bolt,if=talent.infernal_bolt
+
+  anti_idle:
+  - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true,ignore_movement=true
+
+  fallback:
+  - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true,ignore_movement=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - call_action_list,name=precombat,if=!player.combat
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=default
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

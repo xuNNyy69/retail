@@ -1,0 +1,237 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 257
+name: xuNNyy_priest_holy
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Dispel"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  flash_heal_hp:
+    label: "Flash Heal HP%"
+    type: slider
+    min: 20
+    max: 90
+    default: 70
+  prayer_of_healing_hp:
+    label: "Prayer of Healing HP%"
+    type: slider
+    min: 30
+    max: 100
+    default: 80
+  serenity_hp:
+    label: "Holy Word: Serenity HP%"
+    type: slider
+    min: 20
+    max: 90
+    default: 65
+  sanctify_hp:
+    label: "Holy Word: Sanctify HP%"
+    type: slider
+    min: 30
+    max: 100
+    default: 75
+  emergency_hp:
+    label: "Emergency HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 40
+
+variables:
+
+  # Hero-tree routing
+  # Oracle: default; stronger PoM-based play
+  is_oracle: talent.answered_prayers
+  # Archon: Halo-based burst healing
+  is_archon: talent.halo
+
+  # Proc tracking
+  surge_of_light_up: buff.surge_of_light.up
+  benediction_up: buff.benediction.up
+  apotheosis_up: buff.apotheosis.up
+
+  # Guide: Holy Words should never sit at 2 charges (triggers Epiphany + Lasting Words)
+  # Approximate: serenity/sanctify have charges; use when about to reach 2
+  serenity_ready: cooldown.holy_word_serenity.ready
+  sanctify_ready: cooldown.holy_word_sanctify.ready
+
+  # Healing thresholds
+  anyone_emergency: group.lowest.health.pct<config.emergency_hp
+  tank_low: group.tanks.lowest.health.pct<config.serenity_hp
+  multi_injured: group.count(cycle.health.pct<config.prayer_of_healing_hp)>=config.aoe_threshold
+
+lists:
+  interrupts:
+  - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable.magic
+  - mass_dispel,if=config.use_dispel&group.count(cycle.dispelable.magic)>=3
+
+  defensives:
+  - desperate_prayer,if=config.use_defensives&health.pct<=50
+  - fade,if=config.use_defensives&health.pct<=60,use_off_gcd=1
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.apotheosis_up|var.multi_injured|var.anyone_emergency)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.apotheosis_up|var.multi_injured|var.anyone_emergency)
+  - potion,if=config.use_potions&var.apotheosis_up,use_off_gcd=1
+
+  # ===========================================================
+  # Emergency healing -- critical HP
+  # ===========================================================
+  emergency:
+  - guardian_spirit,if=config.use_cooldowns&cooldown.guardian_spirit.ready&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
+  - holy_word_serenity,if=var.serenity_ready&var.anyone_emergency
+  - flash_heal,if=var.anyone_emergency
+  - prayer_of_mending,if=cooldown.prayer_of_mending.ready&var.anyone_emergency
+
+  # ===========================================================
+  # Major cooldowns
+  # Apotheosis: maximize Holy Word casts inside it
+  # Divine Hymn: strong AoE + 20% group healing amp -- pair with other healer CDs
+  # Power Infusion: external haste to top DPS; Twins of Sun Priestess applies to self
+  # ===========================================================
+  cooldowns:
+  - apotheosis,if=cooldown.apotheosis.ready&var.multi_injured
+  - divine_hymn,if=cooldown.divine_hymn.ready&var.multi_injured
+  - power_infusion,if=cooldown.power_infusion.ready,use_off_gcd=1
+  - guardian_spirit,if=cooldown.guardian_spirit.ready&var.tank_low,use_off_gcd=1
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.apotheosis_up|var.multi_injured
+  - blood_fury,use_off_gcd=1,if=var.apotheosis_up|var.multi_injured
+  - fireblood,use_off_gcd=1,if=var.anyone_emergency
+  - ancestral_call,use_off_gcd=1,if=var.multi_injured
+
+  # ===========================================================
+  # Core healing priority (Oracle/Archon shared)
+  # Guide priority list:
+  # 1. PoM if 2 charges; 2. Holy Words if about to cap; 3. Benediction proc;
+  # 4. PoM; 5. Holy Nova (Lightburst); 6. Holy Words; 7. PoH/Flash Heal
+  # ===========================================================
+  healing:
+  # Prayer of Mending: never let sit at 2 charges; main Oracle HoT engine
+  # Guide: cast as often as possible, even at full health to prepare
+  - prayer_of_mending,if=cooldown.prayer_of_mending.charges>=2
+  - prayer_of_mending,if=cooldown.prayer_of_mending.ready&(var.apotheosis_up|var.multi_injured)
+
+  # Holy Words: avoid reaching 2 charges (triggers Epiphany / Lasting Words)
+  # Serenity: single-target burst
+  - holy_word_serenity,if=cooldown.holy_word_serenity.charges>=2
+  - holy_word_sanctify,if=cooldown.holy_word_sanctify.charges>=2
+  - holy_word_serenity,if=var.serenity_ready&(group.tanks.lowest.health.pct<config.serenity_hp|group.lowest.health.pct<config.serenity_hp)
+  # Sanctify: AoE burst
+  - holy_word_sanctify,if=var.sanctify_ready&var.multi_injured
+
+  # Benediction proc (Apex talent: upgraded instant Flash Heal)
+  # Guide: spend immediately; spawns Divine Image via tier set
+  - flash_heal,if=var.benediction_up
+
+  # Prayer of Mending: on CD as filler
+  - prayer_of_mending,if=cooldown.prayer_of_mending.ready
+
+  # Holy Nova: Lightburst AoE proc
+  - holy_nova,if=talent.lightburst&active_enemies>=2&var.multi_injured
+
+  # Apotheosis window: spam Holy Words as fast as possible
+  - holy_word_serenity,if=var.apotheosis_up&var.serenity_ready
+  - holy_word_sanctify,if=var.apotheosis_up&var.sanctify_ready
+
+  # Holy Words: general use when injured players present
+  - holy_word_serenity,if=var.serenity_ready&group.lowest.health.pct<config.serenity_hp
+  - holy_word_sanctify,if=var.sanctify_ready&group.lowest.health.pct<config.sanctify_hp
+
+  # Prayer of Healing: group AoE at mana-permit; reduces Sanctify CD via Voice of Harmony
+  - prayer_of_healing,if=var.multi_injured&group.lowest.health.pct<config.prayer_of_healing_hp
+
+  # Surge of Light proc: instant free Flash Heal
+  - flash_heal,if=var.surge_of_light_up
+
+  # Flash Heal: spot heal below threshold
+  - flash_heal,if=group.lowest.health.pct<config.flash_heal_hp
+
+  # ===========================================================
+  # Archon-specific: Halo for AoE healing burst
+  # ===========================================================
+  archon_heal:
+  - return,if=!var.is_archon
+  - halo,if=config.use_cooldowns&cooldown.halo.ready&var.multi_injured
+
+  # ===========================================================
+  # DPS filler when group is healthy
+  # Guide: Holy Fire on CD (if talented), else SWP; Smite filler
+  # ===========================================================
+  dps:
+  - holy_fire,if=talent.holy_fire
+  - shadow_word_pain,if=!talent.holy_fire&dot.shadow_word_pain.refreshable
+  - smite
+
+  anti_idle:
+  - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - prayer_of_mending,if=cooldown.prayer_of_mending.ready,ignore_queue=true
+
+  fallback:
+  - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - power_word_fortitude,range_check=none,if=!buff.power_word_fortitude.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=(player.casting|player.channeling)&var.anyone_emergency
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=dispel,if=config.use_dispel
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=emergency,if=var.anyone_emergency
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=archon_heal,if=var.is_archon&config.use_cooldowns
+  - call_action_list,name=healing
+  - call_action_list,name=dps
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

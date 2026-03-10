@@ -1,0 +1,167 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 66
+name: xuNNyy_paladin_protection
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  auto_taunt:
+    label: "Auto Taunt"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  in_aw: buff.avenging_wrath.up
+  shake_up: buff.shake_the_heavens.up
+
+lists:
+  taunt:
+  - taunt,if=config.auto_taunt&player.combat&target.threat<100
+
+  interrupts:
+  - rebuke,if=target.casting.interruptible,use_off_gcd=1
+
+  # Tank defensives: emergency cooldowns + active mitigation heal
+  defensives:
+  - divine_shield,if=usable.divine_shield&health.pct<=10&talent.final_stand
+  - lay_on_hands,if=health.pct<=15
+  - guardian_of_ancient_kings,if=health.pct<=40&!var.in_aw
+  - ardent_defender,if=health.pct<=20
+  - word_of_glory,if=buff.shining_light_free.up
+
+  # Trinkets fire during Avenging Wrath window
+  trinkets:
+  - use_item,slot=trinket1,use_off_gcd=1,if=var.in_aw
+  - use_item,slot=trinket2,use_off_gcd=1,if=var.in_aw
+
+  # Major cooldowns — Avenging Wrath synced to Divine Toll window,
+  # Divine Toll held for AW or used as Righteous Protector filler
+  cooldowns:
+  - avenging_wrath,if=usable.avenging_wrath&cooldown.divine_toll.remains<=10
+  - potion,if=config.use_potions&var.in_aw
+  - fireblood,if=var.in_aw,use_off_gcd=1
+  - blood_fury,if=var.in_aw,use_off_gcd=1
+  - berserking,if=var.in_aw,use_off_gcd=1
+  - ancestral_call,if=var.in_aw,use_off_gcd=1
+  - divine_toll,if=usable.divine_toll&(var.in_aw|(!talent.righteous_protector&cooldown.avenging_wrath.remains<30))
+
+  # Generic fallback — used when neither Lightsmith nor Templar is detected
+  standard:
+  - hammer_of_light,if=buff.hammer_of_light_ready.up
+  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=5|buff.divine_purpose.up)
+  - holy_armaments,if=!buff.sacred_weapon.up|buff.sacred_weapon.remains<5
+  - avengers_shield,if=usable.avengers_shield&(active_enemies>=2|buff.vanguard.up)
+  - consecration,if=usable.consecration&buff.divine_guidance.stack>=5
+  - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
+  - hammer_of_wrath
+  - judgment,if=usable.judgment
+  - avengers_shield,if=usable.avengers_shield
+  - hammer_of_the_righteous,if=usable.hammer_of_the_righteous&buff.blessed_assurance.up
+  - blessed_hammer,if=buff.blessed_assurance.up
+  - holy_armaments
+  - blessed_hammer
+  - hammer_of_the_righteous,if=usable.hammer_of_the_righteous
+  - consecration,if=usable.consecration
+
+  # Lightsmith hero tree (guide priority order)
+  lightsmith:
+  - consecration,if=usable.consecration&buff.divine_guidance.stack>=5
+  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=5|buff.divine_purpose.up)
+  - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
+  - avengers_shield,if=usable.avengers_shield&(active_enemies>=2|buff.vanguard.up)
+  - hammer_of_wrath
+  # Sacred Weapon pandemic — refresh when missing or <5s remaining
+  - holy_armaments,if=!buff.sacred_weapon.up|buff.sacred_weapon.remains<5
+  - hammer_of_the_righteous,if=usable.hammer_of_the_righteous&buff.blessed_assurance.up
+  - blessed_hammer,if=buff.blessed_assurance.up
+  - judgment,if=usable.judgment
+  # Holy Bulwark — 2 charges outside AW (higher value dump)
+  - holy_armaments,if=cooldown.holy_armaments.charges>=2&!var.in_aw
+  - avengers_shield,if=usable.avengers_shield
+  - hammer_of_the_righteous,if=usable.hammer_of_the_righteous
+  - blessed_hammer
+  # Holy Bulwark — 1 charge low-priority filler
+  - holy_armaments
+  - consecration,if=usable.consecration
+
+  # Templar hero tree (guide priority order)
+  templar:
+  - hammer_of_light,if=buff.hammer_of_light_ready.up
+  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=5|buff.divine_purpose.up)
+  - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
+  # Interrupt with Punishment talent OR Glory of the Vanguard proc
+  - avengers_shield,if=usable.avengers_shield&(target.casting.interruptible&talent.punishment|buff.vanguard.up)
+  - judgment,if=usable.judgment
+  - hammer_of_wrath
+  # Shake the Heavens buff guard — maintain via Blessed Hammer
+  - blessed_hammer,if=var.shake_up
+  - hammer_of_the_righteous,if=usable.hammer_of_the_righteous&var.shake_up
+  # Shining Light free WoG during Shake the Heavens (Hammerfall offensive value)
+  - word_of_glory,if=buff.shining_light_free.up&var.shake_up
+  - avengers_shield,if=usable.avengers_shield
+  - blessed_hammer
+  - hammer_of_the_righteous,if=usable.hammer_of_the_righteous
+  - consecration,if=usable.consecration
+
+  anti_idle:
+  - judgment,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - hammer_of_the_righteous,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - hammer_of_the_righteous,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=taunt
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=trinkets,if=config.use_trinkets
+  - call_action_list,name=lightsmith,if=talent.lightsmith
+  - call_action_list,name=templar,if=talent.templar
+  - call_action_list,name=standard
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

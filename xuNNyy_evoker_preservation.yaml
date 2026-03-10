@@ -1,0 +1,250 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 1468
+name: xuNNyy_evoker_preservation
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Dispel"
+    type: checkbox
+    default: true
+  heal_only:
+    label: "Heal Only (No DPS)"
+    type: checkbox
+    default: false
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  reversion_hp:
+    label: "Reversion HP%"
+    type: slider
+    min: 50
+    max: 100
+    default: 95
+  verdant_embrace_hp:
+    label: "Verdant Embrace HP%"
+    type: slider
+    min: 20
+    max: 90
+    default: 70
+  emerald_blossom_hp:
+    label: "Emerald Blossom HP%"
+    type: slider
+    min: 30
+    max: 100
+    default: 80
+  echo_hp:
+    label: "Echo HP%"
+    type: slider
+    min: 30
+    max: 100
+    default: 85
+  emergency_hp:
+    label: "Emergency HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 40
+  safe_dps_hp:
+    label: "Safe to DPS HP%"
+    type: slider
+    min: 60
+    max: 100
+    default: 90
+
+variables:
+
+  # Hero-tree routing
+  # Chronowarden: defined by Time Convergence talent
+  is_chronowarden: talent.time_convergence
+  # Flameshaper: defined by Consume Flame
+  is_flameshaper: talent.consume_flame
+
+  # Essence resource tracking
+  essence_burst_up: buff.essence_burst.up
+  twin_echoes_up: buff.twin_echoes.up
+  # Merithra's Blessing proc (strongest single-target heal)
+  merithras_proc: buff.merithras_blessing.up
+
+  # Healing state helpers
+  anyone_emergency: group.lowest.health.pct<config.emergency_hp
+  tank_low: group.tanks.lowest.health.pct<config.verdant_embrace_hp
+  multi_injured: group.count(cycle.health.pct<config.emerald_blossom_hp)>=config.aoe_threshold
+  anyone_injured: group.lowest.health.pct<config.reversion_hp
+  safe_to_dps: group.lowest.health.pct>=config.safe_dps_hp
+
+  # Cooldown readiness
+  dream_breath_ready: cooldown.dream_breath.ready
+  temporal_anomaly_ready: cooldown.temporal_anomaly.ready
+  rewind_ready: cooldown.rewind.ready
+  tip_scales_ready: talent.tip_the_scales&cooldown.tip_the_scales.ready
+  stasis_ready: talent.stasis&cooldown.stasis.ready
+  reversion_ready: cooldown.reversion.ready
+
+lists:
+  interrupts:
+  - quell,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - naturalize,cycle_targets=1,if=config.use_dispel&cycle.dispelable.poison
+
+  defensives:
+  - obsidian_scales,if=config.use_defensives&health.pct<=50
+  - renewing_blaze,if=config.use_defensives&health.pct<=45
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.multi_injured|var.anyone_emergency)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.multi_injured|var.anyone_emergency)
+  - potion,if=config.use_potions&var.anyone_emergency
+
+  # ===========================================================
+  # Emergency healing -- someone is critically low
+  # ===========================================================
+  emergency:
+  - verdant_embrace,if=var.anyone_emergency
+  - emerald_blossom,if=var.multi_injured&var.anyone_emergency
+  - rewind,if=config.use_cooldowns&var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2
+  - verdant_embrace,if=var.tank_low
+
+  # ===========================================================
+  # Major cooldowns
+  # Guide: Rewind after heavy damage lands; TtS for Chronowarden burst window;
+  # Stasis: load then release at next damage event
+  # ===========================================================
+  cooldowns:
+  - rewind,if=var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2
+  - tip_the_scales,if=var.tip_scales_ready&var.multi_injured
+  - stasis,if=var.stasis_ready&var.multi_injured
+  - zephyr,if=talent.zephyr&cooldown.zephyr.ready&var.multi_injured,use_off_gcd=1
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.multi_injured|var.anyone_emergency
+  - blood_fury,use_off_gcd=1,if=var.multi_injured|var.anyone_emergency
+  - fireblood,use_off_gcd=1,if=var.anyone_emergency
+  - ancestral_call,use_off_gcd=1,if=var.multi_injured
+
+  # ===========================================================
+  # Layer 1: HoT maintenance -- Reversion blanket + Dream Breath
+  # Guide: Reversion is the highest priority HoT; keep rolling especially on tank
+  # Temporal Anomaly → Reversion is the easiest way to spread coverage
+  # ===========================================================
+  hot_maintenance:
+  # Temporal Anomaly: keep on CD to spread Reversion efficiently
+  # Guide: TA → Reversion on tank; don't use TA with other spells in M+ baseline
+  - temporal_anomaly,if=var.temporal_anomaly_ready
+
+  # Reversion: blanket coverage on tank and injured players
+  - reversion,cycle_targets=1,if=var.reversion_ready&cycle.tank&cycle.buff.reversion.down
+  - reversion,if=var.reversion_ready&group.tanks.lowest.health.pct<config.reversion_hp&buff.reversion.down
+
+  # Dream Breath: core rolling HoT (empower_to=1 for lowest cast time per guide)
+  - dream_breath,if=var.dream_breath_ready,empower_to=1
+
+  # ===========================================================
+  # Layer 2: Echo ramp healing -- answer damage spikes
+  # Guide: Echo first, then heal through all Echoes with one strong spell
+  # Twin Echoes (from Verdant Embrace + tier-set Emerald Blossom) doubles Echo
+  # ===========================================================
+  echo_healing:
+  - echo,if=var.twin_echoes_up&var.anyone_injured
+  # Verdant Embrace: strongest reliable single-target heal; applies Lifebind
+  # Drives tier-set Emerald Blossom for Twin Echoes setup
+  - verdant_embrace,if=group.tanks.lowest.health.pct<config.verdant_embrace_hp
+
+  # Merithra's Blessing proc: use immediately -- strongest heal in the kit
+  - merithras_blessing,if=var.merithras_proc
+
+  # Echo → Reversion: Golden Hour burst (heals % of recent damage taken)
+  # Best single-target setup: double Reversion gives 21% healing amp
+  - echo,if=group.lowest.health.pct<config.echo_hp&cooldown.reversion.charges>=1
+  - reversion,if=buff.echo.up
+
+  # Echo → Verdant Embrace: strong Chronowarden sustained heal
+  - echo,if=var.is_chronowarden&group.lowest.health.pct<config.verdant_embrace_hp
+  - verdant_embrace,if=buff.echo.up&var.is_chronowarden
+
+  # Echo → Dream Breath: for sustained multi-target damage
+  - echo,if=var.multi_injured&buff.dream_breath.down
+  - dream_breath,if=buff.echo.up,empower_to=1
+
+  # Emerald Blossom: backup AoE heal when stronger options unavailable
+  - emerald_blossom,if=var.multi_injured&group.lowest.health.pct<config.emerald_blossom_hp
+
+  # Verdant Embrace: general spot heal / keep Lifebind rolling
+  - verdant_embrace,if=group.lowest.health.pct<config.verdant_embrace_hp
+
+  # ===========================================================
+  # DPS fill -- contributes to Essence Burst fishing + Chrono Flame ramp
+  # Guide: Fire Breath on CD; Deep Breath vs 2+ targets;
+  # Disintegrate (Energy Loop) or Living Flame (Essence Burst procs) as filler
+  # ===========================================================
+  dps:
+  - fire_breath,empower_to=1
+  - deep_breath,if=active_enemies>=2
+  - disintegrate,if=talent.energy_loop
+  - living_flame
+
+  anti_idle:
+  - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Stop casting for true emergencies
+  - stop_casting,if=(player.casting|player.channeling)&var.anyone_emergency&(var.rewind_ready|cooldown.verdant_embrace.ready)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=dispel,if=config.use_dispel
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=emergency,if=var.anyone_emergency
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=hot_maintenance
+  - call_action_list,name=echo_healing,if=var.anyone_injured
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - call_action_list,name=dps,if=!config.heal_only&var.safe_to_dps
+  # Living Flame: idle Essence Burst fishing when group is healthy
+  - living_flame,if=var.safe_to_dps&!config.heal_only
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

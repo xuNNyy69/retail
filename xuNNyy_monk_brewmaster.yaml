@@ -1,0 +1,207 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 268
+name: xuNNyy_monk_brewmaster
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  auto_taunt:
+    label: "Auto Taunt"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  defensive_hp:
+    label: "Major Defensive HP%"
+    type: slider
+    min: 20
+    max: 80
+    default: 50
+  hold_purify_niuzao:
+    label: "Hold Purify for Niuzao"
+    type: checkbox
+    default: true
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+
+  has_woo: talent.weapons_of_order
+  has_cta: talent.call_to_arms
+  has_niuzao: talent.invoke_niuzao_the_black_ox
+  has_boc: talent.blackout_combo
+  has_charred: talent.charred_passions
+  has_scalding: talent.scalding_brew
+  has_fluidity: talent.fluidity_of_motion
+  has_rjw: talent.rushing_jade_wind
+  has_bma: talent.bring_me_another
+  has_moh: talent.aspect_of_harmony
+
+  boc_up: buff.blackout_combo.up
+  woo_up: buff.weapons_of_order.up
+  charred_up: buff.charred_passions.up
+  charred_low: buff.charred_passions.remains<3
+  niuzao_up: buff.invoke_niuzao_the_black_ox.up|buff.call_to_arms_invoke_niuzao.up
+  rjw_up: buff.rushing_jade_wind.up
+  rjw_low: buff.rushing_jade_wind.remains<2.5
+  balanced_strat_ready: buff.balanced_stratagem_magic.stack>=4
+
+  moh_vitality_ready: buff.aspect_of_harmony_accumulator.up
+  moh_spending: dot.aspect_of_harmony_damage.ticking
+
+  cb_near_cap: cooldown.celestial_brew.charges_fractional>1.8
+  pb_overcap: cooldown.purifying_brew.charges_fractional>1.25
+
+  combat_gate: player.combat&(target.time_to_die>12|active_enemies>=3)
+  pool_gate: energy>=40&cooldown.keg_smash.remains<1&cooldown.breath_of_fire.remains<1.5
+  safety_gate: cooldown.purifying_brew.charges_fractional>=0.5|cooldown.celestial_brew.charges_fractional>=1
+
+  woo_keg_condition: buff.weapons_of_order.up&(debuff.weapons_of_order_debuff.remains<18|debuff.weapons_of_order_debuff.stack<3&!var.boc_up|buff.weapons_of_order.remains<3&!var.boc_up)
+
+  purify_no_niuzao: "!var.boc_up&!var.has_niuzao&!var.has_cta"
+  purify_niuzao_active: "!var.boc_up&(var.has_niuzao|var.has_cta)&var.niuzao_up"
+  purify_niuzao_hold: "!var.boc_up&(var.has_niuzao|var.has_cta)&!var.niuzao_up&cooldown.weapons_of_order.remains>10&cooldown.invoke_niuzao_the_black_ox.remains>10"
+
+  energy_low: energy<40
+  energy_filler: energy>40
+
+lists:
+  taunt:
+  - provoke,if=config.auto_taunt&player.combat&target.exists&target.enemy&target.alive&target.threat<100,use_off_gcd=1
+
+  interrupts:
+  - spear_hand_strike,if=target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - dampen_harm,if=health.pct<=(config.defensive_hp+20)
+  - diffuse_magic,if=health.pct<=config.defensive_hp
+  - fortifying_brew,if=health.pct<=config.defensive_hp
+  - touch_of_karma,if=health.pct<=(config.defensive_hp+10)
+  - celestial_brew,if=var.has_moh&var.moh_vitality_ready&!var.moh_spending&!var.boc_up
+  - celestial_brew,if=!var.has_moh&(stagger.pct>=65|(cooldown.purifying_brew.charges_fractional<0.6&stagger.pct>=40)|cooldown.celestial_brew.charges_fractional>1.8)
+
+  purify:
+  - purifying_brew,if=!var.boc_up&stagger.pct>=65
+  - purifying_brew,if=!var.boc_up&stagger.pct>=35&(var.purify_no_niuzao|var.purify_niuzao_active|(config.hold_purify_niuzao&var.purify_niuzao_hold)|(!config.hold_purify_niuzao&(var.has_niuzao|var.has_cta)&!var.niuzao_up))
+  - purifying_brew,if=!var.boc_up&var.pb_overcap&stagger.pct>5
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=(var.woo_up|var.niuzao_up)&var.combat_gate&var.pool_gate&var.safety_gate
+  - use_item,slot=trinket2,use_off_gcd=1,if=(var.woo_up|var.niuzao_up)&var.combat_gate&var.pool_gate&var.safety_gate
+  - potion,if=config.use_potions&(var.woo_up|var.niuzao_up)&var.combat_gate&var.pool_gate&var.safety_gate
+
+  cooldowns:
+  - touch_of_death,if=target.health.pct<=15|target.time_to_die<=10
+  - weapons_of_order,if=var.has_woo&var.pool_gate&var.safety_gate&var.combat_gate
+  - bonedust_brew,if=var.combat_gate&var.pool_gate&var.safety_gate
+  - invoke_niuzao_the_black_ox,if=var.has_niuzao&!var.has_cta
+  - invoke_niuzao_the_black_ox,if=var.has_niuzao&var.has_cta&(var.woo_up|!var.has_woo)
+  - invoke_niuzao_the_black_ox,if=var.has_niuzao&var.has_cta&!buff.call_to_arms_invoke_niuzao.up&buff.weapons_of_order.remains<=16
+  - black_ox_brew,if=var.energy_low
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.woo_up&var.combat_gate
+  - blood_fury,use_off_gcd=1,if=var.woo_up&var.combat_gate
+  - fireblood,use_off_gcd=1,if=var.woo_up&var.combat_gate
+  - ancestral_call,use_off_gcd=1,if=var.woo_up&var.combat_gate
+  - arcane_torrent,use_off_gcd=1,if=energy.deficit>=30
+  - lights_judgment
+  - bag_of_tricks
+
+  keg_woo:
+  - keg_smash,if=var.woo_keg_condition
+
+  st:
+  - call_action_list,name=keg_woo,if=var.has_woo&var.woo_up
+  - empty_barrel,if=var.has_bma
+  - blackout_kick
+  - tiger_palm,if=var.boc_up&cooldown.keg_smash.remains>gcd
+  - keg_smash
+  - chi_burst,if=!var.has_moh
+  - chi_burst,if=var.has_moh&var.balanced_strat_ready
+  - spinning_crane_kick,if=var.has_scalding&var.has_charred&var.charred_up&var.charred_low&dot.breath_of_fire.remains<9&active_enemies>=2
+  - breath_of_fire,if=var.has_charred&(!var.charred_up|var.charred_low)
+  - breath_of_fire,if=!var.has_charred
+  - rising_sun_kick,if=!var.has_fluidity
+  - rushing_jade_wind,if=!var.rjw_up|var.rjw_low
+  - exploding_keg,if=!var.has_rjw|var.rjw_up
+  - rising_sun_kick,if=var.has_fluidity
+  - tiger_palm,if=var.energy_filler
+  - spinning_crane_kick,if=active_enemies>=3&var.energy_filler
+
+  aoe:
+  - call_action_list,name=keg_woo,if=var.has_woo&var.woo_up
+  - empty_barrel,if=var.has_bma
+  - blackout_kick
+  - breath_of_fire,if=var.has_charred&(!var.charred_up|var.charred_low)
+  - breath_of_fire,if=!var.has_charred
+  - tiger_palm,if=var.boc_up&cooldown.keg_smash.remains>gcd
+  - keg_smash
+  - chi_burst,if=!var.has_moh|var.balanced_strat_ready
+  - rushing_jade_wind,if=!var.rjw_up|var.rjw_low
+  - spinning_crane_kick,if=var.has_charred&var.charred_up&var.charred_low&dot.breath_of_fire.remains<9
+  - exploding_keg,if=!var.has_rjw|var.rjw_up
+  - rising_sun_kick
+  - spinning_crane_kick,if=var.energy_filler
+  - tiger_palm,if=var.energy_filler
+
+  anti_idle:
+  - keg_smash,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=taunt
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=purify
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=st
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

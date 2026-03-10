@@ -1,0 +1,121 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 262
+name: xuNNyy_shaman_elemental
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+
+variables:
+  # mael_cap base is 100; swelling_maelstrom/primordial_capacity add 50/25 respectively.
+  # Variables section only supports static values — using base value (constraint-driven).
+  # Inline conditions use maelstrom>85 (mael_cap-15 = 85).
+  mael_cap: 100
+
+lists:
+  interrupts:
+  - wind_shear,if=target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - astral_shift,if=health.pct<=35
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
+
+  cooldowns:
+  - return,if=!config.use_cooldowns
+  - fire_elemental,if=talent.fire_elemental&cooldown.fire_elemental.ready
+  - stormkeeper,if=talent.stormkeeper&cooldown.stormkeeper.ready
+  - ascendance,if=talent.ascendance&cooldown.ascendance.ready
+  - natures_swiftness,if=talent.natures_swiftness&cooldown.natures_swiftness.ready
+  - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready
+
+  racials:
+  - return,if=!config.use_cooldowns|!state.cds
+  - blood_fury,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
+  - berserking,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
+  - fireblood,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
+  - ancestral_call,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
+
+  aoe:
+  - tempest,if=buff.tempest.stack=2
+  - flame_shock,if=active_dot.flame_shock=0&active_enemies<=3&cooldown.ascendance.remains>10
+  - voltaic_blaze
+  - earthquake
+  - lava_burst,if=dot.flame_shock.remains>2&buff.purging_flames.up&(buff.ascendance.up&buff.ascendance.remains<3|buff.lava_surge.up)
+  - lightning_bolt,if=buff.stormkeeper.up&active_enemies=2
+  - chain_lightning
+  - frost_shock
+
+  single_target:
+  - tempest,if=buff.tempest.stack=2
+  - flame_shock,if=(!dot.flame_shock.ticking|dot.flame_shock.remains<6)&!buff.master_of_the_elements.up
+  - voltaic_blaze,if=!dot.flame_shock.ticking
+  - elemental_blast,if=maelstrom>85|buff.master_of_the_elements.up
+  - earth_shock,if=maelstrom>85|buff.master_of_the_elements.up
+  - lightning_bolt,if=buff.power_of_the_maelstrom.stack=2
+  - lava_burst,if=dot.flame_shock.remains>=2&!buff.master_of_the_elements.up
+  - lightning_bolt
+  - frost_shock
+
+  anti_idle:
+  - lightning_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - flame_shock,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - spiritwalkers_grace,if=player.moving,use_off_gcd=1
+  - lightning_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - flametongue_weapon,range_check=none,if=!buff.flametongue_weapon.up
+  - lightning_shield,range_check=none,if=!buff.lightning_shield.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - spiritwalkers_grace,if=player.moving,use_off_gcd=1
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - potion,if=config.use_potions
+  - call_action_list,name=aoe,if=active_enemies>=2
+  - call_action_list,name=single_target
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

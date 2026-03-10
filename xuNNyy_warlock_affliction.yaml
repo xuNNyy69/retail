@@ -1,0 +1,125 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 265
+name: xuNNyy_warlock_affliction
+entry: main
+
+config:
+  use_trinkets:
+    label: Use Items
+    type: checkbox
+    default: true
+  use_potions:
+    label: Use Potions
+    type: checkbox
+    default: true
+  use_defensives:
+    label: Use Defensives
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: Use Interrupts
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: Use Cooldowns
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: Anti Idle Mode
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: AoE Threshold
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  cds_active: cooldown.summon_darkglare.remains>20|buff.summon_darkglare.up
+
+lists:
+  interrupts:
+  - spell_lock,if=config.use_interrupts&target.casting.interruptible
+
+  defensives:
+  - dark_pact,if=health.pct<=35&buff.dark_pact.down
+  - unending_resolve,if=health.pct<=20&buff.unending_resolve.down
+
+  precombat:
+  - grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice
+  - haunt
+  - unstable_affliction
+
+  ogcd:
+  - potion,use_off_gcd=1,if=config.use_potions&(buff.summon_darkglare.up|!talent.summon_darkglare)
+  - berserking,use_off_gcd=1,if=buff.summon_darkglare.up
+  - blood_fury,use_off_gcd=1,if=buff.summon_darkglare.up
+  - fireblood,use_off_gcd=1,if=buff.summon_darkglare.up
+  - ancestral_call,use_off_gcd=1,if=buff.summon_darkglare.up
+
+  items:
+  - use_item,slot=trinket1,if=config.use_trinkets&var.cds_active
+  - use_item,slot=trinket2,if=config.use_trinkets&var.cds_active
+
+  soul_harvester:
+  - haunt,if=cooldown.haunt.ready
+  - agony,target_if=min:dot.agony.remains,if=dot.agony.refreshable&active_dot.agony<active_enemies
+  - corruption,target_if=min:dot.corruption.remains,if=dot.corruption.refreshable&active_dot.corruption<active_enemies
+  - summon_darkglare,if=config.use_cooldowns
+  - seed_of_corruption,if=active_enemies>=config.aoe_threshold&(buff.summon_darkglare.up|soul_shards>=4)
+  - unstable_affliction,if=(buff.summon_darkglare.up|soul_shards>=4|buff.shard_instability.up)&active_enemies<config.aoe_threshold
+  - dark_harvest,if=talent.dark_harvest&soul_shards<=1
+  - malefic_grasp,if=buff.summon_darkglare.up&buff.summon_darkglare.remains<gcd
+
+  hellcaller:
+  - haunt,if=cooldown.haunt.ready
+  - agony,target_if=min:dot.agony.remains,if=dot.agony.refreshable&active_dot.agony<active_enemies
+  - wither,if=!dot.wither.ticking|dot.wither.refreshable
+  - summon_darkglare,if=config.use_cooldowns
+  - malevolence,if=config.use_cooldowns
+  - seed_of_corruption,if=active_enemies>=config.aoe_threshold&(buff.summon_darkglare.up|buff.malevolence.up|soul_shards>=4)
+  - unstable_affliction,if=(buff.summon_darkglare.up|buff.malevolence.up|soul_shards>=4|buff.shard_instability.up)&active_enemies<config.aoe_threshold
+  - dark_harvest,if=talent.dark_harvest&dot.agony.remains>3&dot.wither.remains>3
+  - malefic_grasp,if=buff.summon_darkglare.up&buff.summon_darkglare.remains<gcd
+
+  default:
+  - call_action_list,name=ogcd
+  - call_action_list,name=items
+  - call_action_list,name=soul_harvester,if=talent.demonic_soul
+  - call_action_list,name=hellcaller,if=talent.wither
+  - malefic_grasp,if=buff.summon_darkglare.up&buff.nightfall.stack>=2&buff.nightfall.remains<4
+  - drain_soul,if=buff.nightfall.stack>=2&buff.nightfall.remains<4
+  - shadow_bolt,if=buff.nightfall.stack>=2&buff.nightfall.remains<4
+  - malefic_grasp,if=buff.summon_darkglare.up
+  - drain_soul
+  - shadow_bolt
+
+  anti_idle:
+  - corruption,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - call_action_list,name=precombat,if=!player.combat
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=default
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

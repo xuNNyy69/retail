@@ -1,0 +1,231 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 65
+name: xuNNyy_paladin_holy
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Dispel (Cleanse)"
+    type: checkbox
+    default: true
+  heal_only:
+    label: "Heal Only (No DPS)"
+    type: checkbox
+    default: false
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  emergency_hp:
+    label: "Emergency HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 35
+  major_heal_hp:
+    label: "Major Heal HP%"
+    type: slider
+    min: 30
+    max: 90
+    default: 65
+  loh_hp:
+    label: "Lay on Hands HP%"
+    type: slider
+    min: 5
+    max: 40
+    default: 20
+  bos_hp:
+    label: "Blessing of Sacrifice HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 40
+
+variables:
+
+  # Holy Power thresholds
+  hp_max: holy_power>=5
+  hp_high: holy_power>=4
+  hp_3plus: holy_power>=3
+  hp_low: holy_power<=1
+
+  # Key buff states
+  aw_up: buff.avenging_wrath.up
+  ac_up: buff.avenging_crusader.up
+  bov_up: buff.beacon_of_virtue.up
+  in_burst: buff.avenging_wrath.up|buff.avenging_crusader.up|buff.beacon_of_virtue.up
+  iol_up: buff.infusion_of_light.up
+
+  # Group health pressure
+  need_emergency: group.lowest.health.pct<config.emergency_hp
+  need_major_heal: group.lowest.health.pct<config.major_heal_hp
+  need_aoe_heal: group.count(cycle.health.pct<config.major_heal_hp)>=config.aoe_threshold
+  tank_critical: group.tanks.lowest.health.pct<config.emergency_hp
+
+  # Mana
+  mana_low: mana.pct<=40
+  mana_ok: mana.pct>=60
+
+  # Safe to contribute damage
+  safe_to_damage: !var.need_emergency&!var.need_major_heal&!var.need_aoe_heal
+
+lists:
+
+  interrupts:
+  - rebuke,if=target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - cleanse,cycle=members,if=config.use_dispel&(cycle.dispelable.magic|cycle.dispelable.poison|cycle.dispelable.disease)
+
+  defensives:
+  - divine_protection,if=health.pct<=50,use_off_gcd=1
+  - shield_of_vengeance,if=health.pct<=35,use_off_gcd=1
+
+  emergency:
+  - lay_on_hands,target=lowest,if=group.lowest.health.pct<config.loh_hp,use_off_gcd=1
+  - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_3plus
+  - word_of_glory,target=lowest,if=var.hp_3plus
+  - divine_toll,if=cooldown.divine_toll.ready
+  - holy_shock,target=lowest
+  - word_of_glory,target=lowest,if=var.hp_high
+  - flash_of_light,target=lowest,if=var.iol_up
+  - flash_of_light,target=lowest
+  - holy_light,target=lowest
+
+  beacon_maintenance:
+  - beacon_of_light,cycle=tanks,if=cycle.buff.beacon_of_light.down
+
+  cooldowns:
+  - avenging_wrath,if=usable.avenging_wrath&talent.avenging_wrath
+  - avenging_crusader,if=usable.avenging_crusader&talent.avenging_crusader
+  - divine_toll,if=usable.divine_toll&holy_power<=3&(var.need_aoe_heal|var.in_burst|cooldown.avenging_wrath.remains<10)
+  - holy_avenger,if=talent.holy_avenger&var.aw_up
+  - beacon_of_virtue,if=talent.beacon_of_virtue&var.need_aoe_heal
+  - tyrs_deliverance,if=talent.tyrs_deliverance&(var.need_aoe_heal|var.need_emergency|var.need_major_heal)
+  - daybreak,if=talent.daybreak&(var.need_aoe_heal|var.in_burst)
+  - aura_mastery,if=talent.aura_mastery&var.need_aoe_heal,use_off_gcd=1
+  - blessing_of_sacrifice,cycle=tanks,if=cycle.health.pct<config.bos_hp&cooldown.blessing_of_sacrifice.ready,use_off_gcd=1
+  - holy_prism,if=talent.holy_prism&(var.need_aoe_heal|var.in_burst)
+  - wake_of_ashes,if=talent.wake_of_ashes&holy_power<=2&(var.in_burst|var.need_major_heal)
+  - holy_armaments,if=talent.holy_bulwark&(!buff.sacred_weapon.up|buff.sacred_weapon.remains<5|cooldown.holy_armaments.charges>=2)
+
+  racials:
+  - blood_fury,use_off_gcd=1,if=var.in_burst|var.need_aoe_heal
+  - berserking,use_off_gcd=1,if=var.in_burst|var.need_aoe_heal
+  - fireblood,use_off_gcd=1,if=var.need_emergency|var.in_burst
+  - ancestral_call,use_off_gcd=1,if=var.in_burst|var.need_aoe_heal
+  - arcane_torrent,use_off_gcd=1,if=var.mana_low&holy_power<5
+  - lights_judgment
+  - bag_of_tricks
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_burst|var.need_emergency|var.need_aoe_heal)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_burst|var.need_emergency|var.need_aoe_heal)
+  - potion,if=config.use_potions&(var.need_emergency|var.in_burst&var.need_aoe_heal)
+
+  burst_healing:
+  - return,if=!var.in_burst
+  - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_3plus
+  - light_of_dawn,if=var.hp_3plus&active_enemies>=2
+  - word_of_glory,target=lowest,if=var.hp_3plus
+  - holy_shock,target=lowest
+  - daybreak,if=talent.daybreak&cooldown.daybreak.ready
+  - judgment,if=var.ac_up
+  - crusader_strike,if=var.ac_up
+  - flash_of_light,target=lowest,if=var.iol_up
+  - bestow_faith,target=lowest,if=talent.bestow_faith
+  - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_3plus
+  - light_of_dawn,if=var.hp_3plus&active_enemies>=2
+  - word_of_glory,target=lowest,if=var.hp_3plus
+  - judgment
+  - crusader_strike
+
+  healing:
+  - holy_shock,target=lowest
+  - bestow_faith,target=lowest,if=talent.bestow_faith
+  - light_of_dawn,if=var.hp_max&active_enemies>=2
+  - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_max
+  - word_of_glory,target=lowest,if=var.hp_max
+  - light_of_dawn,if=var.hp_high&(var.need_aoe_heal|active_enemies>=2)
+  - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_high&var.need_major_heal
+  - word_of_glory,target=lowest,if=var.hp_high&var.need_major_heal
+  - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_3plus&var.need_major_heal
+  - word_of_glory,target=lowest,if=var.hp_3plus&var.need_major_heal
+  - bestow_faith,target=lowest,if=talent.bestow_faith&var.need_major_heal
+  - flash_of_light,target=lowest,if=var.iol_up&var.need_major_heal
+  - holy_light,target=lowest,if=var.need_major_heal&var.mana_ok
+  - flash_of_light,target=lowest,if=var.need_major_heal
+  - judgment,if=!var.hp_max
+
+  damage:
+  - return,if=config.heal_only
+  - shield_of_the_righteous,if=var.hp_max&var.safe_to_damage
+  - shield_of_the_righteous,if=var.hp_high&var.safe_to_damage&var.aw_up
+  - judgment,if=!var.hp_max
+  - crusader_strike,if=!var.hp_max
+  - hammer_of_wrath,if=talent.hammer_of_wrath&(var.aw_up|target.health.pct<20)&var.safe_to_damage
+  - consecration,if=var.safe_to_damage
+
+  anti_idle:
+  - judgment,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - holy_light,target=lowest,ignore_queue=true
+
+  fallback:
+  - holy_light,target=lowest,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=(player.casting|player.channeling)&(var.need_emergency&var.hp_3plus|var.tank_critical)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=dispel,if=config.use_dispel
+  - call_action_list,name=emergency,if=var.need_emergency
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=beacon_maintenance
+  - call_action_list,name=burst_healing,if=var.in_burst
+  - call_action_list,name=healing
+  - call_action_list,name=damage
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

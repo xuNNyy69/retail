@@ -1,0 +1,119 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 267
+name: xuNNyy_warlock_destruction
+entry: main
+
+config:
+  use_trinkets:
+    label: Use Items
+    type: checkbox
+    default: true
+  use_potions:
+    label: Use Potions
+    type: checkbox
+    default: true
+  use_defensives:
+    label: Use Defensives
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: Use Interrupts
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: Use Cooldowns
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: Anti Idle Mode
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: AoE Threshold
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  infernal_active: pet.infernal.active
+  in_ritual: buff.diabolic_ritual_mother_of_chaos.up|buff.diabolic_ritual_overlord.up|buff.diabolic_ritual_pit_lord.up
+
+lists:
+  interrupts:
+  - spell_lock,if=config.use_interrupts&target.casting.interruptible
+
+  defensives:
+  - dark_pact,if=health.pct<=35&buff.dark_pact.down
+  - unending_resolve,if=health.pct<=20&buff.unending_resolve.down
+
+  precombat:
+  - grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice
+  - soul_fire
+  - incinerate
+
+  ogcd:
+  - potion,use_off_gcd=1,if=config.use_potions&(var.infernal_active|!talent.summon_infernal)
+  - berserking,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
+  - blood_fury,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
+  - fireblood,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
+  - ancestral_call,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
+
+  items:
+  - use_item,slot=trinket1,if=config.use_trinkets
+  - use_item,slot=trinket2,if=config.use_trinkets
+
+  default:
+  - call_action_list,name=ogcd
+  - call_action_list,name=items,if=config.use_trinkets
+  - wither,if=talent.wither&(!dot.wither.ticking|dot.wither.refreshable)
+  - immolate,if=!talent.wither&(dot.immolate.down|dot.immolate.refreshable)&(!talent.soul_fire|cooldown.soul_fire.remains>gcd)
+  - chaos_bolt,if=talent.diabolic_ritual&!var.in_ritual&soul_shards>=2
+  - summon_infernal,if=talent.summon_infernal&config.use_cooldowns
+  - malevolence,if=talent.malevolence&config.use_cooldowns
+  - chaos_bolt,if=buff.malevolence.up&soul_shards>=2
+  - incinerate,if=buff.chaotic_inferno_buff.up&soul_shards<=4
+  - shadowburn,if=talent.shadowburn&soul_shards>=4&target.health.pct<=20
+  - shadowburn,if=talent.shadowburn&(buff.fiendish_cruelty.up|soul_shards>=5)
+  - soul_fire,if=buff.backdraft.up
+  - conflagrate,if=cooldown.conflagrate.charges>=2
+  - soul_fire,if=cooldown.soul_fire.ready&soul_shards<=4
+  - rain_of_fire,if=talent.wither&active_enemies>=config.aoe_threshold&soul_shards>=3
+  - chaos_bolt,if=var.in_ritual&soul_shards>=2
+  - chaos_bolt,if=soul_shards>=4
+  - ruination,if=talent.ruination&buff.ruination.up
+  - infernal_bolt,if=talent.infernal_bolt&soul_shards<=3
+  - channel_demonfire,if=talent.channel_demonfire&(active_dot.immolate>=1|active_dot.wither>=1)
+  - conflagrate,if=buff.backdraft.stack<2
+  - cataclysm,if=talent.cataclysm
+  - incinerate
+
+  anti_idle:
+  - wither,if=target.exists&target.enemy&target.alive&talent.wither,ignore_queue=true
+  - immolate,if=target.exists&target.enemy&target.alive&!talent.wither,ignore_queue=true
+  - incinerate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - incinerate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - call_action_list,name=precombat,if=!player.combat
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=default
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

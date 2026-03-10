@@ -1,0 +1,208 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 64
+name: xuNNyy_mage_frost
+entry: main
+movement_allowed: buff.ice_floes.up
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+    show_override: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+    show_override: true
+  defensive_hp:
+    label: "Defensive HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 40
+    show_override: true
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  is_frostfire: talent.frostfire_bolt
+  is_spellslinger: "!talent.frostfire_bolt"
+  brain_freeze: buff.brain_freeze.up
+  fof_low: buff.fingers_of_frost.stack<=1
+  icicles_full: buff.icicles.stack=5
+  shatterable: debuff.winters_chill.up|buff.fingers_of_frost.up
+  ray_charge_high: cooldown.ray_of_frost.charges>=2
+  burst_window: buff.icy_veins.up|cooldown.frozen_orb.ready|cooldown.ray_of_frost.charges>=2|cooldown.comet_storm.ready
+  thermal_void: buff.thermal_void.up
+  freezing_ff: debuff.freezing.stack>=10
+  freezing_ss: debuff.freezing.stack>=6
+  freezing_winds: buff.freezing_winds.up
+
+lists:
+  interrupts:
+  - counterspell.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - counterspell.focus,if=focus.casting.interruptible,use_off_gcd=1
+  - counterspell,if=target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - ice_block,if=health.pct<=(config.defensive_hp-20)
+
+  items:
+  - trinket_1,if=config.use_trinkets&trinket_1.sync,use_off_gcd=1
+  - trinket_2,if=config.use_trinkets&trinket_2.sync,use_off_gcd=1
+  - potion,if=config.use_potions&(var.burst_window|var.want_aoe&cooldown.frozen_orb.ready)
+
+  racials:
+  - blood_fury,if=var.burst_window,use_off_gcd=1
+  - berserking,if=var.burst_window,use_off_gcd=1
+  - fireblood,if=var.burst_window,use_off_gcd=1
+  - ancestral_call,if=var.burst_window,use_off_gcd=1
+  - lights_judgment,if=var.burst_window
+  - bag_of_tricks,if=var.burst_window
+  - arcane_torrent,use_off_gcd=1,if=var.burst_window
+
+  cooldowns:
+  - icy_veins,if=usable.icy_veins&!buff.icy_veins.up,ignore_movement=true
+  - ray_of_frost,if=!player.moving
+  - potion,if=config.use_potions&(prev_gcd.1.icy_veins|buff.icy_veins.up),ignore_movement=true
+  - comet_storm,if=var.is_frostfire
+  - frozen_orb,if=var.want_aoe&var.fof_low&debuff.winters_chill.down
+  - frozen_orb,if=var.fof_low&debuff.winters_chill.down&!var.icicles_full
+
+  ff_aoe:
+  - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - glacial_spike,if=var.icicles_full
+  - blizzard,if=talent.ice_caller|talent.freezing_rain
+  - ice_lance,if=debuff.winters_chill.up
+  - ice_lance,if=buff.fingers_of_frost.up
+  - ice_lance,if=var.freezing_ff
+  - frostfire_bolt
+  - glacial_spike
+
+  ff_st:
+  - ray_of_frost,if=debuff.winters_chill.stack>=2
+  - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - glacial_spike,if=var.icicles_full
+  - ice_lance,if=debuff.winters_chill.up
+  - ice_lance,if=buff.fingers_of_frost.up
+  - ice_lance,if=var.freezing_ff
+  - frostfire_bolt
+  - glacial_spike
+
+  ff_st_boltspam:
+  - ray_of_frost,if=debuff.winters_chill.stack>=2
+  - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down&buff.icicles.stack>=3
+  - glacial_spike,if=var.icicles_full
+  - ice_lance,if=debuff.winters_chill.stack>=2
+  - ice_lance,if=buff.fingers_of_frost.up&buff.icicles.stack=0
+  - frostfire_bolt
+  - glacial_spike
+
+  ss_aoe:
+  - blizzard,if=var.freezing_winds
+  - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - glacial_spike,if=var.icicles_full&(var.brain_freeze|var.shatterable)
+  - blizzard,if=active_enemies>=7|talent.ice_caller|talent.freezing_rain
+  - ice_lance,if=debuff.winters_chill.up
+  - ice_lance,if=buff.fingers_of_frost.up
+  - ice_lance,if=var.freezing_ss
+  - flurry,if=debuff.winters_chill.down
+  - comet_storm,if=debuff.winters_chill.up
+  - frostbolt
+  - glacial_spike
+
+  ss_cleave:
+  - frozen_orb,if=var.fof_low&debuff.winters_chill.down
+  - glacial_spike,if=var.icicles_full&(var.brain_freeze|var.shatterable)
+  - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - comet_storm,if=debuff.winters_chill.up
+  - ice_lance,if=debuff.winters_chill.up
+  - ice_lance,if=buff.fingers_of_frost.up
+  - ice_lance,if=var.freezing_ss
+  - frostbolt
+  - glacial_spike
+
+  ss_st:
+  - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - glacial_spike,if=var.icicles_full&var.shatterable
+  - comet_storm,if=debuff.winters_chill.up
+  - ray_of_frost,if=debuff.winters_chill.stack>=1&!buff.icy_veins.up
+  - ice_lance,if=debuff.winters_chill.up
+  - ice_lance,if=buff.fingers_of_frost.up
+  - ice_lance,if=var.freezing_ss
+  - flurry,if=debuff.winters_chill.down
+  - frostbolt
+  - glacial_spike
+
+  movement:
+  - ice_floes,if=buff.ice_floes.down&player.moving
+  - flurry,if=var.brain_freeze&player.moving
+  - frozen_orb,if=player.moving&var.fof_low
+  - ice_lance,if=var.shatterable&player.moving
+  - frostfire_bolt,if=var.is_frostfire&buff.ice_floes.up&player.moving
+  - frostbolt,if=var.is_spellslinger&buff.ice_floes.up&player.moving
+
+  anti_idle:
+  - frostfire_bolt,if=var.is_frostfire&target.exists&target.enemy&target.alive,ignore_queue=true
+  - frostbolt,if=var.is_spellslinger&target.exists&target.enemy&target.alive,ignore_queue=true
+  - ice_lance,if=target.exists&target.enemy&target.alive&var.shatterable&player.moving,ignore_queue=true
+
+  fallback:
+  - frostfire_bolt,if=var.is_frostfire&target.exists&target.enemy&target.alive,ignore_queue=true
+  - frostbolt,if=var.is_spellslinger&target.exists&target.enemy&target.alive,ignore_queue=true
+  - ice_lance,if=target.exists&target.enemy&target.alive&player.moving,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - arcane_intellect,range_check=none,if=!buff.arcane_intellect.up
+  - ice_barrier,range_check=none,if=talent.ice_barrier&buff.ice_barrier.down
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts work while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=player.channeling&buff.brain_freeze.up&!var.thermal_void&debuff.winters_chill.down
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=movement,if=player.moving
+  - call_action_list,name=ff_aoe,if=var.is_frostfire&var.want_aoe
+  - call_action_list,name=ff_st_boltspam,if=var.is_frostfire&talent.deaths_chill&talent.cold_front&talent.slick_ice&talent.deep_shatter
+  - call_action_list,name=ff_st,if=var.is_frostfire
+  - call_action_list,name=ss_aoe,if=var.is_spellslinger&var.want_aoe
+  - call_action_list,name=ss_cleave,if=var.is_spellslinger&state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
+  - call_action_list,name=ss_st,if=var.is_spellslinger
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

@@ -1,0 +1,218 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 254
+name: xuNNyy_hunter_marksmanship
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+
+  # Hero-tree routing
+  # Dark Ranger (default) defined by Black Arrow talent
+  is_dr: talent.black_arrow
+  # Sentinel defined by Sentinel talent
+  is_sentinel: talent.sentinel
+
+  # Key buff states
+  in_trueshot: buff.trueshot.up
+  trick_shots_up: buff.trick_shots.up
+  precise_shots_up: buff.precise_shots.up
+  bulletstorm_active: buff.bulletstorm.up
+  withering_fire_up: buff.withering_fire.up
+
+  # Sentinel's Mark proc (spread via precise shots consumption)
+  sentinels_mark_up: buff.sentinels_mark.up
+
+  # AoE routing
+  want_aoe: active_enemies>=config.aoe_threshold
+
+lists:
+  interrupts:
+  - counter_shot,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - exhilaration,if=config.use_defensives&health.pct<=55
+  - survival_of_the_fittest,if=config.use_defensives&health.pct<=40
+  - aspect_of_the_turtle,if=config.use_defensives&health.pct<=20
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.in_trueshot
+  - blood_fury,use_off_gcd=1,if=var.in_trueshot
+  - fireblood,use_off_gcd=1,if=var.in_trueshot
+  - ancestral_call,use_off_gcd=1,if=var.in_trueshot
+  - lights_judgment
+  - bag_of_tricks
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_trueshot
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_trueshot
+  - potion,if=config.use_potions&var.in_trueshot,use_off_gcd=1
+
+  # ===========================================================
+  # Dark Ranger (Black Arrow) -- Single Target
+  # Priority: Black Arrow maximal > Rapid Fire timing > Arcane Shot procs
+  # > Trueshot > Aimed Shot > Wailing Arrow > Rapid Fire > Steady Shot
+  # ===========================================================
+  dr_st:
+  - return,if=!var.is_dr
+  # Black Arrow: highest damage in the rotation; consume Deathblow procs fast
+  - black_arrow
+  # Rapid Fire: use during Withering Fire window (Trueshot grants this)
+  - rapid_fire,if=var.withering_fire_up
+  # Arcane Shot: consume Precise Shots to avoid overcapping
+  - arcane_shot,if=var.precise_shots_up
+  # Rapid Fire: when Bulletstorm is not active or about to run out
+  - rapid_fire,if=!var.bulletstorm_active
+  # Trueshot: main DPS cooldown
+  - trueshot,if=config.use_cooldowns
+  # Aimed Shot: core filler; never let charges hit 2 (overcap)
+  - aimed_shot,if=cooldown.aimed_shot.charges<2
+  # Wailing Arrow: strong instant during Trueshot windows
+  - wailing_arrow,if=buff.wailing_arrow.up
+  - rapid_fire
+  # Steady Shot: focus generation filler
+  - steady_shot
+
+  # ===========================================================
+  # Dark Ranger -- AoE / Cleave
+  # Multi-Shot maintains Trick Shots; Rapid Fire + Aimed Shot consume it
+  # ===========================================================
+  dr_aoe:
+  - return,if=!var.is_dr
+  # Black Arrow: still top priority in AoE
+  - black_arrow
+  # Multi-Shot: consume Precise Shots OR refresh Trick Shots
+  - multishot,if=var.precise_shots_up|!var.trick_shots_up
+  # Rapid Fire with Trick Shots active (cleaves to nearby enemies)
+  - rapid_fire,if=var.trick_shots_up&var.withering_fire_up
+  # Trueshot cooldown
+  - trueshot,if=config.use_cooldowns
+  # Volley: without Double Tap to avoid consuming the buff
+  - volley,if=talent.volley&!buff.double_tap.up
+  # Aimed Shot with Trick Shots (cleaves)
+  - aimed_shot,if=var.trick_shots_up
+  # Wailing Arrow AoE hit
+  - wailing_arrow,if=buff.wailing_arrow.up
+  # Rapid Fire with Trick Shots
+  - rapid_fire,if=var.trick_shots_up
+  # Steady Shot focus refill
+  - steady_shot
+
+  # ===========================================================
+  # Sentinel -- Single Target
+  # Focus on generating and consuming Precise Shots for Sentinel's Mark procs
+  # Lunar Storm is a passive damage proc on Sentinel's Mark consume
+  # ===========================================================
+  sentinel_st:
+  - return,if=!var.is_sentinel
+  # Trueshot: main cooldown
+  - trueshot,if=config.use_cooldowns
+  # Aimed Shot: core ability; never overcap charges
+  - aimed_shot,if=cooldown.aimed_shot.charges<2
+  # Arcane Shot: consume Precise Shots (drives Sentinel's Mark application)
+  - arcane_shot,if=var.precise_shots_up&!var.sentinels_mark_up
+  # Wailing Arrow: strong burst during Trueshot
+  - wailing_arrow,if=buff.wailing_arrow.up
+  - moonlight_chakram,if=talent.moonlight_chakram
+  # Rapid Fire: when Bulletstorm not active
+  - rapid_fire,if=!var.bulletstorm_active
+  - rapid_fire
+  # Arcane Shot: general filler consume
+  - arcane_shot,if=var.precise_shots_up
+  # Steady Shot: focus gen
+  - steady_shot
+
+  # ===========================================================
+  # Sentinel -- AoE / Cleave
+  # ===========================================================
+  sentinel_aoe:
+  - return,if=!var.is_sentinel
+  # Trueshot cooldown
+  - trueshot,if=config.use_cooldowns
+  # Multi-Shot: consume Precise Shots and maintain Trick Shots
+  - multishot,if=var.precise_shots_up|!var.trick_shots_up
+  # Volley: fill AoE window
+  - volley,if=talent.volley&!buff.double_tap.up
+  - moonlight_chakram,if=talent.moonlight_chakram
+  # Aimed Shot with Trick Shots
+  - aimed_shot,if=var.trick_shots_up
+  # Wailing Arrow AoE
+  - wailing_arrow,if=buff.wailing_arrow.up
+  # Rapid Fire with Trick Shots
+  - rapid_fire,if=var.trick_shots_up
+  - rapid_fire
+  # Steady Shot focus refill
+  - steady_shot
+
+  anti_idle:
+  - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - arcane_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - hunters_mark,if=!buff.hunters_mark.up&!player.combat,range_check=none
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  # Dark Ranger routing
+  - call_action_list,name=dr_aoe,if=var.is_dr&var.want_aoe
+  - call_action_list,name=dr_st,if=var.is_dr
+  # Sentinel routing
+  - call_action_list,name=sentinel_aoe,if=var.is_sentinel&var.want_aoe
+  - call_action_list,name=sentinel_st,if=var.is_sentinel
+  # Generic fallback (no specific hero talent detected)
+  - trueshot,if=config.use_cooldowns
+  - aimed_shot,if=cooldown.aimed_shot.charges<2
+  - rapid_fire
+  - arcane_shot,if=var.precise_shots_up
+  - steady_shot
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

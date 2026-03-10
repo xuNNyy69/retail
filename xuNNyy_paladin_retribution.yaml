@@ -1,0 +1,161 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 70
+name: xuNNyy_paladin_retribution
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  in_melee: target.range<=8
+  trinket_1_buffs: trinket.1.has_stat.strength|trinket.1.has_stat.mastery|trinket.1.has_stat.versatility|trinket.1.has_stat.haste|trinket.1.has_stat.crit
+  trinket_2_buffs: trinket.2.has_stat.strength|trinket.2.has_stat.mastery|trinket.2.has_stat.versatility|trinket.2.has_stat.haste|trinket.2.has_stat.crit
+  trinket_1_sync: trinket.1.cooldown.duration>=90&trinket.1.cooldown.duration<=120
+  trinket_2_sync: trinket.2.cooldown.duration>=90&trinket.2.cooldown.duration<=120
+  trinket_priority: trinket_1_sync&!trinket_2_sync
+  ds_castable: (active_enemies>=3|(active_enemies>=2&talent.tempest_of_lightbringer&!talent.rush_of_light)|buff.empyrean_power.up|(!talent.final_verdict&talent.tempest))&!buff.empyrean_legacy.up&!(debuff.divine_arbiter.stack>24)
+  hp5: holy_power>=5
+  hp4: holy_power>=4
+  hp3: holy_power>=3
+  in_crusade: buff.crusade.up
+  crusade_10: buff.crusade.stack>=10
+  in_avenging_wrath: buff.avenging_wrath.up
+  hammer_ready: buff.hammer_of_light_ready.up
+  divine_hammer_up: buff.divine_hammer.up
+  divine_resonance_up: buff.divine_resonance.up
+  all_in_up: buff.all_in.up
+  templar_strikes_2: buff.templar_strikes.stack>=2
+  templar_strikes_1: buff.templar_strikes.stack>=1
+  expurgation_down: debuff.expurgation.down
+  blessing_of_anshe: buff.blessing_of_anshe.up
+  blade_of_vengeance: talent.blade_of_vengeance
+
+lists:
+  interrupts:
+  - return,if=!config.use_interrupts
+  - rebuke,if=target.casting&var.in_melee,use_off_gcd=1,ignore_movement=true
+
+  defensives:
+  - return,if=!config.use_defensives
+  - divine_protection,if=usable.divine_protection&health.pct<=50,use_off_gcd=1
+  - divine_shield,if=usable.divine_shield&health.pct<=10,ignore_movement=true
+
+  items:
+  - return,if=!config.use_trinkets
+  - use_item,slot=trinket1,use_off_gcd=1,if=var.trinket_1_buffs&var.trinket_1_sync&(buff.crusade.stack>=10|var.in_avenging_wrath)&cooldown.trinket1.ready
+  - use_item,slot=trinket2,use_off_gcd=1,if=var.trinket_2_buffs&var.trinket_2_sync&(buff.crusade.stack>=10|var.in_avenging_wrath)&cooldown.trinket2.ready
+  - use_item,slot=trinket1,use_off_gcd=1,if=!var.trinket_1_sync&(var.in_avenging_wrath|var.in_crusade)
+  - use_item,slot=trinket2,use_off_gcd=1,if=!var.trinket_2_sync&(var.in_avenging_wrath|var.in_crusade)
+
+  cooldowns:
+  - return,if=!config.use_cooldowns|!state.cds
+  - potion,if=config.use_potions&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up)
+  - power_infusion,if=usable.power_infusion&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up),use_off_gcd=1,ignore_movement=true
+  - lights_judgment,if=usable.lights_judgment&(active_enemies>=2|!player.combat|combat.time>=75),ignore_movement=true
+  - fireblood,if=usable.fireblood&(var.in_avenging_wrath|var.crusade_10|debuff.execution_sentence.up),use_off_gcd=1,ignore_movement=true
+  - shield_of_vengeance,if=usable.shield_of_vengeance&!debuff.execution_sentence.up,ignore_movement=true
+  # Execution Sentence: fire inside AW/Crusade (guide: always pair with AW);
+  # allow on CD only when BOTH burst CDs are >5s away to avoid wasting right before the window.
+  - execution_sentence,if=usable.execution_sentence&(holy_power>=4|buff.divine_resonance.up)&(var.in_avenging_wrath|var.in_crusade|(cooldown.avenging_wrath.remains>5&cooldown.crusade.remains>5)),ignore_movement=true
+  # Avenging Wrath: gated by !talent.radiant_glory -- Radiant Glory auto-triggers AW from finishers.
+  - avenging_wrath,if=usable.avenging_wrath&!talent.radiant_glory&((holy_power>=4&combat.time<5)|(holy_power>=3&combat.time>=5)|(holy_power>=2&talent.divine_auxiliary)),ignore_movement=true
+  - crusade,if=usable.crusade&((holy_power>=5&combat.time<5)|(holy_power>=3&combat.time>=5)),ignore_movement=true
+  - final_reckoning,if=usable.final_reckoning&(holy_power>=4|buff.divine_resonance.up)&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up),ignore_movement=true
+
+  finishers:
+  - hammer_of_light,if=usable.hammer_of_light&(var.hammer_ready|!talent.divine_hammer|var.divine_hammer_up|cooldown.divine_hammer.remains>10),ignore_movement=true
+  - divine_hammer,if=usable.divine_hammer&!var.divine_hammer_up,ignore_movement=true
+  - divine_storm,if=usable.divine_storm&var.ds_castable&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath|buff.empyrean_power.up),ignore_movement=true
+  - justicars_vengeance,if=usable.justicars_vengeance&talent.justicars_vengeance&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath),ignore_movement=true
+  - templars_verdict,if=usable.templars_verdict&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath|var.hp5),ignore_movement=true
+
+  generators:
+  - call_action_list,name=finishers,if=(var.hp5|(holy_power>=4&var.divine_resonance_up)|var.all_in_up)&cooldown.wake_of_ashes.remains>0
+  - templar_slash,if=usable.templar_slash&talent.templar_slash&buff.templar_strikes.remains<=gcd*2,ignore_movement=true
+  - blade_of_justice,if=usable.blade_of_justice&var.expurgation_down&talent.holy_flames&cooldown.divine_toll.remains>0,ignore_movement=true
+  - wake_of_ashes,if=usable.wake_of_ashes&talent.lights_guidance&holy_power<=2&cooldown.wake_of_ashes.remains<=0&!debuff.execution_sentence.up&!var.want_aoe,ignore_movement=true
+  # Herald of the Sun builds: wake_of_ashes usable without lights_guidance
+  - wake_of_ashes,if=usable.wake_of_ashes&!talent.lights_guidance&holy_power<=2,ignore_movement=true
+  - divine_toll,if=usable.divine_toll&holy_power<=2&!var.want_aoe&(cooldown.wake_of_ashes.remains>gcd*3|!talent.wake_of_ashes),ignore_movement=true
+  - call_action_list,name=finishers,if=holy_power>=4|var.crusade_10|var.divine_hammer_up|active_enemies>=4
+  - templar_slash,if=usable.templar_slash&talent.templar_slash&buff.templar_strikes.remains<=gcd&active_enemies>=2,ignore_movement=true
+  - blade_of_justice,if=usable.blade_of_justice&active_enemies>=2&var.blade_of_vengeance,ignore_movement=true
+  - hammer_of_wrath,if=usable.hammer_of_wrath&active_enemies<=1&var.blessing_of_anshe,ignore_movement=true
+  - templar_strike,if=usable.templar_strike&talent.templar_strikes,ignore_movement=true
+  - judgment,if=usable.judgment,ignore_movement=true
+  - blade_of_justice,if=usable.blade_of_justice,ignore_movement=true
+  - call_action_list,name=finishers,if=holy_power>=3
+  - hammer_of_wrath,if=usable.hammer_of_wrath&!var.want_aoe,ignore_movement=true
+  - templar_slash,if=usable.templar_slash&talent.templar_slash,ignore_movement=true
+  - crusader_strike,if=usable.crusader_strike,ignore_movement=true
+  - hammer_of_wrath,if=usable.hammer_of_wrath,ignore_movement=true
+  - arcane_torrent,if=usable.arcane_torrent&holy_power<=4,use_off_gcd=1,ignore_movement=true
+
+  racials:
+  - return,if=!config.use_cooldowns|!state.cds
+  - blood_fury,if=usable.blood_fury&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true
+  - berserking,if=usable.berserking&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true
+  - ancestral_call,if=usable.ancestral_call&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true
+  - bag_of_tricks,if=usable.bag_of_tricks,ignore_movement=true
+
+  anti_idle:
+  - crusader_strike,if=usable.crusader_strike&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
+  - judgment,if=usable.judgment&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
+
+  fallback:
+  - crusader_strike,if=usable.crusader_strike&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard)
+  - call_action_list,name=interrupts
+  # Defensives
+  - call_action_list,name=defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=cooldowns
+  - call_action_list,name=racials
+  - call_action_list,name=generators
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

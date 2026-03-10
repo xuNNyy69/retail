@@ -1,0 +1,219 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 258
+name: xuNNyy_priest_shadow
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+
+  # Hero-tree routing
+  # Archon: uses Halo as signature ability
+  is_archon: talent.halo
+  # Voidweaver: no Halo
+  is_voidweaver: "!talent.halo"
+
+  # Key buff/resource states
+  voidform_up: buff.voidform.up
+  power_infusion_up: buff.power_infusion.up
+  # Insanity resource management
+  insanity_overcap: insanity>=90
+  # Shadow Word: Madness -- DoT/spender state
+  swm_active: buff.shadow_word_madness.up
+  # Execute window (guide: SWD in execute range <20%)
+  in_execute: target.health.pct<20
+
+  # DoT states
+  swp_refreshable: dot.shadow_word_pain.refreshable
+  vt_refreshable: dot.vampiric_touch.refreshable
+
+  # AoE routing
+  want_aoe: active_enemies>=config.aoe_threshold
+
+lists:
+  interrupts:
+  - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - dispersion,if=config.use_defensives&health.pct<=20
+  - fade,if=config.use_defensives&health.pct<=50,use_off_gcd=1
+  - desperate_prayer,if=config.use_defensives&health.pct<=50
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.voidform_up
+  - blood_fury,use_off_gcd=1,if=var.voidform_up
+  - fireblood,use_off_gcd=1,if=var.voidform_up
+  - ancestral_call,use_off_gcd=1,if=var.voidform_up
+  - lights_judgment
+  - bag_of_tricks
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.voidform_up
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.voidform_up
+  - potion,if=config.use_potions&var.voidform_up,use_off_gcd=1
+
+  # ===========================================================
+  # Archon priority (single target + AoE backbone)
+  # Builder/spender: generate Insanity via DoTs + Mind Blast/Void Volley
+  # Spend via Shadow Word: Madness; Mind Flay: Insanity fills spend windows
+  # Guide: apply DoTs BEFORE entering Voidform to avoid wasting globals inside CD
+  # ===========================================================
+  archon:
+  - return,if=!var.is_archon
+
+  # DoT application -- get these up before major cooldowns
+  - shadow_word_pain,if=var.swp_refreshable&talent.invoked_nightmare
+  - vampiric_touch,if=var.vt_refreshable
+
+  # Halo: Archon's signature; high priority, uses Insanity
+  - halo,if=config.use_cooldowns
+
+  # Voidform: major DPS cooldown
+  - voidform,if=config.use_cooldowns
+
+  # Power Infusion: align with Voidform
+  - power_infusion,if=config.use_cooldowns&var.voidform_up
+
+  # Void Volley: strong Insanity generator in Voidform window
+  - void_volley,if=talent.void_volley
+
+  # Shadow Word: Madness: spend Insanity if not active, expiring, or near cap
+  - shadow_word_madness,if=!var.swm_active|buff.shadow_word_madness.remains<2|var.insanity_overcap
+
+  # Mind Flay: Insanity -- channel only while SWM active (Insanity dump)
+  - mind_flay_insanity,if=var.swm_active
+
+  # Mind Blast: core Insanity builder
+  - mind_blast
+
+  # SWM during Voidform (additional cast opportunity)
+  - shadow_word_madness,if=var.voidform_up
+
+  # Tentacle Slam: spread DoTs or Insanity gen when no new targets to dot
+  - tentacle_slam,if=talent.tentacle_slam
+
+  # Shadow Word: Death: execute range
+  - shadow_word_death,if=var.in_execute
+
+  # Mind Flay: general filler
+  - mind_flay
+
+  # ===========================================================
+  # Voidweaver priority
+  # No Halo; slightly different insanity flow
+  # ===========================================================
+  voidweaver:
+  - return,if=!var.is_voidweaver
+
+  # DoT application
+  - shadow_word_pain,if=var.swp_refreshable&talent.invoked_nightmare
+  - vampiric_touch,if=var.vt_refreshable
+
+  # Voidform: main cooldown
+  - voidform,if=config.use_cooldowns
+
+  # Power Infusion: align with Voidform
+  - power_infusion,if=config.use_cooldowns&var.voidform_up
+
+  # Void Volley: Insanity builder
+  - void_volley,if=talent.void_volley
+
+  # Shadow Word: Madness: spend Insanity
+  - shadow_word_madness,if=!var.swm_active|buff.shadow_word_madness.remains<2|var.insanity_overcap
+
+  # Mind Flay: Insanity channel inside SWM window
+  - mind_flay_insanity,if=var.swm_active
+
+  # Mind Blast
+  - mind_blast
+
+  # SWM in Voidform
+  - shadow_word_madness,if=var.voidform_up
+
+  # Tentacle Slam
+  - tentacle_slam,if=talent.tentacle_slam
+
+  # Shadow Word: Death execute
+  - shadow_word_death,if=var.in_execute
+
+  # Mind Flay filler
+  - mind_flay
+
+  # ===========================================================
+  # AoE DoT spread layer
+  # Guide: keep VT+SWP on all viable targets; Tentacle Slam auto-handles 6-12
+  # Manually dot 4-5 additional targets without Voidform, any target with VF
+  # ===========================================================
+  aoe_dots:
+  # Tentacle Slam: spreads VT automatically to 6-12 targets
+  - tentacle_slam,if=talent.tentacle_slam
+
+  # Manual VT spread: up to 4-5 targets without Voidform; any with Voidform
+  - vampiric_touch,cycle_targets=1,if=dot.vampiric_touch.refreshable&(var.voidform_up|active_enemies<=5)
+
+  # SWP spread: manual supplement
+  - shadow_word_pain,cycle_targets=1,if=dot.shadow_word_pain.refreshable&(var.voidform_up|active_enemies<=5)
+
+  anti_idle:
+  - mind_flay,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - shadow_word_pain,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - mind_flay,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  # AoE DoT spread in multi-target situations
+  - call_action_list,name=aoe_dots,if=var.want_aoe
+  # Hero-tree routing
+  - call_action_list,name=archon,if=var.is_archon
+  - call_action_list,name=voidweaver,if=var.is_voidweaver
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

@@ -1,0 +1,268 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 72
+name: xuNNyy_warrior_fury
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  defensive_hp:
+    label: "Defensive HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 40
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  want_cleave: state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
+  opener_done: combat.time>5|!player.combat
+  in_execute: target.health.pct<=20|target.health.pct<=35&talent.massacre
+  can_execute: var.in_execute|buff.sudden_death.up
+  has_slayer: talent.slayer_dps
+  enraged: buff.enrage.up
+  need_enrage: buff.enrage.down
+  enrage_soon: buff.enrage.remains<2
+  reckless_active: buff.recklessness.up
+  in_cd_window: buff.recklessness.up|buff.avatar.up
+  meat_cleaver_up: buff.meat_cleaver.up|buff.whirlwind.up
+  need_meat_cleaver: "!var.meat_cleaver_up"
+  furious_bt_up: buff.furious_bloodthirst.up
+  ashen_expiring: buff.ashen_juggernaut.up&buff.ashen_juggernaut.remains<gcd
+  bloodcraze_up: buff.bloodcraze.up
+  raging_thirst_up: buff.raging_thirst.up
+  reap_up: var.has_slayer&buff.reap_the_storm.up
+  marked_ready: var.has_slayer&debuff.marked_for_execution.stack>=3
+  rage_for_rampage: rage>=80
+  rage_high: rage>=90
+  in_melee: target.range<=8
+  thunder_blast_ready: talent.gathering_clouds&buff.thunder_blast.up
+
+lists:
+  interrupts:
+  - pummel,if=target.casting.interruptible,use_off_gcd=1
+  - spell_reflection,if=target.casting.important,use_off_gcd=1
+  - storm_bolt,if=target.casting.interruptible&cooldown.pummel.remains,use_off_gcd=1
+
+  defensives:
+  - enraged_regeneration,if=health.pct<=config.defensive_hp
+  - rallying_cry,if=health.pct<=25
+  - ignore_pain,if=health.pct<=(config.defensive_hp+15)&rage>=40,use_off_gcd=1
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.recklessness.up|buff.avatar.up|target.boss)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.recklessness.up|buff.avatar.up|target.boss)
+  - potion,if=config.use_potions&(buff.recklessness.up&buff.avatar.up|target.boss&target.health.pct<=20)
+
+  movement:
+  - charge
+  - heroic_throw
+
+  opener:
+  - charge
+  - bloodthirst,if=var.need_enrage
+  - recklessness,if=usable.recklessness
+  - avatar,if=usable.avatar
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+
+  cooldowns:
+  - recklessness,if=buff.avatar.up|cooldown.avatar.remains>40|!talent.avatar
+  - avatar,if=buff.recklessness.up|cooldown.recklessness.remains>40
+  - ravager,if=cooldown.recklessness.remains<=gcd|var.reckless_active
+  - thunderous_roar,if=var.enraged&(var.in_cd_window|active_enemies>=2)
+  - champions_spear,if=var.enraged&var.furious_bt_up
+  - odyns_fury,if=var.enraged&var.furious_bt_up
+  - bladestorm,if=var.enraged&(var.in_cd_window|cooldown.recklessness.remains>15|active_enemies>=config.aoe_threshold)
+
+  burst:
+  - return,if=!var.in_cd_window
+  - execute,if=var.ashen_expiring
+  - thunder_clap,if=var.thunder_blast_ready&var.in_melee
+  - rampage,if=var.reap_up&var.rage_for_rampage
+  - rampage,if=var.need_enrage&var.rage_for_rampage
+  - rampage,if=var.rage_for_rampage
+  - execute,if=var.can_execute
+  - execute,if=var.marked_ready
+  - onslaught,if=talent.onslaught&var.enraged
+  - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - bloodthirst,if=var.need_enrage
+  - bloodbath
+  - bloodthirst
+  - rend,if=dot.rend.remains<5
+  - crushing_blow
+  - raging_blow
+  - slam,if=talent.annihilator,ignore_queue=true
+
+  execute_st:
+  - execute,if=var.ashen_expiring
+  - thunder_clap,if=var.thunder_blast_ready&var.in_melee
+  - rampage,if=(var.need_enrage|var.raging_thirst_up)&var.rage_for_rampage
+  - execute,if=buff.sudden_death.up
+  - execute,if=var.in_execute
+  - onslaught,if=talent.onslaught&var.enraged
+  - rampage,if=var.rage_high
+  - bloodthirst,if=var.enrage_soon
+  - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - bloodbath
+  - bloodthirst
+  - crushing_blow,ignore_queue=true
+  - raging_blow,ignore_queue=true
+
+  execute_aoe:
+  - whirlwind,if=var.need_meat_cleaver
+  - execute,if=var.ashen_expiring
+  - thunder_clap,if=var.thunder_blast_ready&var.in_melee
+  - rampage,if=var.need_enrage&var.rage_for_rampage
+  - execute,if=var.meat_cleaver_up&buff.sudden_death.up
+  - rampage,if=var.meat_cleaver_up&var.rage_for_rampage
+  - execute,if=var.meat_cleaver_up
+  - rampage,if=var.rage_for_rampage
+  - bloodthirst,if=var.need_enrage
+  - whirlwind
+  - execute
+  - bloodbath
+  - bloodthirst,ignore_queue=true
+
+  st:
+  - execute,if=var.ashen_expiring
+  - thunder_clap,if=var.thunder_blast_ready&var.in_melee
+  - rampage,if=var.reap_up&var.rage_for_rampage
+  - rampage,if=var.need_enrage&var.rage_for_rampage
+  - rampage,if=var.rage_for_rampage
+  - onslaught,if=talent.onslaught&var.enraged
+  - execute,if=buff.sudden_death.up
+  - execute,if=var.marked_ready
+  - crushing_blow,if=talent.tenderize&debuff.tenderize.down
+  - raging_blow,if=talent.tenderize&debuff.tenderize.down
+  - bloodthirst,if=var.furious_bt_up&var.enraged
+  - bloodthirst,if=var.enrage_soon
+  - bloodthirst,if=var.bloodcraze_up
+  - rend,if=dot.rend.remains<5
+  - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - crushing_blow
+  - raging_blow
+  - bloodbath
+  - bloodthirst
+  - rend
+  - slam,if=talent.annihilator,ignore_queue=true
+
+  aoe:
+  - whirlwind,if=var.need_meat_cleaver
+  - execute,if=var.ashen_expiring&var.meat_cleaver_up
+  - thunder_clap,if=var.thunder_blast_ready&var.in_melee
+  - rampage,if=var.need_enrage&var.rage_for_rampage
+  - rampage,if=var.meat_cleaver_up&var.rage_for_rampage
+  - onslaught,if=talent.onslaught&var.enraged
+  - execute,if=buff.sudden_death.up&var.meat_cleaver_up
+  - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury&var.meat_cleaver_up
+  - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury&var.meat_cleaver_up
+  - bloodthirst,if=var.enrage_soon
+  - rend,if=dot.rend.remains<5
+  - crushing_blow,if=var.meat_cleaver_up
+  - raging_blow,if=var.meat_cleaver_up
+  - whirlwind
+  - bloodbath
+  - bloodthirst
+  - slam,if=talent.annihilator,ignore_queue=true
+
+  cleave:
+  - whirlwind,if=var.need_meat_cleaver
+  - thunder_clap,if=var.thunder_blast_ready&var.in_melee
+  - rampage,if=var.need_enrage&var.rage_for_rampage
+  - rampage,if=var.meat_cleaver_up&var.rage_for_rampage
+  - onslaught,if=talent.onslaught&var.enraged
+  - execute,if=(buff.sudden_death.up|var.marked_ready)&var.meat_cleaver_up
+  - crushing_blow,if=talent.tenderize&debuff.tenderize.down
+  - raging_blow,if=talent.tenderize&debuff.tenderize.down
+  - bloodthirst,if=var.enrage_soon
+  - rend,if=dot.rend.remains<5
+  - crushing_blow,if=var.meat_cleaver_up
+  - raging_blow,if=var.meat_cleaver_up
+  - bloodbath
+  - bloodthirst
+  - rend
+  - slam,if=talent.annihilator,ignore_queue=true
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.in_cd_window
+  - blood_fury,use_off_gcd=1,if=var.in_cd_window
+  - fireblood,use_off_gcd=1
+  - ancestral_call,use_off_gcd=1,if=var.in_cd_window
+  - lights_judgment,if=buff.recklessness.down
+  - bag_of_tricks
+  - arcane_torrent,use_off_gcd=1,if=rage<60
+
+  anti_idle:
+  - bloodbath,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - bloodthirst,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - crushing_blow,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - raging_blow,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - heroic_throw
+  - slam,if=talent.annihilator&target.exists&target.enemy&target.alive,ignore_queue=true
+  - whirlwind,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - battle_shout,range_check=none,if=!buff.battle_shout.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=opener,if=!var.opener_done
+  - call_action_list,name=movement
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=burst,if=var.in_cd_window
+  - call_action_list,name=execute_aoe,if=var.want_aoe&var.can_execute&var.in_melee
+  - call_action_list,name=execute_st,if=!var.want_aoe&var.can_execute
+  - call_action_list,name=aoe,if=var.want_aoe&var.in_melee
+  - call_action_list,name=cleave,if=var.want_cleave
+  - call_action_list,name=st,if=var.in_melee
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

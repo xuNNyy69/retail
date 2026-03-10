@@ -1,0 +1,250 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 252
+name: xuNNyy_death_knight_unholy
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 4
+  funnel_mode:
+    label: "Funnel (Boss Focus)"
+    type: checkbox
+    default: true
+  death_strike_hp:
+    label: "Death Strike HP%"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
+  opener_done: combat.time>8|!player.combat
+  has_sanlayn: talent.vampiric_strike
+  has_rider: talent.apocalypse_now
+  has_deathbringer: talent.reapers_mark
+  pet_missing: pet.exists=0|pet.dead
+  wounds_up: buff.lesser_ghoul_ready.up
+  wounds_low: buff.lesser_ghoul_ready.down
+  vp_refresh: debuff.virulent_plague.down|debuff.virulent_plague.remains<4
+  # APL: spending_rp = rune<2 | buff.sudden_doom.react — spend DC when rune-starved or proc up
+  rp_spend: rune<2|buff.sudden_doom.up
+  dt_up: buff.dark_transformation.up
+  gargoyle_window: buff.summon_gargoyle.up|pet.gargoyle.active
+  rp_gargoyle: runic_power>=60&var.gargoyle_window
+  in_execute: target.health.pct<=35
+  # APL uses active_enemies>=3 for epidemic threshold (not config-based)
+  epidemic_mode: talent.epidemic&active_enemies>=3
+  sr_ready: var.in_execute|buff.reaping.up
+  gift_up: var.has_sanlayn&buff.gift_of_the_sanlayn.up
+  sanguine_up: var.has_sanlayn&buff.sanguine_scent.up
+  rider_active: var.has_rider&(buff.mograines_might.up|buff.nazgrims_march.up|buff.trollbanes_icy_fury.up|buff.whitemanes_famine.up)
+
+lists:
+  interrupts:
+  - mind_freeze,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - asphyxiate,if=config.use_interrupts&target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
+
+  defensives:
+  - anti_magic_shell,if=config.use_defensives&player.dangerous_debuff.magic.up,use_off_gcd=1
+  - icebound_fortitude,if=config.use_defensives&(player.dangerous_debuff.up|health.pct<=35)
+  - lichborne,if=config.use_defensives&health.pct<=30
+  - death_strike,if=config.use_defensives&health.pct<=config.death_strike_hp&runic_power>=35
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)
+  - potion,if=config.use_potions&var.dt_up
+
+  movement:
+  - death_grip
+  - deaths_caress
+  - outbreak,if=var.vp_refresh
+
+  precombat:
+  - raise_dead,if=var.pet_missing
+
+  opener:
+  - raise_dead,if=var.pet_missing
+  - outbreak,if=var.vp_refresh
+  - festering_strike,if=var.wounds_low
+  - dark_transformation
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+
+  cooldowns:
+  - raise_dead,if=var.pet_missing,use_off_gcd=1
+  - outbreak,if=var.vp_refresh
+  # APL: invoke_external_buff,name=power_infusion on DT window
+  - power_infusion,if=var.dt_up,use_off_gcd=1
+  - army_of_the_dead,use_off_gcd=1
+  - dark_transformation,use_off_gcd=1
+  # TOKEN UNVALIDATED: putrefy not in action_tokens.txt — needs in-game test
+  - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2
+  # APL: soul_reaper at execute or with Reaping talent post-DT
+  - soul_reaper,if=var.sr_ready
+  - summon_gargoyle,if=talent.summon_gargoyle&runic_power>=60
+  - unholy_blight
+  - raise_abomination
+  - reapers_mark,if=var.has_deathbringer
+  - unholy_assault,if=talent.unholy_assault&var.wounds_low
+  - empower_rune_weapon,if=rune<2|runic_power<40
+  - abomination_limb
+
+  burst:
+  - return,if=!var.dt_up&!var.gargoyle_window
+  - soul_reaper,if=var.sr_ready
+  # Gift of the Sanlayn — highest-priority strike during Sanlayn hero tree
+  - vampiric_strike,if=var.gift_up
+  - scourge_strike,if=var.gift_up
+  # APL: refresh scythe buff before expiry, then strike to pop wounds
+  - festering_scythe,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - festering_strike,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - putrefy,if=talent.putrefy
+  - scourge_strike,if=var.wounds_up
+  - vampiric_strike,if=var.wounds_up
+  # Gargoyle filler — dump RP while gargoyle is active
+  - death_coil,if=var.gargoyle_window&var.rp_gargoyle&!var.epidemic_mode
+  - epidemic,if=var.gargoyle_window&var.rp_gargoyle&var.epidemic_mode
+  # Rider of the Apocalypse buff dump
+  - death_coil,if=var.rider_active&runic_power>=40
+  # APL: spend DC when rune-starved (rp_spend = rune<2 | sudden_doom)
+  - death_coil,if=var.rp_spend&!var.epidemic_mode
+  - epidemic,if=var.rp_spend&var.epidemic_mode
+  - festering_strike,if=var.wounds_low
+  - scourge_strike
+  - vampiric_strike
+
+  st:
+  - outbreak,if=var.vp_refresh
+  - soul_reaper,if=var.sr_ready
+  # APL single_target: scythe buff refresh is top priority when talented
+  - festering_scythe,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - festering_strike,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - putrefy,if=talent.putrefy&cooldown.dark_transformation.remains>15
+  # APL: spend DC before wound building when rune-starved or sudden_doom proc
+  - death_coil,if=var.rp_spend
+  - festering_strike,if=var.wounds_low
+  - scourge_strike,if=var.wounds_up
+  - vampiric_strike,if=var.wounds_up
+  - death_coil,if=var.rider_active&runic_power>=40
+  - scourge_strike
+  - vampiric_strike
+  - death_coil,if=runic_power>=40,ignore_queue=true
+
+  aoe:
+  - outbreak,if=var.vp_refresh
+  # APL: keep D&D ticking when desecrate talent is active
+  - death_and_decay,if=talent.desecrate&cooldown.death_and_decay.ready
+  # Scythe buff refresh on expiry during AoE
+  - festering_scythe,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
+  - festering_strike,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
+  - soul_reaper,if=var.sr_ready
+  - putrefy,if=talent.putrefy&cooldown.dark_transformation.remains>15
+  # APL: epidemic when spending RP and >=3 enemies
+  - epidemic,if=var.epidemic_mode&debuff.virulent_plague.up&var.rp_spend
+  - scourge_strike,if=var.wounds_up
+  - vampiric_strike,if=var.wounds_up
+  - festering_strike,if=var.wounds_low
+  - death_coil,if=!var.epidemic_mode&var.rp_spend
+  - epidemic,if=var.epidemic_mode&debuff.virulent_plague.up&runic_power>=40
+  - death_coil,if=!var.epidemic_mode&runic_power>=40,ignore_queue=true
+
+  funnel:
+  - outbreak,if=var.vp_refresh
+  - death_and_decay,if=talent.desecrate&cooldown.death_and_decay.ready
+  - soul_reaper,if=var.sr_ready
+  # Scythe buff refresh for boss focus
+  - festering_scythe,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - festering_strike,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - putrefy,if=talent.putrefy&cooldown.dark_transformation.remains>15
+  - scourge_strike,if=var.wounds_up
+  - vampiric_strike,if=var.wounds_up
+  - festering_strike,if=var.wounds_low
+  # RP spend — epidemic for cleave value, DC for boss focus
+  - epidemic,if=var.epidemic_mode&debuff.virulent_plague.up&var.rp_spend
+  - death_coil,if=var.rp_spend
+  - scourge_strike
+  - vampiric_strike
+  - death_coil,if=runic_power>=40,ignore_queue=true
+
+
+  racials:
+  # APL: burst-window racials aligned to dark_transformation window
+  - berserking,if=var.dt_up,use_off_gcd=1
+  - blood_fury,if=var.dt_up,use_off_gcd=1
+  - fireblood,if=var.dt_up,use_off_gcd=1
+  - ancestral_call,if=var.dt_up,use_off_gcd=1
+  # APL: resource-dump racials when rune-starved and low RP
+  - lights_judgment,if=rune<2&runic_power<20
+  - bag_of_tricks,if=rune<2&runic_power<20
+  - arcane_torrent,if=rune<2&runic_power<20,use_off_gcd=1
+  - arcane_pulse,if=rune<2&runic_power<20
+
+  anti_idle:
+  - death_coil,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - festering_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - deaths_caress,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - scourge_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - vampiric_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - death_coil,if=target.exists&target.enemy&target.alive&runic_power>=40,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - call_action_list,name=precombat,if=!player.combat
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=opener,if=!var.opener_done
+  - call_action_list,name=movement
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=burst,if=(var.dt_up|var.gargoyle_window)
+  - call_action_list,name=funnel,if=var.want_funnel
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=st
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

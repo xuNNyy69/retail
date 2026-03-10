@@ -1,0 +1,165 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 63
+name: xuNNyy_mage_fire
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  in_melee: target.range<=8
+  in_ranged: target.range<=40
+  in_combustion: buff.combustion.up
+  hot_streak_react: buff.hot_streak.up
+  heating_up_react: buff.heating_up.up
+  is_frostfire: talent.frostfire_bolt
+
+lists:
+  interrupts:
+  - counterspell,if=config.use_interrupts&target.casting&var.in_ranged,use_off_gcd=1,ignore_movement=true
+
+  defensives:
+  - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_combustion,ignore_movement=true
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_combustion,ignore_movement=true
+  - potion,if=config.use_potions&buff.combustion.up,ignore_movement=true
+
+  cooldowns:
+  - invoke_power_infusion,if=buff.combustion.up,use_off_gcd=1,ignore_movement=true
+  - combustion,if=usable.combustion&!buff.combustion.up,ignore_movement=true
+  - mirror_image,if=usable.mirror_image,ignore_movement=true
+
+  # Frostfire build — Combustion window
+  ff_combustion:
+  - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&buff.heating_up.up&cooldown.fire_blast.charges>=1,ignore_movement=true
+  - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&!buff.heating_up.up&cooldown.fire_blast.charges>=2,ignore_movement=true
+  - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
+  - meteor,if=talent.meteor&buff.combustion.remains>2,ignore_movement=true
+  - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=var.hot_streak_react,ignore_movement=true
+  - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
+  - dragons_breath,if=talent.dragons_breath&usable.dragons_breath&var.in_melee,ignore_movement=true
+  - scorch,if=talent.improved_scorch&buff.improved_scorch.stack<2,ignore_movement=true
+  - scorch,ignore_movement=true
+  - frostfire_bolt,ignore_movement=true
+
+  # Frostfire build — outside Combustion
+  ff_filler:
+  - shifting_power,if=cooldown.combustion.remains>=15,ignore_movement=true
+  - fire_blast,if=!buff.hot_streak.up&buff.heating_up.up,ignore_movement=true
+  - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
+  - dragons_breath,if=talent.dragons_breath&usable.dragons_breath&var.in_melee,ignore_movement=true
+  - meteor,if=talent.meteor&cooldown.combustion.remains>=20,ignore_movement=true
+  - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=var.hot_streak_react,ignore_movement=true
+  - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
+  - scorch,if=talent.improved_scorch&target.health_pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
+  - scorch,if=target.health_pct<=30,ignore_movement=true
+  - frostfire_bolt,ignore_movement=true
+
+  # Base / Spellslinger build — Combustion window
+  sf_combustion:
+  - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&buff.heating_up.up&cooldown.fire_blast.charges>=1,ignore_movement=true
+  - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&!buff.heating_up.up&cooldown.fire_blast.charges>=2,ignore_movement=true
+  - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
+  - meteor,if=talent.meteor&buff.combustion.remains>2,ignore_movement=true
+  - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=var.hot_streak_react,ignore_movement=true
+  - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
+  - dragons_breath,if=talent.dragons_breath&usable.dragons_breath&var.in_melee,ignore_movement=true
+  - scorch,if=talent.improved_scorch&buff.improved_scorch.stack<2,ignore_movement=true
+  - scorch,ignore_movement=true
+  - fireball,ignore_movement=true
+
+  # Base / Spellslinger build — outside Combustion
+  sf_filler:
+  - shifting_power,if=cooldown.combustion.remains>=15,ignore_movement=true
+  - fire_blast,if=!buff.hot_streak.up&buff.heating_up.up,ignore_movement=true
+  - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
+  - dragons_breath,if=talent.dragons_breath&usable.dragons_breath&var.in_melee,ignore_movement=true
+  - meteor,if=talent.meteor&cooldown.combustion.remains>=20,ignore_movement=true
+  - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=var.hot_streak_react,ignore_movement=true
+  - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
+  - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
+  - scorch,if=talent.improved_scorch&target.health_pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
+  - scorch,if=target.health_pct<=30,ignore_movement=true
+  - fireball,ignore_movement=true
+
+  racials:
+  - berserking,if=usable.berserking&buff.combustion.up,use_off_gcd=1,ignore_movement=true
+  - blood_fury,if=usable.blood_fury&buff.combustion.up,use_off_gcd=1,ignore_movement=true
+  - fireblood,if=usable.fireblood&buff.combustion.up,use_off_gcd=1,ignore_movement=true
+  - ancestral_call,if=usable.ancestral_call&buff.combustion.up,use_off_gcd=1,ignore_movement=true
+
+  anti_idle:
+  - fireball,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
+
+  fallback:
+  - fireball,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
+  - scorch,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - arcane_intellect,range_check=none,if=!buff.arcane_intellect.up
+  - ice_barrier,range_check=none,if=talent.ice_barrier&buff.ice_barrier.down
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts work while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=(player.casting|player.channeling)&(buff.hot_streak.up|buff.hyperthermia.up)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=ff_combustion,if=var.is_frostfire&var.in_combustion
+  - call_action_list,name=ff_filler,if=var.is_frostfire&!var.in_combustion
+  - call_action_list,name=sf_combustion,if=!var.is_frostfire&var.in_combustion
+  - call_action_list,name=sf_filler,if=!var.is_frostfire
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

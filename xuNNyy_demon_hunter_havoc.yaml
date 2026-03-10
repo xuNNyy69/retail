@@ -1,0 +1,222 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 577
+name: xuNNyy_demon_hunter_havoc
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  in_meta: buff.metamorphosis.up
+  is_ar: talent.reaver_glaive
+  fury_ok: fury>=40
+  fury_high: fury>=70
+  fury_low: fury<30
+  ar_proc: buff.reaver_glaive.up
+  demonsurge_up: buff.demonsurge.up
+  eb_window: debuff.essence_break.up
+  use_blade_dance: talent.first_blood|active_enemies>=3
+  demonsurge_ready: buff.metamorphosis.up&buff.demonsurge.up
+  rending_flurry: buff.rending_strike.up&buff.glaive_flurry.up
+
+lists:
+  interrupts:
+  - disrupt,if=target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - blur,if=health.pct<=40,use_off_gcd=1
+  - darkness,if=health.pct<=25,use_off_gcd=1
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
+  - potion,if=config.use_potions&var.in_meta
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.in_meta|buff.eye_beam.up
+  - blood_fury,use_off_gcd=1,if=var.in_meta|buff.eye_beam.up
+  - fireblood,use_off_gcd=1,if=var.in_meta
+  - ancestral_call,use_off_gcd=1,if=var.in_meta
+  - arcane_torrent,use_off_gcd=1,if=var.fury_low
+  - lights_judgment,if=var.in_meta|buff.eye_beam.up
+  - bag_of_tricks,if=var.in_meta|buff.eye_beam.up
+
+  cooldowns:
+  - metamorphosis,if=!var.in_meta&(cooldown.eye_beam.remains>=gcd*2|talent.chaotic_transformation)
+  - the_hunt,if=talent.the_hunt&debuff.essence_break.down&!var.ar_proc
+  - glaive_tempest,if=var.want_aoe|var.eb_window
+
+  # Called only when var.in_meta. Handles in-meta priorities for both AR and FS.
+  # Morph pairs are base-before-morph adjacent: blade_dance/death_sweep, chaos_strike/annihilation.
+  meta:
+  # P1: EB window / meta-clip prevention / demonsurge consume
+  - blade_dance,if=var.eb_window|var.demonsurge_ready|buff.metamorphosis.remains<gcd
+  - death_sweep,if=var.eb_window|var.demonsurge_ready|buff.metamorphosis.remains<gcd
+  - chaos_strike,if=var.eb_window|buff.metamorphosis.remains<gcd
+  - annihilation,if=var.eb_window|buff.metamorphosis.remains<gcd
+  # P2: Essence Break setup — blade_dance aligns, sufficient fury
+  - essence_break,if=talent.essence_break&fury>=35&cooldown.blade_dance.remains<gcd*2
+  # P3: AR glaive cycle in meta
+  - reaver_glaive,if=talent.reaver_glaive&var.is_ar&!var.ar_proc&buff.rending_strike.down&buff.glaive_flurry.down
+  - chaos_strike,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
+  - annihilation,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
+  - blade_dance,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
+  - death_sweep,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
+  # P4: FS demonsurge extension via immolation_aura
+  - immolation_aura,if=var.demonsurge_up
+  # P5: Eye Beam alignment (outside EB window)
+  - eye_beam,if=config.use_cooldowns&!var.eb_window
+  # P6: Blade Dance / Death Sweep utility
+  - blade_dance,if=var.use_blade_dance
+  - death_sweep,if=var.use_blade_dance
+  # P7: High-fury spend
+  - chaos_strike,if=fury>=65
+  - annihilation,if=fury>=65
+  # P8: Fury generation
+  - felblade,if=fury<60
+  - immolation_aura,if=fury<80
+  # P9: General spend / filler
+  - chaos_strike,if=var.fury_ok
+  - annihilation,if=var.fury_ok
+  - fel_rush
+
+  # Aldrachi Reaver hero tree — out-of-meta (and remaining in-meta) rotation.
+  hero_tree_ar:
+  # AR glaive setup: cast when no proc and both empowered buffs are down
+  - reaver_glaive,if=talent.reaver_glaive&!var.ar_proc&buff.rending_strike.down&buff.glaive_flurry.down
+  # AR empowered sequence: consume rending_strike + glaive_flurry buffs
+  - chaos_strike,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
+  - annihilation,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
+  - blade_dance,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
+  - death_sweep,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
+  # Eye Beam
+  - eye_beam
+  - sigil_of_flame,if=talent.sigil_of_flame
+  # Essence Break setup
+  - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2
+  # EB window priority spend
+  - blade_dance,if=var.eb_window|var.use_blade_dance
+  - death_sweep,if=var.eb_window|var.use_blade_dance
+  - chaos_strike,if=var.eb_window|var.fury_high
+  - annihilation,if=var.eb_window|var.fury_high
+  # Regular blade dance
+  - blade_dance
+  - death_sweep
+  # General fury spend
+  - chaos_strike,if=var.fury_ok
+  - annihilation,if=var.fury_ok
+  # Fury generation / filler
+  - immolation_aura,if=fury<80
+  - felblade,if=fury<60
+  - fel_rush
+  - demons_bite
+
+  # Felscarred hero tree — out-of-meta (and remaining in-meta) rotation.
+  hero_tree_fs:
+  # FS demonsurge: Eye Beam leads, then blade dance window, then CS window
+  - eye_beam,if=var.demonsurge_up
+  - blade_dance,if=var.demonsurge_up
+  - death_sweep,if=var.demonsurge_up
+  - chaos_strike,if=var.demonsurge_up
+  - annihilation,if=var.demonsurge_up
+  # Eye Beam outside EB window
+  - eye_beam,if=!var.eb_window
+  - sigil_of_flame,if=talent.sigil_of_flame
+  # Essence Break setup
+  - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2
+  # EB window priority spend
+  - blade_dance,if=var.eb_window|var.use_blade_dance
+  - death_sweep,if=var.eb_window|var.use_blade_dance
+  - chaos_strike,if=var.eb_window|var.fury_high
+  - annihilation,if=var.eb_window|var.fury_high
+  # Regular blade dance
+  - blade_dance
+  - death_sweep
+  # General fury spend
+  - chaos_strike,if=var.fury_ok
+  - annihilation,if=var.fury_ok
+  # Fury generation / filler
+  - immolation_aura,if=fury<80
+  - felblade,if=fury<60
+  - fel_rush
+  - demons_bite
+
+  aoe:
+  - eye_beam,if=config.use_cooldowns
+  - glaive_tempest
+  - sigil_of_flame,if=talent.sigil_of_flame
+  - blade_dance
+  - death_sweep
+  - immolation_aura
+  - fel_barrage,if=talent.fel_barrage
+  - chaos_nova,if=active_enemies>=4
+  - chaos_strike,if=var.fury_ok
+  - annihilation,if=var.fury_ok
+  - demons_bite
+
+  anti_idle:
+  - demons_bite,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - throw_glaive
+  - demons_bite,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
+  - immolation_aura,if=buff.immolation_aura.down&fury<100
+  - call_action_list,name=meta,if=var.in_meta
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=hero_tree_ar,if=config.use_cooldowns&var.is_ar
+  - call_action_list,name=hero_tree_fs,if=config.use_cooldowns&!var.is_ar
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

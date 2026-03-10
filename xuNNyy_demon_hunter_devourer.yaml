@@ -1,0 +1,366 @@
+﻿version: "1.5"
+author: xuNNyy
+patch: 12.0.1
+spec: 1480
+name: xuNNyy_demon_hunter_devourer
+entry: main
+
+config:
+  precombat_usage:
+    label: "Precombat Usage"
+    type: checkbox
+    default: true
+  use_trinkets:
+    label: "Use Items (Trinkets/Weapon)"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_tag_defensives:
+    label: "Use Tag Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_mouseover:
+    label: "Use Mouseover"
+    type: checkbox
+    default: true
+  use_utility:
+    label: "Use Utility"
+    type: checkbox
+    default: true
+  auto_target:
+    label: "Auto Target Enemy"
+    type: checkbox
+    default: true
+  movement_safe_mode:
+    label: "Movement Safe Mode"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  boss_only_cooldowns:
+    label: "Boss-Only Cooldowns"
+    type: checkbox
+    default: false
+  aoe_threshold:
+    label: "AoE - Min Enemies (4+)"
+    type: slider
+    min: 3
+    max: 10
+    default: 4
+  cleave_threshold:
+    label: "Cleave - Min Enemies (2-3)"
+    type: slider
+    min: 2
+    max: 3
+    default: 2
+  funnel_mode:
+    label: "ST-While-AoE (Boss Focus)"
+    type: checkbox
+    default: true
+  blur_hp:
+    label: "Blur HP %"
+    type: slider
+    min: 10
+    max: 99
+    default: 55
+  darkness_hp:
+    label: "Darkness HP %"
+    type: slider
+    min: 10
+    max: 99
+    default: 35
+  netherwalk_hp:
+    label: "Netherwalk HP %"
+    type: slider
+    min: 5
+    max: 99
+    default: 20
+
+variables:
+  # === Core State ===
+  in_combat_valid: player.combat&target.exists&target.enemy&target.alive&!target.dead
+  target_invalid: target.exists=0|target.enemy=0|target.alive=0
+  can_act: player.casting=0&player.channeling=0
+  should_auto_target: config.auto_target&player.combat&var.can_act
+  want_aoe: active_enemies>=config.aoe_threshold
+  want_cleave: active_enemies>=config.cleave_threshold&active_enemies<config.aoe_threshold
+  want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
+  in_melee: target.range<=8
+  in_range_30: target.range<=30
+  in_range_20: target.range<=20
+  # === Danger Detection ===
+  dangerous_any: player.dangerous_debuff.up
+  dangerous_magic: player.dangerous_debuff.magic.up
+  dangerous_physical: player.dangerous_debuff.physical.up
+  aoe_casting: nameplate.casting.aoe
+  cds_ok: (config.boss_only_cooldowns=0)|target.boss|var.want_aoe|var.want_cleave
+  # === Core Buffs ===
+  meta_up: buff.metamorphosis.up
+  outside_meta: buff.metamorphosis.down
+  opener_window: player.combat&combat_time<14
+  # === Initiative (Apex — crit after Vengeful Retreat) ===
+  initiative_up: buff.initiative.up
+  # === Momentum (Apex — damage after movement) ===
+  momentum_up: buff.momentum.up
+  # === Inertia (Apex — damage after Fel Rush with Unbound Chaos) ===
+  inertia_up: buff.inertia.up
+  # === Unbound Chaos (Apex — empowered Fel Rush after Immo Aura) ===
+  unbound_chaos_up: buff.unbound_chaos.up
+  # === Furious Gaze (Apex — haste after Eye Beam) ===
+  furious_gaze_up: buff.furious_gaze.up
+  # === Restless Hunter (Apex — empowered CS after Blade Dance) ===
+  restless_hunter_up: buff.restless_hunter.up
+  # === A Fire Inside (Apex — Immo Aura charge tracking) ===
+  immo_charges_2: cooldown.immolation_aura.charges>=2
+  # === Burning Wound (Apex — debuff maintenance) ===
+  burning_wound_up: debuff.burning_wound.up
+  burning_wound_missing: debuff.burning_wound.down
+  # === Essence Break (Apex — debuff window) ===
+  essence_break_debuff: debuff.essence_break.up
+  # === Soulscar (Apex) ===
+  soulscar_up: debuff.soulscar.up
+  # === Feed the Demon ===
+  feed_active: buff.feed_the_demon.up
+  # === Art of the Glaive (Aldrachi Reaver hero) ===
+  art_of_glaive_up: buff.art_of_the_glaive.up
+  glaive_flurry_up: buff.glaive_flurry.up
+  # === Composite Variables ===
+  damage_window: var.momentum_up|var.inertia_up|var.initiative_up|var.essence_break_debuff
+  cs_empowered: var.restless_hunter_up|var.initiative_up
+
+lists:
+  spell_queue:
+  - queue_spell
+
+  sanity_checks:
+  - return,if=player.dead
+  - return,if=mounted
+  - return,if=!state.rotation
+  - return,if=state.blocked_inputs
+  - return,if=player.cc
+
+  auto_target:
+  - target_enemy,if=var.should_auto_target&var.target_invalid&active_enemies>0,delay=25
+
+  precombat:
+  - snapshot_stats
+  - immolation_aura,if=target.exists&target.enemy
+
+  interrupts:
+  - disrupt,if=config.use_interrupts&interrupts.target.ready
+  - disrupt,if=config.use_interrupts&config.use_mouseover&interrupts.mouseover.ready
+
+  utility:
+  - devour_magic,if=config.use_utility&usable.devour_magic&(var.dangerous_magic|var.aoe_casting)
+  - chaos_nova,if=config.use_utility&active_enemies>=config.cleave_threshold&nameplate.casting.aoe
+  - sigil_of_misery,if=config.use_utility&active_enemies>=config.aoe_threshold&nameplate.casting.aoe
+
+  defensives:
+  - return,if=!config.use_defensives
+  - blur,if=config.use_tag_defensives&usable.blur&(var.dangerous_any|var.aoe_casting)
+  - darkness,if=config.use_tag_defensives&usable.darkness&(var.dangerous_magic|var.aoe_casting)
+  - netherwalk,if=config.use_tag_defensives&usable.netherwalk&(var.dangerous_any|var.dangerous_physical|var.aoe_casting)
+  - blur,if=usable.blur&health.pct<=config.blur_hp
+  - darkness,if=usable.darkness&health.pct<=config.darkness_hp
+  - netherwalk,if=usable.netherwalk&health.pct<=config.netherwalk_hp
+
+  trinkets:
+  - use_item,slot=trinket1,if=config.use_trinkets&var.in_combat_valid&(var.meta_up|var.damage_window|target.boss)
+  - use_item,slot=trinket2,if=config.use_trinkets&var.in_combat_valid&(var.meta_up|var.damage_window|target.boss)
+  - use_item,slot=main_hand,if=config.use_trinkets&var.in_combat_valid&var.meta_up
+
+  cooldowns:
+  - return,if=!config.use_cooldowns|!state.cds|!var.in_combat_valid|!var.cds_ok
+  - potion,if=config.use_potions&(var.meta_up|target.boss|var.want_aoe)
+  - the_hunt,if=usable.the_hunt
+  - metamorphosis,if=var.outside_meta&(target.boss|var.want_aoe|var.want_cleave)
+  - call_action_list,name=trinkets
+
+  opener_st:
+  - immolation_aura,if=usable.immolation_aura
+  - the_hunt,if=usable.the_hunt
+  - vengeful_retreat,if=usable.vengeful_retreat
+  - felblade,if=usable.felblade&var.in_melee
+  - eye_beam,if=usable.eye_beam&var.in_range_20
+  # Essence Break in damage window (after Initiative from VR)
+  - essence_break,if=usable.essence_break&var.initiative_up&var.in_melee
+  - soulscar,if=usable.soulscar&var.in_melee
+  - death_sweep,if=usable.death_sweep&var.in_melee
+  - soul_sunder,if=usable.soul_sunder&var.in_melee
+  - annihilation,if=usable.annihilation&var.in_melee
+  - throw_glaive,if=usable.throw_glaive&var.in_range_30
+
+  opener_aoe:
+  - the_hunt,if=usable.the_hunt
+  - immolation_aura,if=usable.immolation_aura
+  - vengeful_retreat,if=usable.vengeful_retreat
+  - eye_beam,if=usable.eye_beam&var.in_range_20
+  - blade_dance,if=usable.blade_dance&var.in_melee
+  - felblade,if=usable.felblade&var.in_melee
+  - essence_break,if=usable.essence_break&var.in_melee
+  - soulscar,if=usable.soulscar&var.in_melee
+  - death_sweep,if=usable.death_sweep&var.in_melee
+  - soul_sunder,if=usable.soul_sunder&var.in_melee
+  - annihilation,if=usable.annihilation&var.in_melee
+
+  st:
+  # === Vengeful Retreat — triggers Initiative (crit buff) ===
+  - vengeful_retreat,if=usable.vengeful_retreat&!var.initiative_up
+  # === Eye Beam — burst damage + Furious Gaze haste ===
+  - eye_beam,if=usable.eye_beam&var.in_range_20
+  # === Essence Break — apply debuff in damage window ===
+  - essence_break,if=var.meta_up&usable.essence_break&(var.initiative_up|var.momentum_up)&var.in_melee
+  - essence_break,if=usable.essence_break&var.in_melee
+  # === Death Sweep — Meta Blade Dance, highest priority melee ===
+  - death_sweep,if=usable.death_sweep&var.in_melee
+  # === Soul Sunder in Meta (Aldrachi Reaver) ===
+  - soul_sunder,if=var.meta_up&usable.soul_sunder&var.in_melee
+  # === Annihilation — Restless Hunter empowered or Initiative crit ===
+  - annihilation,if=var.cs_empowered&var.meta_up&usable.annihilation&var.in_melee
+  # === Soulscar — apply/maintain debuff ===
+  - soulscar,if=usable.soulscar&!var.soulscar_up&var.in_melee
+  # === Immolation Aura — prevent charge capping (A Fire Inside) ===
+  - immolation_aura,if=var.immo_charges_2&usable.immolation_aura
+  # === Felblade — fury generation + gap close ===
+  - felblade,if=usable.felblade&var.in_melee
+  # === Blade Dance outside Meta ===
+  - blade_dance,if=usable.blade_dance&var.in_melee
+  # === Annihilation — standard Meta filler ===
+  - annihilation,if=var.meta_up&usable.annihilation&var.in_melee
+  # === Chaos Strike — Restless Hunter empowered ===
+  - chaos_strike,if=var.restless_hunter_up&var.outside_meta&usable.chaos_strike&var.in_melee
+  # === Chaos Strike — standard filler outside Meta ===
+  - chaos_strike,if=var.outside_meta&usable.chaos_strike&var.in_melee
+  # === Immolation Aura — gap fill ===
+  - immolation_aura,if=usable.immolation_aura
+  # === Unbound Chaos Fel Rush (if talented for Inertia) ===
+  - fel_rush,if=var.unbound_chaos_up&usable.fel_rush&var.in_melee
+  # === The Hunt ===
+  - the_hunt,if=usable.the_hunt
+  # === Metamorphosis ===
+  - metamorphosis,if=var.outside_meta&cooldown.eye_beam.remains>gcd.max&cooldown.death_sweep.remains>gcd.max
+  # === Throw Glaive — Art of the Glaive stacking ===
+  - throw_glaive,if=usable.throw_glaive&var.in_range_30
+  # === Fel Rush gap close ===
+  - fel_rush,if=usable.fel_rush&var.in_melee
+  # === Demons Bite filler ===
+  - demons_bite,if=usable.demons_bite&var.in_melee,ignore_queue=true
+
+  aoe:
+  # === Vengeful Retreat — Initiative + Momentum for AoE window ===
+  - vengeful_retreat,if=usable.vengeful_retreat&!var.initiative_up
+  # === Eye Beam — AoE burst + Furious Gaze ===
+  - eye_beam,if=usable.eye_beam&var.in_range_20
+  # === Death Sweep — AoE Meta priority ===
+  - death_sweep,if=usable.death_sweep&var.in_melee
+  # === Essence Break in damage window ===
+  - essence_break,if=var.meta_up&usable.essence_break&var.in_melee
+  # === Immolation Aura — prevent capping (A Fire Inside) ===
+  - immolation_aura,if=var.immo_charges_2
+  # === Blade Dance outside Meta ===
+  - blade_dance,if=usable.blade_dance&var.in_melee
+  # === Soul Sunder AoE in Meta ===
+  - soul_sunder,if=var.meta_up&usable.soul_sunder&var.in_melee
+  # === Soulscar AoE apply ===
+  - soulscar,if=usable.soulscar&!var.soulscar_up&var.in_melee
+  # === Felblade fury gen ===
+  - felblade,if=usable.felblade&var.in_melee
+  # === Immolation Aura fill ===
+  - immolation_aura,if=usable.immolation_aura
+  # === Annihilation AoE Meta ===
+  - annihilation,if=var.meta_up&usable.annihilation&var.in_melee
+  # === Chaos Strike AoE filler ===
+  - chaos_strike,if=var.outside_meta&usable.chaos_strike&var.in_melee
+  # === The Hunt ===
+  - the_hunt,if=usable.the_hunt
+  # === Metamorphosis ===
+  - metamorphosis,if=var.outside_meta&cooldown.eye_beam.remains>gcd.max&cooldown.death_sweep.remains>gcd.max
+  # === Unbound Chaos Fel Rush ===
+  - fel_rush,if=var.unbound_chaos_up&usable.fel_rush&var.in_melee
+  # === Throw Glaive — Art of the Glaive ===
+  - throw_glaive,if=usable.throw_glaive&var.in_range_30
+  # === Fel Rush ===
+  - fel_rush,if=usable.fel_rush&var.in_melee
+  # === Demons Bite filler ===
+  - demons_bite,if=usable.demons_bite&var.in_melee,ignore_queue=true
+
+  cleave:
+  - call_action_list,name=aoe
+
+  funnel:
+  - call_action_list,name=st
+
+  moving:
+  - throw_glaive,if=usable.throw_glaive&target.exists&target.enemy&var.in_range_30
+  - immolation_aura,if=usable.immolation_aura
+  - felblade,if=usable.felblade&target.exists&target.enemy&var.in_melee
+  - fel_rush,if=usable.fel_rush&target.exists&target.enemy&var.in_melee
+
+  anti_idle:
+  - target_enemy,if=var.should_auto_target&var.target_invalid&active_enemies>0,delay=25
+  - throw_glaive,if=usable.throw_glaive&target.exists&target.enemy&var.in_range_30,ignore_queue=true
+  - demons_bite,if=usable.demons_bite&var.in_combat_valid&var.in_melee,ignore_queue=true
+
+  no_idle:
+  - target_enemy,if=var.should_auto_target&var.target_invalid&active_enemies>0,delay=25
+  - felblade,if=usable.felblade&var.in_melee,ignore_queue=true
+  - demons_bite,if=usable.demons_bite&var.in_combat_valid&var.in_melee,ignore_queue=true
+
+  # ============================
+  #   RACIALS
+  # ============================
+  racials:
+  - return,if=!state.cds
+  - berserking,if=usable.berserking,use_off_gcd=1,ignore_movement=true
+  - blood_fury,if=usable.blood_fury,use_off_gcd=1,ignore_movement=true
+  - fireblood,if=usable.fireblood,use_off_gcd=1,ignore_movement=true
+  - ancestral_call,if=usable.ancestral_call,use_off_gcd=1,ignore_movement=true
+  - lights_judgment,if=usable.lights_judgment,ignore_movement=true
+  - bag_of_tricks,if=usable.bag_of_tricks,ignore_movement=true
+  - arcane_torrent,if=usable.arcane_torrent,use_off_gcd=1,ignore_movement=true
+
+  fallback:
+  - target_enemy,if=var.should_auto_target&var.target_invalid&active_enemies>0,delay=25
+  - demons_bite,if=usable.demons_bite&var.in_combat_valid&var.in_melee,ignore_queue=true
+
+  main:
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=spell_queue
+  - call_action_list,name=auto_target
+  - call_action_list,name=precombat,if=config.precombat_usage&!player.combat
+  - return,if=!player.combat
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode&var.target_invalid
+  - return,if=!target.exists
+  - call_action_list,name=interrupts
+  - call_action_list,name=utility
+  - call_action_list,name=defensives
+  - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
+  - call_action_list,name=racials,if=state.cds
+  - call_action_list,name=opener_aoe,if=var.opener_window&var.want_aoe
+  - call_action_list,name=opener_st,if=var.opener_window&!var.want_aoe
+  - call_action_list,name=moving,if=player.moving&config.movement_safe_mode
+  - call_action_list,name=funnel,if=var.want_funnel
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=cleave,if=var.want_cleave
+  - call_action_list,name=st,if=var.in_combat_valid
+  - call_action_list,name=no_idle
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

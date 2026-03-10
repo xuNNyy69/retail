@@ -1,0 +1,195 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 71
+name: xuNNyy_warrior_arms
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  execute_phase: target.health.pct<20|talent.massacre&target.health.pct<35
+  cs_active: debuff.colossus_smash.up|debuff.warbreaker.up
+
+lists:
+  interrupts:
+  - pummel,if=target.casting.interruptible,use_off_gcd=1
+  - storm_bolt,if=target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - die_by_the_sword,if=config.use_defensives&health.pct<=35
+  - ignore_pain,if=config.use_defensives&health.pct<=55&rage>=40
+  - spell_reflection,if=config.use_defensives&target.casting
+  - rallying_cry,if=config.use_defensives&health.pct<=20
+  - bitter_immunity,if=config.use_defensives&health.pct<=25
+
+  trinkets:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)
+
+  racials:
+  - blood_fury,use_off_gcd=1,if=var.cs_active
+  - berserking,use_off_gcd=1,if=var.cs_active
+  - fireblood,use_off_gcd=1,if=var.cs_active
+  - ancestral_call,use_off_gcd=1,if=var.cs_active
+  - arcane_torrent,use_off_gcd=1,if=cooldown.mortal_strike.remains>1.5&rage<50
+  - lights_judgment,if=!var.cs_active&cooldown.mortal_strike.remains>0
+
+  cooldowns:
+  - return,if=!config.use_cooldowns
+  - avatar
+  - colossus_smash
+  - ravager
+  - bladestorm,if=var.cs_active|cooldown.colossus_smash.remains>5
+  - demolish,if=talent.demolish&var.cs_active&buff.colossal_might.stack>=1
+
+  colossus_aoe:
+  - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
+  - rend,if=!dot.rend.ticking
+  - sweeping_strikes,if=!buff.sweeping_strikes.up&cooldown.colossus_smash.remains>4
+  - overpower,if=cooldown.overpower.charges=2
+  - cleave
+  - mortal_strike
+  - execute,if=buff.sudden_death.up
+  - champions_spear,if=talent.champions_spear
+  - overpower
+  - wrecking_throw
+  - rend
+  - execute,if=talent.improved_execute
+  - whirlwind
+
+  colossus_execute:
+  - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
+  - sweeping_strikes,if=active_enemies>1
+  - rend,if=dot.rend.remains<=gcd&!talent.bloodletting
+  - champions_spear,if=talent.champions_spear
+  - execute,if=buff.sudden_death.up
+  - overpower,if=cooldown.overpower.charges=2&cooldown.mortal_strike.remains>0|rage<30
+  - mortal_strike,if=talent.battlelord|buff.executioners_precision.stack=2|!talent.executioners_precision
+  - execute
+  - overpower
+  - wrecking_throw
+
+  colossus_st:
+  - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
+  - rend,if=dot.rend.remains<=gcd
+  - champions_spear,if=talent.champions_spear
+  - execute,if=cooldown.demolish.remains>6|buff.sudden_death.stack=2|buff.sudden_death.remains<2
+  - mortal_strike
+  - execute,if=cooldown.demolish.remains>10
+  - overpower
+  - wrecking_throw
+  - rend,if=dot.rend.remains<=gcd*5
+  - slam
+
+  slayer_aoe:
+  - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
+  - rend,if=!dot.rend.ticking
+  - sweeping_strikes,if=!buff.sweeping_strikes.up&cooldown.colossus_smash.remains>4
+  - cleave
+  - whirlwind,if=talent.fervor_of_battle&buff.collateral_damage.stack=3
+  - execute,if=buff.sudden_death.up
+  - overpower,if=talent.dreadnaught&cooldown.overpower.charges=2
+  - mortal_strike,if=buff.executioners_precision.stack=2
+  - overpower,if=talent.dreadnaught
+  - whirlwind,if=talent.fervor_of_battle
+  - champions_spear,if=talent.champions_spear
+  - mortal_strike
+  - overpower
+  - execute
+  - rend
+  - wrecking_throw
+  - whirlwind
+  - slam
+
+  slayer_execute:
+  - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
+  - sweeping_strikes,if=active_enemies>1&!buff.sweeping_strikes.up&cooldown.colossus_smash.remains>4
+  - rend,if=dot.rend.remains<=gcd&!talent.bloodletting
+  - champions_spear,if=talent.champions_spear
+  - mortal_strike,if=buff.executioners_precision.stack=2
+  - execute,if=buff.sudden_death.up|rage>=70|buff.executioners_precision.stack<2
+  - overpower
+  - execute
+  - wrecking_throw
+
+  slayer_st:
+  - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
+  - rend,if=dot.rend.remains<=gcd
+  - sweeping_strikes,if=active_enemies>1&!buff.sweeping_strikes.up&cooldown.colossus_smash.remains>4
+  - champions_spear,if=talent.champions_spear&(debuff.colossus_smash.up|buff.avatar.up)
+  - mortal_strike,if=buff.executioners_precision.stack=2
+  - execute,if=buff.sudden_death.up
+  - overpower,if=cooldown.overpower.charges=2
+  - mortal_strike
+  - overpower
+  - wrecking_throw
+  - slam
+
+  anti_idle:
+  - slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - mortal_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - heroic_throw,if=target.exists&target.enemy&target.alive
+  - slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - battle_shout,range_check=none,if=!buff.battle_shout.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - charge,if=combat.time<1
+  - call_action_list,name=trinkets,if=config.use_trinkets
+  - potion,if=config.use_potions&var.cs_active
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=colossus_aoe,if=talent.demolish&active_enemies>2
+  - call_action_list,name=colossus_execute,if=talent.demolish&var.execute_phase
+  - call_action_list,name=colossus_st,if=talent.demolish
+  - call_action_list,name=slayer_aoe,if=talent.slayer_dps&active_enemies>2
+  - call_action_list,name=slayer_execute,if=talent.slayer_dps&var.execute_phase
+  - call_action_list,name=slayer_st,if=talent.slayer_dps
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

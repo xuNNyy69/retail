@@ -1,0 +1,145 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 1467
+name: xuNNyy_evoker_devastation
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  in_dr: buff.dragonrage.up
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  is_sc: talent.mass_disintegrate
+  eb_burst: buff.essence_burst.up
+  fb_refresh: dot.fire_breath_damage.remains<3
+  tts_up: buff.tip_the_scales.up
+
+lists:
+  interrupts:
+  - quell,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - obsidian_scales,if=health.pct<=50,use_off_gcd=1
+  - renewing_blaze,if=health.pct<=60,use_off_gcd=1
+  - cauterizing_flame,if=health.pct<=40,use_off_gcd=1
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_dr
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_dr
+  - potion,if=config.use_potions&var.in_dr
+
+  racials:
+  - berserking,if=var.in_dr,use_off_gcd=1
+  - blood_fury,if=var.in_dr,use_off_gcd=1
+  - fireblood,if=var.in_dr,use_off_gcd=1
+  - ancestral_call,if=var.in_dr,use_off_gcd=1
+
+  cooldowns:
+  - dragonrage,if=!var.in_dr
+  - deep_breath,if=var.is_sc
+  - tip_the_scales,use_off_gcd=1,if=var.in_dr
+
+  st_fs:
+  - fire_breath,empower_to=1,if=var.fb_refresh|cooldown.fire_breath.charges>=2
+  - eternity_surge,empower_to=1
+  - disintegrate,if=var.in_dr|var.eb_burst|buff.iridescence_blue.up
+  - azure_sweep,if=talent.azure_sweep
+  - living_flame,if=buff.burnout.up|buff.leaping_flames.up|buff.ancient_flame.up
+  - azure_strike,if=active_enemies>1
+  - living_flame
+  - azure_strike
+
+  aoe_fs:
+  - fire_breath,empower_to=1,if=var.fb_refresh|cooldown.fire_breath.charges>=2
+  - tip_the_scales,use_off_gcd=1,if=var.in_dr
+  - eternity_surge,empower_to=1
+  - pyre,if=buff.charged_blast.stack>=12|active_enemies>=4
+  - deep_breath,if=talent.imminent_destruction&!dot.fire_breath_damage.ticking
+  - azure_sweep,if=talent.azure_sweep
+  - living_flame,if=buff.leaping_flames.up
+  - azure_strike
+
+  st_sc:
+  - fire_breath,empower_to=1,if=var.fb_refresh|var.tts_up
+  - eternity_surge,empower_to=1
+  - disintegrate,if=talent.mass_disintegrate&(var.in_dr|var.eb_burst|essence>=3)
+  - pyre,if=buff.charged_blast.stack>=5
+  - disintegrate,if=var.in_dr|var.eb_burst
+  - azure_sweep,if=talent.azure_sweep
+  - living_flame,if=buff.burnout.up|buff.leaping_flames.up
+  - azure_strike,if=active_enemies>1
+  - living_flame
+  - azure_strike
+
+  aoe_sc:
+  - deep_breath,if=talent.imminent_destruction
+  - fire_breath,empower_to=1
+  - eternity_surge,empower_to=1
+  - disintegrate,if=talent.mass_disintegrate&(var.in_dr|var.eb_burst|essence>=3)
+  - pyre,if=buff.charged_blast.stack>=5|active_enemies>=3
+  - azure_sweep,if=talent.azure_sweep
+  - living_flame,if=buff.leaping_flames.up
+  - azure_strike
+
+  anti_idle:
+  - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - azure_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=aoe_sc,if=var.want_aoe&var.is_sc
+  - call_action_list,name=aoe_fs,if=var.want_aoe
+  - call_action_list,name=st_sc,if=var.is_sc
+  - call_action_list,name=st_fs
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

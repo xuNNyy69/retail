@@ -1,0 +1,253 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 581
+name: xuNNyy_demon_hunter_vengeance
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  auto_taunt:
+    label: "Auto Taunt"
+    type: checkbox
+    default: false
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  demon_spikes_hp:
+    label: "Demon Spikes below HP%"
+    type: slider
+    min: 40
+    max: 100
+    default: 100
+  defensive_hp:
+    label: "Major Defensive HP%"
+    type: slider
+    min: 20
+    max: 80
+    default: 50
+
+variables:
+  want_aoe: active_enemies>=config.aoe_threshold
+  single_target: active_enemies=1
+  in_meta: buff.metamorphosis.up
+  is_ar: talent.art_of_the_glaive
+  ar_proc: buff.reaver_glaive.up
+  rending_flurry: buff.rending_strike.up&buff.glaive_flurry.up
+  fiery_demise_active: talent.fiery_demise&dot.fiery_brand.ticking
+  demon_spikes_up: buff.demon_spikes.up
+  demon_spikes_low: buff.demon_spikes.remains<=gcd*2
+  fury_low: fury<40
+  fury_high: fury>=80
+
+lists:
+  interrupts:
+  - disrupt,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  taunt:
+  - torment,if=config.auto_taunt&target.exists&target.enemy&target.threat<100
+
+  defensives:
+  # Demon Spikes: keep active at configured HP ceiling (off-GCD)
+  - demon_spikes,if=(var.demon_spikes_low|!var.demon_spikes_up)&health.pct<=config.demon_spikes_hp,use_off_gcd=1
+  # Soul Barrier emergency at 40%
+  - soul_barrier,if=talent.soul_barrier&health.pct<=40,use_off_gcd=1
+  # Emergency meta below HP threshold (defensive; offensive use is in ar/anni cooldowns)
+  - metamorphosis,if=health.pct<=config.defensive_hp&!var.in_meta,use_off_gcd=1
+  # Fiery brand emergency (reduces damage taken)
+  - fiery_brand,if=health.pct<=config.defensive_hp&dot.fiery_brand.down
+  # Fel devastation self-heal emergency
+  - fel_devastation,if=health.pct<=50
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
+  - potion,if=config.use_potions&var.in_meta
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.in_meta
+  - blood_fury,use_off_gcd=1,if=var.in_meta
+  - fireblood,use_off_gcd=1,if=var.in_meta
+  - ancestral_call,use_off_gcd=1,if=var.in_meta
+  - arcane_torrent,use_off_gcd=1,if=var.fury_low
+  - lights_judgment,if=var.in_meta
+  - bag_of_tricks,if=var.in_meta
+
+  # ============================================================
+  # Aldrachi Reaver path  (talent.reavers_glaive = true)
+  # ============================================================
+  ar:
+  - return,if=!var.is_ar
+  # Guide: Meta not in AR offensive priority � defensive use only (handled in defensives:)
+  - call_action_list,name=ar_glaive_cycle
+  - call_action_list,name=ar_cooldowns,if=config.use_cooldowns
+  - call_action_list,name=ar_fillers
+
+  # Aldrachi Reaver glaive consumption cycle.
+  # reavers_glaive is not confirmed in action_tokens; talent guard applied (matches Havoc pattern).
+  # Fragment thresholds: 3 with fiery_demise_active, 4 in meta, 6 baseline.
+  ar_glaive_cycle:
+  # Activate glaive when proc is up and neither empowered buff is running
+  - reaver_glaive,if=var.is_ar&var.ar_proc&buff.rending_strike.down&buff.glaive_flurry.down
+  # Both buffs active: guide priority � Empowered Fracture first (#4), then Empowered Soul Cleave (#5)
+  - shear,if=var.rending_flurry
+  - soul_cleave,if=var.rending_flurry
+  # Rending strike only: shear to chain into fragment generation
+  - shear,if=buff.rending_strike.up&buff.glaive_flurry.down
+  # Glaive flurry only: spirit_bomb at 5+ frags, otherwise soul_cleave
+  - spirit_bomb,if=buff.glaive_flurry.up&buff.rending_strike.down&soul_fragments>=5
+  - soul_cleave,if=buff.glaive_flurry.up&buff.rending_strike.down
+
+  ar_cooldowns:
+  # Guide #2: Sigil of Spite � high-priority, permissive fragment cap (detonates after delay)
+  - sigil_of_spite,if=soul_fragments<=4
+  # Guide #3: Fiery Brand � before charge cap / fiery_demise alignment
+  - fiery_brand,if=dot.fiery_brand.down&(cooldown.fiery_brand.charges>=2|!talent.fiery_demise)
+  - fiery_brand,if=talent.fiery_demise&dot.fiery_brand.down&(cooldown.soul_carver.remains<8|cooldown.sigil_of_spite.remains<8)
+  # Fiery demise window: spirit_bomb at threshold 3 to leverage amplification debuff
+  - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
+  # Charred flesh: keep immolation_aura rolling inside fiery brand window
+  - immolation_aura,if=var.fiery_demise_active&talent.charred_flesh
+  # Guide #6: Soul Carver � Fiery Brand on target with 3s+ remaining
+  - soul_carver,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=3
+  # Guide #11: Fel Devastation � outside glaive empowered windows, Fiery Brand 2s+
+  - fel_devastation,if=buff.rending_strike.down&buff.glaive_flurry.down&dot.fiery_brand.ticking&dot.fiery_brand.remains>=2
+  # IA refresh in fiery demise window when charred_flesh is not talented
+  - immolation_aura,if=var.fiery_demise_active
+  # The Hunt: movement + heal; use when available
+  - the_hunt,if=talent.the_hunt
+
+  ar_fillers:
+  # AoE IA opener
+  - immolation_aura,if=var.want_aoe&player.combat
+  # Fragment generation: stepped thresholds (fiery_demise=3, meta=4, baseline=6)
+  - shear,if=var.fiery_demise_active&soul_fragments<3
+  - shear,if=var.in_meta&soul_fragments<4
+  - shear,if=soul_fragments<6
+  # Spirit bomb at matching thresholds
+  - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
+  - spirit_bomb,if=var.in_meta&soul_fragments>=4
+  - spirit_bomb,if=soul_fragments>=6
+  # Continue shear during meta to cap fragments faster
+  - shear,if=var.in_meta
+  - sigil_of_flame,if=var.want_aoe
+  - immolation_aura
+  - shear
+  - felblade
+  - sigil_of_flame
+  # Guide #10: Soul Cleave at 3+ souls before filler use
+  - soul_cleave,if=soul_fragments>=3
+  - soul_cleave
+  - throw_glaive
+
+  # ============================================================
+  # Annihilator / Felscarred path  (!talent.reavers_glaive)
+  # ============================================================
+  anni:
+  - return,if=var.is_ar
+  # Guide: Fiery Brand (#1) then Meta (#2) � both routed through anni_cooldowns
+  - call_action_list,name=anni_cooldowns,if=config.use_cooldowns
+  # In-meta priority list: tighter thresholds and charred flesh rotation
+  - call_action_list,name=anni_meta,if=var.in_meta
+  - call_action_list,name=anni_fillers
+
+  anni_cooldowns:
+  # Guide #1: Fiery Brand highest priority
+  - fiery_brand,if=dot.fiery_brand.down&(cooldown.fiery_brand.charges>=2|!talent.fiery_demise)
+  - fiery_brand,if=talent.fiery_demise&dot.fiery_brand.down&(cooldown.soul_carver.remains<8|cooldown.sigil_of_spite.remains<8)
+  # Guide #2: Metamorphosis after Fiery Brand
+  - metamorphosis,if=!var.in_meta
+  # Fragment guard before sigil_of_spite to prevent overcap
+  - sigil_of_spite,if=talent.sigil_of_spite&soul_fragments<=3
+  # Guide #7: Soul Carver � Fiery Brand on target with 3s+ remaining
+  - soul_carver,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=3
+  # Guide #10: Fel Devastation � Fiery Brand on target with 2s+ remaining
+  - fel_devastation,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=2
+  # The Hunt: movement + heal
+  - the_hunt,if=talent.the_hunt
+
+  anni_meta:
+  # Fiery demise window during meta: lower threshold amplifies more hits
+  - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
+  - immolation_aura,if=var.fiery_demise_active&talent.charred_flesh
+  # Standard meta cycling at 4 fragments
+  - spirit_bomb,if=soul_fragments>=4
+  - shear,if=soul_fragments<4
+  - sigil_of_flame
+
+  anni_fillers:
+  # Fiery demise window outside meta
+  - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
+  # Baseline spirit_bomb threshold (guide: 6 souls)
+  - spirit_bomb,if=soul_fragments>=6
+  # Fragment generation
+  - shear,if=soul_fragments<6
+  - immolation_aura,if=var.want_aoe
+  - shear
+  - sigil_of_flame,if=var.want_aoe
+  - felblade
+  - immolation_aura
+  - sigil_of_flame
+  # Guide #9: Soul Cleave at 3+ souls before filler use
+  - soul_cleave,if=soul_fragments>=3
+  - soul_cleave
+  - shear
+  - throw_glaive
+
+  anti_idle:
+  - shear,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - shear,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=taunt,if=config.auto_taunt
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=ar,if=var.is_ar
+  - call_action_list,name=anni,if=!var.is_ar
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

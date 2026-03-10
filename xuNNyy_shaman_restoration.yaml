@@ -1,0 +1,239 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 264
+name: xuNNyy_shaman_restoration
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Purge"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  emergency_hp:
+    label: "Emergency HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 40
+  major_heal_hp:
+    label: "Major Heal HP%"
+    type: slider
+    min: 30
+    max: 90
+    default: 68
+  light_heal_hp:
+    label: "Light Heal HP%"
+    type: slider
+    min: 50
+    max: 100
+    default: 88
+  damage_mode:
+    label: "Damage Mode"
+    type: dropdown
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Safe Weave"
+        value: 1
+    default: 1
+  mana_conservative_mode:
+    label: "Mana Conservative Mode"
+    type: checkbox
+    default: false
+  safe_damage_hp:
+    label: "Safe Damage HP%"
+    type: slider
+    min: 60
+    max: 100
+    default: 90
+  safe_damage_max_injured:
+    label: "Safe Damage Max Injured"
+    type: slider
+    min: 0
+    max: 5
+    default: 1
+  defensive_hp:
+    label: "Defensive HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 45
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+
+  need_emergency: group.lowest.health.pct<config.emergency_hp
+  need_major_heal: group.lowest.health.pct<config.major_heal_hp
+  need_light_heal: group.lowest.health.pct<config.light_heal_hp
+  need_aoe_heal: group.count(cycle.health.pct<config.major_heal_hp)>=config.aoe_threshold
+  heavy_group_damage: group.lowest.health.pct<config.emergency_hp|group.count(cycle.health.pct<config.emergency_hp)>=2
+  tank_emergency: group.tanks.lowest.health.pct<config.emergency_hp
+  tank_low: group.tanks.lowest.health.pct<config.major_heal_hp
+
+  safe_to_damage: config.damage_mode=1&group.lowest.health.pct>=config.safe_damage_hp&group.count(cycle.health.pct<config.light_heal_hp)<=config.safe_damage_max_injured
+  mana_low: mana.pct<=35
+  mana_careful: config.mana_conservative_mode|var.mana_low
+
+  tidal_waves: buff.tidal_waves.stack>=1
+  tidal_waves_2: buff.tidal_waves.stack>=2
+  healing_rain_up: ground_effect.healing_rain.up
+  hst_refresh: totem.healing_stream_totem.down|totem.healing_stream_totem.remains<5
+  surging_totem_refresh: totem.surging_totem.down|totem.surging_totem.remains<2
+
+lists:
+
+  interrupts:
+  - wind_shear,if=target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - purge,if=target.purgeable,use_off_gcd=1
+
+  defensives:
+  - astral_shift,if=health.pct<=config.defensive_hp,use_off_gcd=1
+  - earth_elemental,if=health.pct<=(config.defensive_hp-10),use_off_gcd=1
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.heavy_group_damage|var.tank_emergency|buff.ascendance.up)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.heavy_group_damage|var.tank_emergency|buff.ascendance.up)
+  - potion,if=config.use_potions&(var.heavy_group_damage|var.mana_low)
+
+  cooldowns:
+  - healing_tide_totem,if=cooldown.healing_tide_totem.ready&(var.heavy_group_damage|var.need_aoe_heal)
+  - spirit_link_totem,if=cooldown.spirit_link_totem.ready&(var.heavy_group_damage|var.tank_emergency)
+  - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&(var.need_aoe_heal|var.need_major_heal),use_off_gcd=1
+  - mana_tide_totem,if=var.mana_low
+  - unleash_life,target=lowest,if=talent.unleash_life&!buff.unleash_life.up&cooldown.ascendance.remains<=gcd
+  - ascendance,if=talent.ascendance&cooldown.ascendance.ready&(var.heavy_group_damage|var.need_aoe_heal)
+  - ancestral_guidance,if=talent.ancestral_guidance&cooldown.ancestral_guidance.ready&(var.need_aoe_heal|var.tank_emergency|var.heavy_group_damage)
+
+  tank_maintenance:
+  - earth_shield,cycle=tanks,if=cycle.buff.earth_shield.down
+  - riptide,cycle=tanks,if=cycle.health.pct<config.light_heal_hp&(cycle.buff.riptide.down|cycle.buff.riptide.remains<4)
+
+  maintenance:
+  - surging_totem,if=talent.surging_totem&var.surging_totem_refresh
+  - unleash_life,target=lowest,if=talent.unleash_life&!buff.unleash_life.up
+  - downpour,if=talent.downpour&totem.surging_totem.up&totem.surging_totem.remains<3,ignore_movement=true
+  - healing_stream_totem,if=var.hst_refresh
+  - healing_rain,if=talent.totemic&!var.healing_rain_up&(!var.mana_careful|var.need_aoe_heal),ignore_movement=true
+  - healing_rain,if=var.heavy_group_damage&!var.healing_rain_up,ignore_movement=true
+  - healing_rain,if=var.need_aoe_heal&!var.healing_rain_up&!var.mana_careful,ignore_movement=true
+  - riptide,cycle=members,if=cooldown.riptide.charges>=2&cycle.buff.riptide.down
+  - riptide,cycle=members,if=cycle.health.pct<config.major_heal_hp&cycle.buff.riptide.down
+  - riptide,cycle=members,if=cycle.health.pct<config.light_heal_hp&cycle.buff.riptide.remains<4
+
+  emergency:
+  - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&var.need_emergency,use_off_gcd=1
+  - unleash_life,target=lowest,if=talent.unleash_life&!buff.unleash_life.up
+  - healing_surge,target=lowest,if=buff.unleash_life.up,ignore_movement=true
+  - healing_surge,target=lowest,if=buff.ancestral_swiftness.up,ignore_movement=true
+  - riptide,target=lowest,if=group.lowest.health.pct<config.emergency_hp
+  - healing_surge,cycle=tanks,if=cycle.health.pct<config.emergency_hp,ignore_movement=true
+  - healing_surge,target=lowest,if=var.need_emergency,ignore_movement=true
+
+  aoe_healing:
+  - unleash_life,target=lowest,if=talent.unleash_life&!buff.unleash_life.up
+  - chain_heal,if=buff.unleash_life.up,ignore_movement=true
+  - downpour,if=talent.downpour&totem.surging_totem.up,ignore_movement=true
+  - wellspring,if=talent.wellspring&(var.heavy_group_damage|var.need_aoe_heal),ignore_movement=true
+  - chain_heal,if=var.heavy_group_damage,ignore_movement=true
+  - chain_heal,if=var.need_aoe_heal&!var.mana_careful&var.tidal_waves_2,ignore_movement=true
+  - chain_heal,if=var.need_aoe_heal&!var.mana_careful&group.count(cycle.health.pct<config.emergency_hp)>=2,ignore_movement=true
+  - healing_wave,target=lowest,if=var.need_major_heal,ignore_movement=true
+
+  spot_healing:
+  - unleash_life,target=lowest,if=talent.unleash_life&!buff.unleash_life.up&var.need_major_heal
+  - healing_wave,target=lowest,if=buff.unleash_life.up&(var.need_major_heal|var.need_light_heal),ignore_movement=true
+  - healing_wave,target=lowest,if=buff.ancestral_swiftness.up,ignore_movement=true
+  - healing_surge,target=lowest,if=var.tidal_waves_2&var.need_major_heal,ignore_movement=true
+  - riptide,target=lowest,if=var.need_major_heal
+  - healing_wave,target=lowest,if=var.need_major_heal,ignore_movement=true
+  - healing_wave,target=lowest,if=var.need_light_heal,ignore_movement=true
+
+  moving_healing:
+  - riptide,target=lowest,if=var.need_emergency|var.tank_emergency,ignore_movement=true
+  - riptide,cycle=members,if=cycle.health.pct<config.major_heal_hp&cycle.buff.riptide.down,ignore_movement=true
+  - healing_surge,target=lowest,if=var.need_emergency,ignore_movement=true
+  - chain_heal,if=var.need_aoe_heal,ignore_movement=true
+  - healing_wave,target=lowest,if=var.need_major_heal,ignore_movement=true
+  - healing_wave,target=lowest,if=var.need_light_heal,ignore_movement=true
+
+  damage:
+  - return,if=config.damage_mode=0
+  - flame_shock,if=debuff.flame_shock.down,ignore_movement=true
+  - lava_burst,if=dot.flame_shock.up&buff.lava_surge.up,ignore_movement=true
+  - chain_lightning,if=var.want_aoe,ignore_movement=true
+  - lightning_bolt,ignore_movement=true
+
+  anti_idle:
+  - healing_wave,target=lowest,if=player.combat&var.need_light_heal,ignore_queue=true,ignore_movement=true
+
+  fallback:
+  - healing_wave,target=lowest,if=player.combat&var.need_light_heal,ignore_queue=true,ignore_movement=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - earthliving_weapon,range_check=none,if=mainhand.enchant.up=0
+  - water_shield,range_check=none,if=buff.water_shield.down
+  - lightning_shield,range_check=none,if=buff.lightning_shield.down&buff.water_shield.down
+  - earth_shield.player,range_check=none,if=buff.earth_shield.down
+  - earth_shield,cycle=tanks,range_check=none,if=cycle.buff.earth_shield.down
+  - skyfury,range_check=none,if=group.count(cycle.buff.skyfury.down)>=1
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=dispel,if=config.use_dispel
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - riptide,cycle=members,range_check=none,if=cycle.health.pct<config.major_heal_hp&cycle.buff.riptide.down
+  - stop_casting,if=(player.casting|player.channeling)&((var.need_emergency|var.tank_emergency)&(cooldown.spirit_link_totem.ready|cooldown.riptide.charges>=1|talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready))
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=emergency,if=var.need_emergency|var.tank_emergency
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=tank_maintenance
+  - call_action_list,name=maintenance
+  - call_action_list,name=aoe_healing,if=var.need_aoe_heal
+  - call_action_list,name=spot_healing,if=var.need_major_heal|var.need_light_heal
+  - call_action_list,name=moving_healing,if=player.moving
+  - call_action_list,name=damage,if=var.safe_to_damage
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

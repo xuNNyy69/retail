@@ -1,0 +1,124 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 260
+name: xuNNyy_rogue_outlaw
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  in_ar: buff.adrenaline_rush.up
+  # talent.improved_ambush token uncertain; combo_points<2 used as safe floor
+  ambush_condition: (talent.hidden_opportunity|combo_points<2)&energy>=50
+  finish_condition: combo_points>=5
+  rtb_stage: buff.roll_the_bones.stack
+  blade_flurry_sync: active_enemies<2|buff.blade_flurry.up
+
+lists:
+  defensives:
+  - feint,if=health.pct<=85
+  - crimson_vial,if=health.pct<=70
+  - evasion,if=health.pct<=50
+  - cloak_of_shadows,if=health.pct<=40
+
+  maintenance:
+  - blade_flurry,if=active_enemies>=2&!buff.blade_flurry.up
+  - roll_the_bones,if=var.rtb_stage<=1&combo_points>=4
+  - keep_it_rolling,if=talent.keep_it_rolling&var.rtb_stage>=2
+
+  # preparation and blade_rush absent from action_tokens.txt; guarded by talent check.
+  cds:
+  - preparation,if=talent.preparation&!cooldown.between_the_eyes.ready&!cooldown.adrenaline_rush.ready&(!talent.blade_rush|!cooldown.blade_rush.ready)
+  - adrenaline_rush,if=!buff.adrenaline_rush.up&combo_points<=2,use_off_gcd=1
+  - blade_rush,if=talent.blade_rush
+  - vanish,if=combo_points<5&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
+  - potion,if=config.use_potions&buff.adrenaline_rush.up,use_off_gcd=1
+  - blood_fury,if=buff.adrenaline_rush.up,use_off_gcd=1
+  - berserking,if=buff.adrenaline_rush.up,use_off_gcd=1
+  - fireblood,if=buff.adrenaline_rush.up,use_off_gcd=1
+  - ancestral_call,if=buff.adrenaline_rush.up,use_off_gcd=1
+  - use_item,slot=trinket1,if=config.use_trinkets&debuff.between_the_eyes.up,use_off_gcd=1
+  - use_item,slot=trinket2,if=config.use_trinkets&debuff.between_the_eyes.up,use_off_gcd=1
+
+  # dispatch,if=!buff.slice_and_dice.up: depends on talent interaction (e.g. Swift Slasher)
+  finish:
+  - dispatch,if=!buff.slice_and_dice.up
+  - between_the_eyes,if=combo_points>=6
+  - killing_spree,if=talent.killing_spree&buff.adrenaline_rush.up
+  - coup_de_grace,if=talent.coup_de_grace&buff.disorienting_strikes.up
+  - dispatch
+
+  # buff.opportunity.stack>=6: approximation of >=max_stack (max_stack token unsupported)
+  build:
+  - ambush,if=talent.hidden_opportunity&buff.audacity.up
+  - blade_flurry,if=talent.deft_maneuvers&active_enemies>=4
+  - coup_de_grace,if=talent.coup_de_grace&buff.disorienting_strikes.up
+  - pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&!buff.audacity.up
+  - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&buff.opportunity.stack>=6
+  - pistol_shot,if=!talent.fan_the_hammer&buff.opportunity.up&(combo_points<5|talent.quick_draw|talent.audacity&!buff.audacity.up)
+  - ambush,if=talent.hidden_opportunity
+  - sinister_strike
+
+  anti_idle:
+  - sinister_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - dispatch,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - sinister_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - kick,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=maintenance
+  - call_action_list,name=cds,if=config.use_cooldowns
+  - call_action_list,name=finish,if=var.finish_condition
+  - call_action_list,name=build
+  - arcane_torrent,if=energy<85+energy.regen,use_off_gcd=1
+  - arcane_pulse,use_off_gcd=1
+  - lights_judgment,use_off_gcd=1
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

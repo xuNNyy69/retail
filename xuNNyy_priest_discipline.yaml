@@ -1,0 +1,229 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 256
+name: xuNNyy_priest_discipline
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Dispel"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  emergency_hp:
+    label: "Emergency Direct Heal HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 45
+  ramp_hp:
+    label: "Ramp Trigger HP%"
+    type: slider
+    min: 60
+    max: 100
+    default: 80
+
+variables:
+
+  # Hero-tree routing
+  # Oracle: dominant hero talent; stronger Penance + Piety overheal protection
+  is_oracle: talent.clairvoyance
+  # Voidweaver: alternative
+  is_voidweaver: "!talent.clairvoyance"
+
+  # Damage buff states
+  potds_up: buff.power_of_the_dark_side.up
+  evangelism_up: buff.evangelism.up
+  atonement_up: buff.atonement.up
+
+  # Healing thresholds
+  anyone_emergency: group.lowest.health.pct<config.emergency_hp
+  tank_low: group.tanks.lowest.health.pct<config.emergency_hp
+  multi_injured: group.count(cycle.health.pct<config.ramp_hp)>=config.aoe_threshold
+
+  # Cooldown readiness
+  evangelism_ready: talent.evangelism&cooldown.evangelism.ready
+  up_ready: talent.ultimate_penitence&cooldown.ultimate_penitence.ready
+  void_shield_ready: talent.void_shield&cooldown.void_shield.ready
+
+lists:
+  interrupts:
+  - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable.magic
+
+  defensives:
+  - desperate_prayer,if=config.use_defensives&health.pct<=50
+  - fade,if=config.use_defensives&health.pct<=60,use_off_gcd=1
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)
+  - potion,if=config.use_potions&var.evangelism_up,use_off_gcd=1
+
+  # ===========================================================
+  # Emergency direct heals -- bypass Atonement for critical targets
+  # Guide: Disc is squishy; don't hesitate to use Pain Suppression selfishly
+  # ===========================================================
+  emergency:
+  - pain_suppression,if=config.use_cooldowns&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
+  - pain_suppression,if=config.use_cooldowns&var.anyone_emergency,use_off_gcd=1
+  - penance,if=var.anyone_emergency
+  - power_word_shield,cycle_targets=1,if=var.anyone_emergency&cycle.health.pct<config.emergency_hp
+  - flash_heal,if=var.anyone_emergency
+
+  # ===========================================================
+  # Evangelism Ramp (Oracle)
+  # Sequence: Void Shield → Flash Heal (self Atonement) → Evangelism
+  #           → 2x Power Word: Radiance → Penance → Mind Blast → Penance
+  # Guide: Evangelism applies 5 Atonements + makes next 2 Radiances instant
+  # Trigger: when Evangelism is ready AND group is taking/about to take damage
+  # ===========================================================
+  evangelism_ramp:
+  - return,if=!var.evangelism_ready&!var.evangelism_up
+
+  # Refresh Shadow Word: Pain if about to expire (don't lose Atonement healing)
+  - shadow_word_pain,if=dot.shadow_word_pain.remains<4
+
+  # Pre-ramp Atonement setup
+  - void_shield,if=var.void_shield_ready
+  - power_word_shield,if=!var.void_shield_ready&cooldown.power_word_shield.ready
+
+  # Self-Atonement via Binding Heals + Flash Heal
+  - flash_heal,if=!var.atonement_up
+
+  # Evangelism: core ramp button
+  - evangelism,if=var.evangelism_up=0
+
+  # 2x Power Word: Radiance (instant from Evangelism proc)
+  - power_word_radiance,if=var.evangelism_up
+
+  # Damage burst through fresh Atonements
+  - penance,if=var.evangelism_up
+  - mind_blast,if=var.evangelism_up
+  - penance
+
+  # ===========================================================
+  # Ultimate Penitence Ramp (Apex Talent -- if available)
+  # Similar to Evangelism ramp but replaced: ... → UP + Mind Blast (falling)
+  #   → Penance → PW:Shield → Penance
+  # Guide: massive offensive 4-minute CD; use offensively in Raid
+  # ===========================================================
+  up_ramp:
+  - return,if=!var.up_ready&!buff.ultimate_penitence.up
+
+  # Pre-ramp
+  - shadow_word_pain,if=dot.shadow_word_pain.remains<4
+  - void_shield,if=var.void_shield_ready
+  - power_word_shield,if=!var.void_shield_ready&cooldown.power_word_shield.ready
+  - flash_heal,if=!var.atonement_up
+  - power_word_radiance,if=cooldown.power_word_radiance.charges>=1
+  - power_word_radiance,if=cooldown.power_word_radiance.charges>=2
+  # Ultimate Penitence: cast; Mind Blast at end of channel while falling
+  - ultimate_penitence,if=config.use_cooldowns
+  - mind_blast
+  - penance
+  - power_word_shield
+  - penance
+
+  # ===========================================================
+  # Damage priority (heals through Atonement)
+  # Guide: damage = healing when Atonements are up
+  # Outside ramp: Void Shield + mini-PWR as "mini-ramp"; then damage
+  # ===========================================================
+  damage:
+  # SWP: must stay active for Atonement healing + Psychic Link cleave
+  - shadow_word_pain,if=dot.shadow_word_pain.refreshable
+
+  # Mind Blast: skip if Power of the Dark Side proc is active
+  # (guide: Power of the Dark Side buffs Penance, so cast it first)
+  - mind_blast,if=!var.potds_up
+
+  # Penance: primary damage / healing conduit; use with PotDS proc always
+  - penance
+
+  # Shadow Word: Death: execute range bonus damage
+  - shadow_word_death,if=target.health.pct<20
+
+  # Holy Nova: if Lightburst talented (AoE proc)
+  - holy_nova,if=talent.lightburst&active_enemies>=2
+
+  # Smite: filler; always casting = always healing through Atonement
+  - smite
+
+  # ===========================================================
+  # Mini-ramp: outside cooldowns, maintain Atonement via Void Shield + PWR
+  # ===========================================================
+  mini_ramp:
+  - void_shield,if=var.void_shield_ready&var.multi_injured
+  - power_word_radiance,if=var.multi_injured&cooldown.power_word_radiance.charges>=1
+
+  anti_idle:
+  - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - shadow_word_pain,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - power_word_fortitude,range_check=none,if=!buff.power_word_fortitude.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=(player.casting|player.channeling)&var.anyone_emergency
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=dispel,if=config.use_dispel
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  # Emergency direct heals bypass all rotation logic
+  - call_action_list,name=emergency,if=var.anyone_emergency
+  # Ultimate Penitence ramp (higher value CD fires first)
+  - call_action_list,name=up_ramp,if=config.use_cooldowns&var.up_ready&var.multi_injured
+  # Evangelism ramp on CD when group is taking damage
+  - call_action_list,name=evangelism_ramp,if=config.use_cooldowns&var.multi_injured
+  # Mini-ramp to maintain Atonement coverage
+  - call_action_list,name=mini_ramp,if=var.multi_injured
+  # Main Atonement-based damage/healing loop
+  - call_action_list,name=damage
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

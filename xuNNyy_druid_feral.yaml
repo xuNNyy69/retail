@@ -1,0 +1,206 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 103
+name: xuNNyy_druid_feral
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+
+  # Berserk covers both Berserk and Incarnation: King of the Jungle
+  # NOTE: may need buff.berserk_cat.up for Feral spec — verify in-game
+  berserk_up: "buff.berserk.up|buff.incarnation_cat.up"
+  tigers_fury_up: buff.tigers_fury.up
+  # Energy threshold for Chomp (guide: deplete energy before Chomp off CD)
+  energy_low: energy<=50
+  # Combo point thresholds
+  cp_high: combo_points>=5
+  cp_low: combo_points<=2
+  # DoT refresh windows
+  # Rip pandemic = .refreshable (engine pandemic window)
+  rip_pandemic: dot.rip.refreshable
+  rake_refreshable: dot.rake.refreshable
+  rip_up: dot.rip.up
+  # Apex Predator proc (free instant Ferocious Bite)
+  apex_predator_up: buff.apex_predators_craving.up
+  # AoE routing
+  want_aoe: active_enemies>=config.aoe_threshold
+
+lists:
+  interrupts:
+  - skull_bash,if=config.use_interrupts&target.casting.interruptible
+
+  defensives:
+  - barkskin,if=config.use_defensives&health.pct<=40,use_off_gcd=1
+  - survival_instincts,if=config.use_defensives&health.pct<=30
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.berserk_up
+  - blood_fury,use_off_gcd=1,if=var.berserk_up
+  - fireblood,use_off_gcd=1,if=var.berserk_up
+  - ancestral_call,use_off_gcd=1,if=var.berserk_up
+  - lights_judgment,if=!var.berserk_up
+  - bag_of_tricks,if=!var.berserk_up
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
+  - potion,if=config.use_potions&var.berserk_up,use_off_gcd=1
+
+  # ===========================================================
+  # Single-target priority
+  # Guide: Berserk + TF together; maintain Rake/Rip; spend at 5 CPs
+  # New in Midnight: Panther's Guile procs bonus CPs from Shred
+  # ===========================================================
+  st:
+  # Stealth opener - exploit Prowl bonus Rake
+  - rake,if=buff.prowl.up
+
+  # Cooldowns: Berserk pairs with TF; fire both together
+  # TF first if energy is low (guide: be at low energy when TF comes up)
+  - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
+  - berserk,if=config.use_cooldowns&var.tigers_fury_up
+  # TOKEN: may need incarnation_avatar_of_ashamane — verify in-game
+  - incarnation_cat,if=config.use_cooldowns&talent.incarnation_cat&var.tigers_fury_up
+  # TF on CD even without Berserk pairing
+  - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
+
+  # DoT maintenance - Rake: refresh early if TF is active (snapshot upgrade)
+  - rake,if=var.tigers_fury_up&dot.rake.remains<9
+  - rake,if=var.rake_refreshable
+
+  # Rip: 5 CPs; ideal with TF active for snapshot
+  # If previous Rip was TF-snapshotted and TF is down, wait for pandemic expiry
+  - rip,if=var.cp_high&var.tigers_fury_up&(var.rip_pandemic|dot.rip.down)
+  - rip,if=var.cp_high&var.rip_pandemic
+
+  # Chomp on CD; guide says deplete energy first for the 2s grace window
+  - chomp,if=talent.chomp&var.energy_low
+
+  # Feral Frenzy / Frantic Frenzy: on CD at low CPs (no need to hold for TF)
+  - feral_frenzy,if=talent.feral_frenzy&config.use_cooldowns&var.cp_low
+  - frantic_frenzy,if=talent.frantic_frenzy&config.use_cooldowns&var.cp_low
+
+  # Convoke: inside Berserk+TF window for maximum value
+  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up
+
+  # Ferocious Bite: 5 CPs; don't refresh Rip if we'd downgrade the snapshot
+  - ferocious_bite,if=var.cp_high&!var.rip_pandemic
+  # Apex Predator proc (free instant Ferocious Bite)
+  - ferocious_bite,if=var.apex_predator_up
+
+  # Moonfire: maintain if Lunar Inspiration talented
+  - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
+
+  # Shred: primary CP builder; proc Panther's Guile (never queue 2 blindly)
+  - shred
+
+  # ===========================================================
+  # AoE priority (3+ targets)
+  # Primal Wrath replaces Rip; Swipe/Rake for CP generation
+  # ===========================================================
+  aoe:
+  # Stealth opener bonus Rake on pull
+  - rake,if=buff.prowl.up
+
+  # Cooldowns: Berserk + TF together
+  - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
+  - berserk,if=config.use_cooldowns&var.tigers_fury_up
+  # TOKEN: may need incarnation_avatar_of_ashamane — verify in-game
+  - incarnation_cat,if=config.use_cooldowns&talent.incarnation_cat&var.tigers_fury_up
+  - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
+
+  # Primal Wrath: maintain Rip on all targets; upgrade snapshot if TF active
+  - primal_wrath,if=var.cp_high&var.tigers_fury_up
+  - primal_wrath,if=var.cp_high&dot.rip.remains<5
+
+  # Convoke: confirm Rip will outlast the full 3s channel
+  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&dot.rip.remains>4
+
+  # Frenzy at low CPs
+  - feral_frenzy,if=talent.feral_frenzy&config.use_cooldowns&var.cp_low
+  - frantic_frenzy,if=talent.frantic_frenzy&config.use_cooldowns&var.cp_low
+
+  # Ferocious Bite: 5 CPs if Rip healthy (5+ seconds safe)
+  - ferocious_bite,if=var.cp_high&dot.rip.remains>5&energy>=50
+  # Apex Predator proc
+  - ferocious_bite,if=var.apex_predator_up
+
+  # Chomp at low energy
+  - chomp,if=talent.chomp&var.energy_low
+
+  # Rake: spread with Double-Clawed Rake; only rake if no Swipe alt available
+  - rake,cycle_targets=1,if=talent.double_clawed_rake&dot.rake.refreshable
+  # Rake at low target count without DCR (guide: up to ~4 targets)
+  - rake,if=!talent.double_clawed_rake&active_enemies<=4&dot.rake.refreshable
+
+  # Swipe: primary AoE CP builder
+  - swipe
+
+  # Shred: low CPs with Panther's Guile on priority target
+  - shred,if=talent.panthers_guile&var.cp_low
+
+  # Moonfire on priority targets
+  - moonfire,cycle_targets=1,if=talent.lunar_inspiration&dot.moonfire.refreshable
+
+  anti_idle:
+  - shred,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - rake,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - shred,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=st
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

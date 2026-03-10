@@ -1,0 +1,236 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 105
+name: xuNNyy_druid_restoration
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Dispel"
+    type: checkbox
+    default: true
+  heal_only:
+    label: "Heal Only (No DPS)"
+    type: checkbox
+    default: false
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  rejuvenation_hp:
+    label: "Rejuvenation HP%"
+    type: slider
+    min: 50
+    max: 100
+    default: 90
+  regrowth_hp:
+    label: "Regrowth HP%"
+    type: slider
+    min: 20
+    max: 90
+    default: 70
+  swiftmend_hp:
+    label: "Swiftmend HP%"
+    type: slider
+    min: 20
+    max: 90
+    default: 80
+  wild_growth_hp:
+    label: "Wild Growth HP%"
+    type: slider
+    min: 30
+    max: 100
+    default: 85
+  emergency_hp:
+    label: "Emergency HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 50
+  ironbark_hp:
+    label: "Ironbark HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 50
+  tranquility_hp:
+    label: "Tranquility HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 40
+  safe_dps_hp:
+    label: "Safe to DPS HP%"
+    type: slider
+    min: 60
+    max: 100
+    default: 85
+  safe_dps_max_injured:
+    label: "Safe DPS Max Injured"
+    type: slider
+    min: 0
+    max: 5
+    default: 1
+
+variables:
+
+  natures_swiftness_up: buff.natures_swiftness.up
+  clearcasting_up: buff.clearcasting.up
+  sotf_up: buff.soul_of_the_forest.up
+  abundance_stacks: buff.abundance.stack
+  incarnation_up: buff.incarnation_tree_of_life.up
+
+  swiftmend_ready: cooldown.swiftmend.ready
+  wild_growth_ready: cooldown.wild_growth.ready
+  flourish_ready: talent.flourish&cooldown.flourish.ready
+  tranquility_ready: cooldown.tranquility.ready
+  convoke_ready: talent.convoke_the_spirits&cooldown.convoke_the_spirits.ready
+  ironbark_ready: cooldown.ironbark.ready
+  natures_swiftness_ready: talent.natures_swiftness&cooldown.natures_swiftness.ready
+
+  anyone_emergency: group.lowest.health.pct<config.emergency_hp
+  tank_emergency: group.tanks.lowest.health.pct<config.emergency_hp
+  tank_low: group.tanks.lowest.health.pct<config.ironbark_hp
+  multi_injured: group.count(cycle.health.pct<config.wild_growth_hp)>=config.aoe_threshold
+  heavy_group_damage: group.lowest.health.pct<config.tranquility_hp|group.count(cycle.health.pct<config.emergency_hp)>=2
+
+  safe_to_dps: group.lowest.health.pct>=config.safe_dps_hp&group.count(cycle.health.pct<config.wild_growth_hp)<=config.safe_dps_max_injured
+  mana_low: mana.pct<=35
+  abundance_high: buff.abundance.stack>=8
+
+lists:
+
+  interrupts:
+  - skull_bash,if=target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - remove_corruption,cycle_targets=1,if=cycle.dispelable.curse|cycle.dispelable.poison
+
+  defensives:
+  - barkskin,if=health.pct<=55,use_off_gcd=1
+  - frenzied_regeneration,if=health.pct<=45
+  - healthstone,if=health.pct<=35
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
+  - potion,if=config.use_potions&var.anyone_emergency
+  - potion,if=config.use_potions&var.mana_low
+
+  cooldowns:
+  - natures_swiftness,use_off_gcd=1,if=var.natures_swiftness_ready&var.convoke_ready&var.abundance_high
+  - convoke_the_spirits,if=var.convoke_ready&(buff.wild_growth.up|var.incarnation_up|var.abundance_high)
+  - incarnation_tree_of_life,if=talent.incarnation_tree_of_life&cooldown.incarnation_tree_of_life.ready&var.multi_injured
+  - tranquility,if=var.tranquility_ready&var.heavy_group_damage
+  - innervate,use_off_gcd=1,if=mana.pct<=80&var.multi_injured
+  - innervate,use_off_gcd=1,if=var.mana_low
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.multi_injured|var.anyone_emergency
+  - blood_fury,use_off_gcd=1,if=var.multi_injured|var.anyone_emergency
+  - fireblood,use_off_gcd=1,if=var.anyone_emergency
+  - ancestral_call,use_off_gcd=1,if=var.multi_injured|var.anyone_emergency
+  - arcane_torrent,use_off_gcd=1,if=var.mana_low
+
+  emergency:
+  - natures_swiftness,use_off_gcd=1,if=var.natures_swiftness_ready&var.anyone_emergency
+  - regrowth,if=var.natures_swiftness_up
+  - swiftmend,if=var.swiftmend_ready&var.anyone_emergency
+  - ironbark,if=var.ironbark_ready&var.tank_emergency,use_off_gcd=1
+  - regrowth,if=var.clearcasting_up&group.lowest.health.pct<config.regrowth_hp
+  - regrowth,if=var.abundance_stacks>=3&group.lowest.health.pct<config.regrowth_hp
+  - regrowth,if=group.lowest.health.pct<config.emergency_hp
+
+  tank_maintenance:
+  - cenarion_ward,cycle_targets=1,if=talent.cenarion_ward&cycle.tank&cycle.buff.cenarion_ward.down
+  - lifebloom,cycle_targets=1,if=cycle.tank&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
+  - rejuvenation,cycle_targets=1,if=cycle.tank&cycle.health.pct<config.rejuvenation_hp&cycle.buff.rejuvenation.down
+  - swiftmend,if=var.swiftmend_ready&var.tank_low
+  - ironbark,use_off_gcd=1,if=var.ironbark_ready&var.tank_low
+
+  ramp_healing:
+  - rejuvenation,cycle_targets=1,if=cycle.health.pct<95&cycle.buff.rejuvenation.down
+  - swiftmend,if=var.swiftmend_ready&var.multi_injured
+  - wild_growth,if=var.wild_growth_ready&(var.sotf_up|var.multi_injured)
+  - flourish,if=var.flourish_ready&buff.wild_growth.up
+  - regrowth,if=var.clearcasting_up
+  - regrowth,if=var.sotf_up
+  - regrowth,if=var.abundance_high
+
+  group_maintenance:
+  - efflorescence,if=buff.efflorescence.down
+  - swiftmend,if=var.swiftmend_ready&group.lowest.health.pct<config.swiftmend_hp
+  - wild_growth,if=var.wild_growth_ready&var.multi_injured
+  - regrowth,if=var.sotf_up&group.lowest.health.pct<config.regrowth_hp
+  - rejuvenation,cycle_targets=1,if=cycle.health.pct<config.rejuvenation_hp&cycle.buff.rejuvenation.down
+  - regrowth,if=var.clearcasting_up&group.lowest.health.pct<config.regrowth_hp
+  - regrowth,if=var.abundance_stacks>=3&group.lowest.health.pct<config.regrowth_hp
+  - regrowth,if=group.lowest.health.pct<config.regrowth_hp&group.count(cycle.health.pct<config.regrowth_hp)<=1
+
+  dps:
+  - sunfire,if=dot.sunfire.refreshable
+  - moonfire,if=dot.moonfire.refreshable
+  - wrath
+
+  anti_idle:
+  - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - mark_of_the_wild,range_check=none,if=!buff.mark_of_the_wild.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=(player.casting|player.channeling)&var.anyone_emergency&(var.swiftmend_ready|var.natures_swiftness_ready)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=emergency,if=var.anyone_emergency
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=dispel,if=config.use_dispel
+  - call_action_list,name=tank_maintenance
+  - call_action_list,name=ramp_healing,if=var.multi_injured
+  - call_action_list,name=group_maintenance
+  - regrowth,if=var.natures_swiftness_up
+  - call_action_list,name=dps,if=!config.heal_only&var.safe_to_dps
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

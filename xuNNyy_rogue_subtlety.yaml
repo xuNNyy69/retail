@@ -1,0 +1,135 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 261
+name: xuNNyy_rogue_subtlety
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  in_dance: buff.shadow_dance.up|buff.stealth.up|buff.vanish.up
+
+lists:
+  interrupts:
+  - kick,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - cloak_of_shadows,if=health.pct<=40
+  - evasion,if=health.pct<=50
+  - crimson_vial,if=health.pct<=60
+
+  # Racial cooldowns sync to shadow_blades+shadow_dance window.
+  race:
+  - blood_fury,if=buff.shadow_blades.up&buff.shadow_dance.up,use_off_gcd=1
+  - berserking,if=buff.shadow_blades.up&buff.shadow_dance.up,use_off_gcd=1
+  - fireblood,if=buff.shadow_blades.up&buff.shadow_dance.up,use_off_gcd=1
+  - ancestral_call,if=buff.shadow_blades.up&buff.shadow_dance.up,use_off_gcd=1
+
+  # Trinkets sync to shadow_blades window.
+  item:
+  - use_item,slot=trinket1,if=config.use_trinkets&buff.shadow_blades.up,use_off_gcd=1
+  - use_item,slot=trinket2,if=config.use_trinkets&buff.shadow_blades.up,use_off_gcd=1
+
+  # shadowmeld not in action_tokens.txt; omitted.
+  # shadow_dance before shadow_blades; Trickster: dance on sectech.ready; Deathstalker: dance freely; blades inside dance.
+  cds:
+  - symbols_of_death
+  - potion,if=config.use_potions&buff.shadow_blades.up&buff.symbols_of_death.up,use_off_gcd=1
+  - flagellation,if=talent.flagellation&combo_points>=5
+  - shadow_dance,if=!var.in_dance&combo_points>=6&energy>=30&cooldown.secret_technique.ready&!talent.deathstalkers_mark
+  - shadow_dance,if=!var.in_dance&combo_points<=2&energy>=30&talent.deathstalkers_mark
+  - shadow_blades,if=buff.shadow_dance.up
+  - vanish,if=!var.in_dance&energy>=40&!buff.subterfuge.up&combo_points<=1
+
+  # Sub uses 6-CP finishers; secret_technique highest priority inside dance.
+  # Maintain slice_and_dice before dance; slam coup_de_grace whenever available; unconditional evis fallback.
+  finish:
+  - slice_and_dice,if=!buff.slice_and_dice.up|(buff.slice_and_dice.refreshable&!buff.shadow_dance.up)
+  - rupture,if=combo_points>=5&dot.rupture.refreshable&talent.replicating_shadows
+  - secret_technique,if=buff.shadow_dance.up
+  - eviscerate,if=buff.darkest_night.up
+  - coup_de_grace
+  - black_powder,if=active_enemies>=2
+  - eviscerate
+
+  # goremaws_bite not in action_tokens.txt; guarded by talent.goremaws_bite.
+  # gloomblade and backstab are talent-exclusive alternatives; engine skips whichever is not talented.
+  # dance: shadowstrike 1-2 targets, shuriken_storm 3+; outside dance: shuriken_storm 2+, backstab/gloomblade 1.
+  build:
+  - shuriken_storm,if=buff.shadow_dance.up&buff.premeditation.up&talent.danse_macabre
+  - shadowstrike,if=var.in_dance&active_enemies<=2
+  - shadowstrike,if=!debuff.deathstalkers_mark.up&talent.deathstalkers_mark&!buff.darkest_night.up
+  - shuriken_storm,if=var.in_dance&active_enemies>=3
+  - shuriken_storm,if=active_enemies>=2
+  - goremaws_bite,if=talent.goremaws_bite&combo_points<3
+  - gloomblade,if=active_enemies<2
+  - backstab,if=active_enemies<2
+
+  # arcane_pulse not in action_tokens.txt; omitted. energy.regen supported per syntax.txt.
+  fill:
+  - arcane_torrent,if=energy<85+energy.regen,use_off_gcd=1
+  - lights_judgment
+
+  anti_idle:
+  - backstab,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - eviscerate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - backstab,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=race,if=config.use_cooldowns
+  - call_action_list,name=item
+  - call_action_list,name=cds,if=config.use_cooldowns
+  - shadowstrike,if=(buff.darkest_night.up|talent.unseen_blade)&buff.shadow_techniques.stack>=5&!buff.ancient_arts.up&active_enemies<=3
+  - call_action_list,name=finish,if=combo_points>=6
+  - call_action_list,name=build
+  - call_action_list,name=fill,if=!var.in_dance
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

@@ -1,0 +1,124 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 259
+name: xuNNyy_rogue_assassination
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  single_target: active_enemies=1
+
+lists:
+  interrupts:
+  - kick,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - cloak_of_shadows,if=health.pct<=40
+  - evasion,if=health.pct<=50
+  - crimson_vial,if=health.pct<=60
+
+  # Vanish → Improved Garrote: fire during Deathmark window or when Garrote is refreshable (guide: sync with Deathmark when possible)
+  vanish:
+  - vanish,if=var.single_target&talent.improved_garrote&(debuff.deathmark.up|dot.garrote.refreshable)
+
+  items:
+  - use_item,slot=trinket1,if=debuff.deathmark.up|cooldown.deathmark.remains>60
+  - use_item,slot=trinket2,if=debuff.deathmark.up|cooldown.deathmark.remains>60
+
+  misc_cds:
+  - potion,if=config.use_potions&debuff.deathmark.up
+  - blood_fury,if=debuff.deathmark.up,use_off_gcd=1
+  - berserking,if=debuff.deathmark.up,use_off_gcd=1
+  - fireblood,if=debuff.deathmark.up,use_off_gcd=1
+  - ancestral_call,if=debuff.deathmark.up,use_off_gcd=1
+
+  cds:
+  - deathmark,if=dot.garrote.up&dot.rupture.up&(cooldown.kingsbane.remains<=gcd|!talent.kingsbane)
+  - shiv,if=talent.shiv&(debuff.deathmark.up|cooldown.deathmark.remains<=5)&debuff.shiv.down
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=misc_cds
+  - kingsbane,if=(dot.garrote.up&dot.rupture.up&debuff.deathmark.up)|(cooldown.deathmark.remains>52)
+  - call_action_list,name=vanish
+
+  # Apply/refresh Garrote (stealth/improved_garrote window first) then Rupture
+  core_dot:
+  - garrote,if=(buff.stealth.up|buff.vanish.up|buff.improved_garrote.up)&dot.garrote.refreshable
+  - garrote,if=combo_points<5&dot.garrote.refreshable
+  - rupture,if=combo_points>=5&dot.rupture.refreshable
+
+  # CP generation: AoE CT spread → darkest_night shiv → stealth/blindside ambush → ST mutilate → AoE fan
+  generate:
+  - crimson_tempest,if=active_enemies>=2&combo_points>=4&active_dot.crimson_tempest<active_enemies
+  - shiv,if=buff.darkest_night.up&combo_points=4&debuff.shiv.down
+  - ambush,if=buff.stealth.up|buff.vanish.up|buff.blindside.up
+  - mutilate,if=active_enemies<=1
+  - fan_of_knives,if=active_enemies>=2
+
+  # Spend: AoE bleed spread via CT first, then Envenom
+  spend:
+  - crimson_tempest,if=active_enemies>=2&active_dot.crimson_tempest<active_enemies
+  - envenom,if=combo_points>=4&(debuff.deathmark.up|buff.darkest_night.up|buff.envenom.up)
+  - envenom,if=combo_points>=5
+
+  anti_idle:
+  - mutilate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - fan_of_knives,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - mutilate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=cds,if=config.use_cooldowns
+  - call_action_list,name=core_dot
+  - call_action_list,name=generate,if=combo_points<5
+  - call_action_list,name=spend,if=combo_points>=5
+  - call_action_list,name=generate,if=combo_points<5
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

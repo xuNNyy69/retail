@@ -1,0 +1,316 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 251
+name: xuNNyy_death_knight_frost
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  funnel_mode:
+    label: "Funnel (Boss Focus)"
+    type: checkbox
+    default: true
+  death_strike_hp:
+    label: "Death Strike HP%"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+
+variables:
+  # --- State ---
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
+  opener_done: combat.time>6|!player.combat
+
+  # --- Hero tree detection (hero_tree.X not supported; use defining talent) ---
+  has_deathbringer: talent.reaper_of_souls
+  has_rider: talent.apocalypse_now
+
+  # --- Pet ---
+  pet_missing: pet.exists=0|pet.dead
+
+  # --- Buff / debuff shortcuts ---
+  km_up: buff.killing_machine.up
+  km_stack2: buff.killing_machine.stack>=2
+  rime_up: buff.rime.up
+  pillar_up: buff.pillar_of_frost.up
+  breath_up: buff.breath_of_sindragosa.up
+  obliteration_active: talent.obliteration&buff.pillar_of_frost.up
+  razorice5: debuff.razorice.stack>=5
+
+  # --- Hero-tree proc shortcuts ---
+  rider_buff_up: var.has_rider&(buff.mograines_might.up|buff.trollbanes_icy_fury.up)
+  exterminate_ready: var.has_deathbringer&buff.exterminate.up
+  cold_heart_ready: buff.cold_heart.stack>=20&talent.cold_heart
+
+  # --- Pooling variables (SimC: rp_pooling / rune_pooling) ---
+  # rp_pooling: BoS coming up in ~4 GCDs (approx 12 s) and RP is low - hold fino BoS fires
+  rp_pooling: talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<12&runic_power<60
+  # rune_pooling: Deathbringer Reaper's Mark is imminent (<6 s) and runes are scarce
+  rune_pooling: var.has_deathbringer&cooldown.reapers_mark.remains<6&rune<3
+
+  # --- Range checks ---
+  in_melee: target.range<=8
+  in_grip_range: target.range<=30&target.range>8
+
+  # --- Misc ---
+  ff_refresh: debuff.frost_fever.down|debuff.frost_fever.remains<4
+
+lists:
+  # -------------------------------------------------------------------------
+  # INTERRUPTS
+  # -------------------------------------------------------------------------
+  interrupts:
+  - mind_freeze,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - blinding_sleet,if=config.use_interrupts&target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
+
+  # -------------------------------------------------------------------------
+  # DEFENSIVES
+  # SimC high_prio: antimagic_shell,if=runic_power.deficit>40 => runic_power<60
+  # -------------------------------------------------------------------------
+  defensives:
+  - anti_magic_shell,if=config.use_defensives&runic_power<60,use_off_gcd=1
+  - icebound_fortitude,if=config.use_defensives&(player.dangerous_debuff.up|health.pct<=35)
+  - lichborne,if=config.use_defensives&health.pct<=30
+  - death_strike,if=config.use_defensives&health.pct<=config.death_strike_hp&runic_power>=35
+
+  # -------------------------------------------------------------------------
+  # ITEMS / TRINKETS
+  # SimC: use on pillar_of_frost
+  # -------------------------------------------------------------------------
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.pillar_up|var.breath_up|target.boss)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.pillar_up|var.breath_up|target.boss)
+  - potion,if=config.use_potions&var.pillar_up
+
+  # -------------------------------------------------------------------------
+  # MOVEMENT
+  # -------------------------------------------------------------------------
+  movement:
+  - death_grip,if=var.in_grip_range
+  - deaths_advance,if=!var.in_melee
+  - howling_blast,if=var.rime_up&!var.in_melee
+
+  # -------------------------------------------------------------------------
+  # PRE-COMBAT
+  # -------------------------------------------------------------------------
+  precombat:
+  - raise_dead,if=var.pet_missing
+
+  # -------------------------------------------------------------------------
+  # OPENER (first ~6 s)
+  # -------------------------------------------------------------------------
+  opener:
+  - raise_dead,if=var.pet_missing
+  - howling_blast,if=var.ff_refresh
+  - remorseless_winter,if=active_enemies>1|talent.gathering_storm
+  - pillar_of_frost
+
+  # -------------------------------------------------------------------------
+  # COOLDOWNS
+  # SimC cooldowns list: pillar, reapers_mark, breath, frostwyrms_fury, ERW
+  # -------------------------------------------------------------------------
+  cooldowns:
+  - raise_dead,if=var.pet_missing,use_off_gcd=1
+  # Remorseless Winter: always in AoE; single-target only with gathering_storm
+  - remorseless_winter,if=buff.remorseless_winter.down&(active_enemies>1|talent.gathering_storm)
+  # Deathbringer: Reaper's Mark just before Pillar (within 1 GCD approx 3 s)
+  - reapers_mark,if=var.has_deathbringer&cooldown.pillar_of_frost.remains<=3
+  # Pillar of Frost: pool 3+ runes first if Obliteration talented (guide); respect Deathbringer RM timing
+  - pillar_of_frost,if=(!var.has_deathbringer|cooldown.reapers_mark.remains>10)&(!talent.obliteration|rune>=3)
+  # Breath of Sindragosa: start inside pillar window
+  - breath_of_sindragosa,use_off_gcd=1,if=talent.breath_of_sindragosa&!var.breath_up&var.pillar_up
+  # Frostwyrm's Fury: both chosen_of_frostbrood and apocalypse_now paths share pillar_up gate
+  - frostwyrms_fury,if=var.pillar_up
+  # Empower Rune Weapon: off-GCD � fire at 2 full charges to avoid cap (guide #3)
+  - empower_rune_weapon,use_off_gcd=1,if=cooldown.empower_rune_weapon.charges_fractional>=2
+  # ERW: BoS just came off CD and RP is low � resource prep before window (guide #3)
+  - empower_rune_weapon,use_off_gcd=1,if=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains=0&runic_power<60
+  # ERW: emergency rune/RP starvation fallback (guide #11)
+  - empower_rune_weapon,use_off_gcd=1,if=rune<2|runic_power<35
+  # Horn of Winter as rune/RP recovery
+  - horn_of_winter,if=rune<2&runic_power<60
+
+  # -------------------------------------------------------------------------
+  # RACIALS
+  # SimC: gate most racials on pillar_of_frost for burst alignment
+  # -------------------------------------------------------------------------
+  racials:
+  - blood_fury,use_off_gcd=1,if=var.pillar_up
+  - berserking,use_off_gcd=1,if=var.pillar_up
+  - lights_judgment,if=var.pillar_up
+  - ancestral_call,use_off_gcd=1,if=var.pillar_up
+  - fireblood,use_off_gcd=1,if=var.pillar_up
+  - bag_of_tricks,if=!var.pillar_up&buff.unholy_strength.up
+  - arcane_torrent,use_off_gcd=1
+
+  # -------------------------------------------------------------------------
+  # BREATH ROTATION
+  # Active while breath_of_sindragosa is up; prioritises rune spending to
+  # generate RP and Howling Blast for Rime procs. No Frost Strike (wastes RP).
+  # -------------------------------------------------------------------------
+  breath_rotation:
+  - return,if=!var.breath_up
+  - obliterate,if=var.km_stack2
+  - howling_blast,if=var.rime_up
+  - obliterate,if=var.km_up&rune>=3
+  - frost_strike,if=var.razorice5&talent.shattering_blade
+  - obliterate,if=var.exterminate_ready
+  - obliterate,if=rune>=2
+  - horn_of_winter,if=runic_power<40&rune<2
+  - howling_blast,ignore_queue=true
+
+  # -------------------------------------------------------------------------
+  # SINGLE TARGET
+  # SimC: single_target list. rp_pooling and rune_pooling inlined as vars.
+  # runic_power.deficit<30 => runic_power>=75 (deficit notation unsupported; guide #10: 75+ RP or Pillar active)
+  # -------------------------------------------------------------------------
+  single_target:
+  # Double KM stack: always consume immediately before anything else
+  - obliterate,if=var.km_stack2
+  - chains_of_ice,if=var.cold_heart_ready&var.pillar_up
+  # Keep Frost Fever up
+  - howling_blast,if=var.ff_refresh
+  # Single KM with runes to spare
+  - obliterate,if=var.km_up&rune>=3
+  # Frostbound Will: Howling Blast over Frost Strike for synergy
+  - howling_blast,if=var.rime_up&talent.frostbound_will
+  # Shattering Blade: spend on full Razorice stacks
+  - frost_strike,if=var.razorice5&talent.shattering_blade&!var.rp_pooling
+  # Rime: standard Howling Blast
+  - howling_blast,if=var.rime_up
+  # Non-shattering-blade: spend at 75+ RP or during Pillar window (guide #10)
+  - frost_strike,if=!talent.shattering_blade&!var.rp_pooling&(runic_power>=75|var.pillar_up)
+  # KM without rune pooling constraint
+  - obliterate,if=var.km_up&!var.rune_pooling
+  # Frost strike outside of BoS prep window
+  - frost_strike,if=!var.rp_pooling
+  # Rune dump outside obliteration window (avoid wasting rune regen)
+  - obliterate,if=!var.rune_pooling&!var.obliteration_active
+  # Obliteration window filler
+  - howling_blast,if=!var.km_up&var.obliteration_active
+  - howling_blast,ignore_queue=true
+
+  # -------------------------------------------------------------------------
+  # PILLAR BURST (Pillar active, no BoS)
+  # -------------------------------------------------------------------------
+  pillar_burst:
+  - return,if=!var.pillar_up
+  - chains_of_ice,if=var.cold_heart_ready
+  - obliterate,if=var.exterminate_ready
+  - obliterate,if=var.km_up
+  - howling_blast,if=var.rime_up
+  - obliterate,if=rune>=2
+
+  # -------------------------------------------------------------------------
+  # AoE (>= aoe_threshold enemies, default 3)
+  # SimC: aoe list. Frostscythe priority threshold = 3 (frostscythe_priority var).
+  # -------------------------------------------------------------------------
+  aoe:
+  # Double KM -> Frostscythe at 3+ targets; always consume immediately
+  - frostscythe,if=var.km_stack2&active_enemies>=3
+  # Double KM without frostscythe target count -> Obliterate (always immediate)
+  - obliterate,if=var.km_stack2
+  # Keep Frost Fever up
+  - howling_blast,if=var.ff_refresh
+  # Frostbane proc -> Frost Strike for RP generation synergy
+  - frost_strike,if=var.razorice5&buff.frostbane.up
+  # KM + spare runes -> Frostscythe
+  - frostscythe,if=var.km_up&rune>=3&active_enemies>=3
+  # Frostbound Will: Howling Blast priority
+  - howling_blast,if=var.rime_up&talent.frostbound_will
+  # Rime: standard cleave
+  - howling_blast,if=var.rime_up
+  # Shattering Blade Frost Strike at <5 targets (frostscythe preferred at 5+)
+  - frost_strike,if=var.razorice5&talent.shattering_blade&active_enemies<5&!var.rp_pooling&!talent.frostbane
+  # KM without pooling -> Frostscythe
+  - frostscythe,if=var.km_up&!var.rune_pooling&active_enemies>=3
+  # KM without pooling -> Obliterate (fallback when frostscythe not available)
+  - obliterate,if=var.km_up&!var.rune_pooling
+  # Glacial Advance: AoE RP spender
+  - glacial_advance,if=talent.glacial_advance&!var.rp_pooling
+  # Rune dump -> Frostscythe outside obliteration window
+  - frostscythe,if=!var.rune_pooling&!var.obliteration_active&active_enemies>=3
+  # Rune dump -> Obliterate fallback
+  - obliterate,if=!var.rune_pooling&!var.obliteration_active
+  # Obliteration window filler
+  - howling_blast,if=!var.km_up&var.obliteration_active
+  - howling_blast,ignore_queue=true
+
+  # -------------------------------------------------------------------------
+  # ANTI-IDLE
+  # -------------------------------------------------------------------------
+  anti_idle:
+  - obliterate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - frost_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  # -------------------------------------------------------------------------
+  # FALLBACK
+  # -------------------------------------------------------------------------
+  fallback:
+  - howling_blast,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - frost_strike,if=target.exists&target.enemy&target.alive&runic_power>=35,ignore_queue=true
+
+  # -------------------------------------------------------------------------
+  # MAIN ENTRY
+  # SimC default list order preserved: sanity -> targeting -> utility ->
+  # cooldowns -> racials -> breath_rotation (if BoS active) -> aoe / st
+  # -------------------------------------------------------------------------
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - call_action_list,name=precombat,if=!player.combat
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=opener,if=!var.opener_done
+  - call_action_list,name=movement,if=!var.in_melee
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=breath_rotation,if=var.breath_up
+  - call_action_list,name=pillar_burst,if=var.pillar_up&!var.breath_up
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=single_target
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

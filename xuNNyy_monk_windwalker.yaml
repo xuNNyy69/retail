@@ -1,0 +1,238 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 269
+name: xuNNyy_monk_windwalker
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  defensive_hp:
+    label: "Defensive HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 40
+  burst_mode:
+    label: "Burst Mode"
+    type: checkbox
+    default: true
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  want_cleave: state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
+
+  # hero-tree routing
+  has_cotc: talent.celestial_conduit
+  has_shado_pan: talent.wisdom_of_the_wall
+
+  # talent checks
+  has_wdp: talent.whirling_dragon_punch
+  has_sotw: talent.strike_of_the_windlord
+  has_slicing: talent.slicing_winds
+  has_chiji: talent.dance_of_chiji
+  has_teachings: talent.teachings_of_the_monastery
+
+  # buff states
+  hotjs_up: buff.heart_of_the_jade_serpent.up
+  zenith_up: buff.zenith.up
+  in_burst: buff.zenith.up|buff.invoke_xuen.up
+  dance_of_chiji_active: buff.dance_of_chiji.up
+  bok_proc: buff.blackout_reinforcement.up
+  teachings_high: buff.teachings_of_the_monastery.stack>=2
+
+  # resource tracking
+  chi_for_bok: chi>=1
+  chi_for_rsk: chi>=2
+  chi_for_fof: chi>=3
+  chi_for_sck: chi>=2
+  energy_cap: energy>=95
+
+  # cooldown tracking
+  wdp_ready: cooldown.whirling_dragon_punch.ready&cooldown.fists_of_fury.remains>0&cooldown.rising_sun_kick.remains>0
+
+lists:
+  interrupts:
+  - spear_hand_strike,if=target.casting.interruptible,use_off_gcd=1
+  - spear_hand_strike.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - spear_hand_strike.focus,if=focus.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - touch_of_karma,if=health.pct<=(config.defensive_hp+10)
+  - diffuse_magic,if=health.pct<=config.defensive_hp&target.casting
+  - dampen_harm,if=health.pct<=config.defensive_hp
+  - fortifying_brew,if=health.pct<=(config.defensive_hp-10)
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=var.in_burst
+  - use_item,slot=trinket2,use_off_gcd=1,if=var.in_burst
+
+  racials:
+  - berserking,if=var.in_burst,use_off_gcd=1
+  - blood_fury,if=var.in_burst,use_off_gcd=1
+  - fireblood,if=var.in_burst,use_off_gcd=1
+  - ancestral_call,if=var.in_burst,use_off_gcd=1
+  - arcane_torrent,use_off_gcd=1,if=chi<=1&energy<50
+  - lights_judgment,if=!var.in_burst
+  - bag_of_tricks,if=!var.in_burst
+
+  cooldowns:
+  - potion,if=config.use_potions&var.in_burst
+  - touch_of_death,if=target.health.pct<=15
+  - invoke_xuen_the_white_tiger,if=var.has_cotc&config.burst_mode
+  - zenith,if=config.burst_mode
+
+  # CotC opener: TP -> Invoke Xuen -> Slicing Winds -> Zenith -> FoF -> RSK -> FoF(Battlegear reset) -> SotW -> WDP
+  cotc_opener:
+  - tiger_palm,if=chi<5
+  - invoke_xuen_the_white_tiger,if=var.has_cotc
+  - slicing_winds,if=var.has_slicing
+  - zenith
+  - fists_of_fury,if=var.chi_for_fof
+  - rising_sun_kick,if=var.chi_for_rsk
+  - fists_of_fury,if=var.chi_for_fof
+  - strike_of_the_windlord,if=var.has_sotw
+  - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+
+  # Shado-Pan opener: TP -> Zenith -> Slicing Winds -> FoF -> RSK -> FoF(Battlegear reset) -> SotW
+  shado_opener:
+  - tiger_palm,if=chi<5
+  - zenith
+  - slicing_winds,if=var.has_slicing
+  - fists_of_fury,if=var.chi_for_fof
+  - rising_sun_kick,if=var.chi_for_rsk
+  - fists_of_fury,if=var.chi_for_fof
+  - strike_of_the_windlord,if=var.has_sotw
+
+  # CotC - Heart of the Jade Serpent window priority
+  # SotW / WDP / Celestial Conduit must NOT be cast during HotJS window
+  hotjs:
+  - fists_of_fury,if=var.chi_for_fof
+  - rising_sun_kick,if=var.chi_for_rsk
+  - slicing_winds,if=var.has_slicing
+  - tiger_palm,if=chi<5&var.energy_cap
+  - spinning_crane_kick,if=var.has_chiji&buff.dance_of_chiji.stack>=2
+  - blackout_kick,if=var.teachings_high|var.bok_proc
+  - spinning_crane_kick,if=var.has_chiji&var.dance_of_chiji_active
+
+  # CotC - single-target priority (no HotJS active)
+  cotc_st:
+  - strike_of_the_windlord,if=var.has_sotw
+  - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+  - celestial_conduit,if=var.has_cotc
+  - slicing_winds,if=var.has_slicing
+  - fists_of_fury,if=var.chi_for_fof
+  - rising_sun_kick,if=var.chi_for_rsk
+  - tiger_palm,if=chi<5&var.energy_cap
+  - blackout_kick,if=var.teachings_high|var.bok_proc
+  - spinning_crane_kick,if=var.has_chiji&buff.dance_of_chiji.stack>=2
+  - spinning_crane_kick,if=var.has_chiji&var.dance_of_chiji_active
+  - blackout_kick,if=var.bok_proc
+  - blackout_kick,if=var.chi_for_bok
+
+  # CotC - multi-target priority (no HotJS active)
+  cotc_aoe:
+  - strike_of_the_windlord,if=var.has_sotw
+  - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+  - celestial_conduit,if=var.has_cotc
+  - tiger_palm,if=chi<5&var.energy_cap
+  - slicing_winds,if=var.has_slicing
+  - fists_of_fury,if=var.chi_for_fof
+  - rising_sun_kick,if=var.chi_for_rsk
+  - spinning_crane_kick,if=var.has_chiji&buff.dance_of_chiji.stack>=2
+  - blackout_kick,if=var.teachings_high|var.bok_proc
+  - spinning_crane_kick,if=var.has_chiji&var.dance_of_chiji_active
+  - spinning_crane_kick,if=var.chi_for_sck
+
+  # Shado-Pan - single-target priority
+  shado_st:
+  - strike_of_the_windlord,if=var.has_sotw
+  - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+  - slicing_winds,if=var.has_slicing
+  - fists_of_fury,if=var.chi_for_fof
+  - rising_sun_kick,if=var.chi_for_rsk
+  - blackout_kick,if=var.teachings_high|var.bok_proc
+  - tiger_palm,if=chi<5&var.energy_cap
+  - spinning_crane_kick,if=var.has_chiji&buff.dance_of_chiji.stack>=2
+  - spinning_crane_kick,if=var.has_chiji&var.dance_of_chiji_active
+  - blackout_kick,if=var.bok_proc
+  - blackout_kick,if=var.chi_for_bok
+
+  # Shado-Pan - multi-target priority
+  shado_aoe:
+  - rising_sun_kick,if=var.chi_for_rsk
+  - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+  - strike_of_the_windlord,if=var.has_sotw
+  - slicing_winds,if=var.has_slicing
+  - fists_of_fury,if=var.chi_for_fof
+  - tiger_palm,if=chi<5&var.energy_cap
+  - spinning_crane_kick,if=var.has_chiji&buff.dance_of_chiji.stack>=2
+  - spinning_crane_kick,if=chi>=5
+  - spinning_crane_kick,if=var.chi_for_sck
+  - blackout_kick,if=var.bok_proc
+  - blackout_kick,if=var.chi_for_bok
+
+  anti_idle:
+  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - blackout_kick,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=cotc_opener,if=var.has_cotc&combat.time<=10
+  - call_action_list,name=shado_opener,if=var.has_shado_pan&combat.time<=10
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=hotjs,if=var.has_cotc&var.hotjs_up
+  - call_action_list,name=cotc_aoe,if=var.has_cotc&var.want_aoe
+  - call_action_list,name=cotc_st,if=var.has_cotc
+  - call_action_list,name=shado_aoe,if=var.has_shado_pan&var.want_aoe
+  - call_action_list,name=shado_st,if=var.has_shado_pan
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

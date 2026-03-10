@@ -1,0 +1,220 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 263
+name: xuNNyy_shaman_enhancement
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Purge"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  defensive_hp:
+    label: "Defensive HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 40
+  funnel_mode:
+    label: "Funnel Mode"
+    type: checkbox
+    default: false
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  want_cleave: state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
+  has_totemic: talent.surging_totem
+  has_stormbringer: talent.tempest
+  has_ascendance: talent.ascendance
+  maelstrom_5: buff.maelstrom_weapon.stack>=5
+  maelstrom_8: buff.maelstrom_weapon.stack>=8
+  maelstrom_10: buff.maelstrom_weapon.stack>=10
+  doom_winds_up: buff.doom_winds.up
+  ascendance_up: buff.ascendance.up
+  hot_hand_up: buff.hot_hand.up
+  stormbringer_up: buff.stormbringer.up
+  feral_spirit_up: buff.feral_spirit.up
+  fs_up: dot.flame_shock.up
+  fs_low: dot.flame_shock.remains<3
+  tempest_ready: buff.tempest.stack>=2
+  voltaic_blaze_up: buff.voltaic_blaze.up
+  surging_totem_up: buff.surging_totem.up
+  dre_up: buff.deeply_rooted_elements.up
+  in_burst: buff.doom_winds.up|buff.ascendance.up|buff.feral_spirit.up
+  hailstorm_up: buff.hailstorm.up
+  lava_surge_up: buff.lava_surge.up
+  eb_ready: talent.elemental_blast&buff.maelstrom_weapon.stack>=5
+
+lists:
+  interrupts:
+  - wind_shear,if=target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - purge,if=target.purgeable,use_off_gcd=1
+
+  defensives:
+  - astral_shift,if=health.pct<=config.defensive_hp,use_off_gcd=1
+  - earth_elemental,if=health.pct<=(config.defensive_hp-10),use_off_gcd=1
+  - ancestral_guidance,if=health.pct<=config.defensive_hp
+  - healing_surge,if=health.pct<=35&var.maelstrom_5
+
+  items:
+  - potion,if=config.use_potions&var.in_burst
+  - use_item,slot=trinket1,use_off_gcd=1,if=var.in_burst
+  - use_item,slot=trinket2,use_off_gcd=1,if=var.in_burst
+
+  cooldowns:
+  - feral_spirit
+  - ascendance,if=talent.ascendance&(cooldown.feral_spirit.remains>30|var.feral_spirit_up)
+  - doom_winds,if=talent.doom_winds
+  - sundering,if=talent.sundering
+
+  racials:
+  - blood_fury,if=var.in_burst,use_off_gcd=1
+  - berserking,if=var.in_burst,use_off_gcd=1
+  - fireblood,if=var.in_burst,use_off_gcd=1
+  - ancestral_call,if=var.in_burst,use_off_gcd=1
+  - lights_judgment
+  - bag_of_tricks
+
+  totemic_call:
+  - surging_totem,if=cooldown.surging_totem.remains=0
+
+  burst:
+  - crash_lightning
+  - stormstrike,if=var.doom_winds_up
+  - windstrike,if=var.doom_winds_up
+  - tempest,if=var.tempest_ready&var.has_stormbringer
+  - elemental_blast,if=var.eb_ready
+  - lightning_bolt,if=var.maelstrom_10&!var.want_aoe
+  - chain_lightning,if=var.maelstrom_10&var.want_aoe
+  - chain_lightning,if=var.maelstrom_10&var.want_aoe
+  - stormstrike
+  - windstrike
+  - lava_lash,if=var.hot_hand_up
+  - voltaic_blaze,if=var.voltaic_blaze_up
+  - lava_burst,if=var.lava_surge_up
+  - lava_lash
+  - lightning_bolt,if=var.maelstrom_8
+  - chain_lightning,if=var.maelstrom_5&var.want_aoe
+  - chain_lightning,if=var.maelstrom_5&var.want_aoe
+
+  single:
+  - voltaic_blaze,if=!var.fs_up
+  - crash_lightning
+  - stormstrike,if=var.doom_winds_up
+  - windstrike,if=var.doom_winds_up
+  - tempest,if=var.tempest_ready&var.has_stormbringer
+  - elemental_blast,if=var.eb_ready&var.maelstrom_10
+  - elemental_blast,if=var.eb_ready&var.maelstrom_8&var.ascendance_up
+  - lightning_bolt,if=var.maelstrom_10
+  - lightning_bolt,if=var.maelstrom_8&var.ascendance_up
+  - lava_lash,if=var.hot_hand_up
+  - stormstrike
+  - windstrike
+  - lava_lash
+  - voltaic_blaze,if=var.voltaic_blaze_up
+  - lava_burst,if=var.lava_surge_up
+  - flame_shock,if=var.fs_low|!var.fs_up
+  - frost_shock,if=var.hailstorm_up
+  - elemental_blast,if=var.eb_ready
+  - lightning_bolt,if=var.maelstrom_5
+  - fire_nova,if=active_dot.flame_shock>=2
+  - flametongue_weapon,if=buff.flametongue_weapon.remains<5
+  - ice_strike,if=talent.ice_strike
+  - flame_shock
+  - frost_shock
+
+  aoe:
+  - tempest,if=var.tempest_ready&var.has_stormbringer
+  - elemental_blast,if=var.eb_ready&var.maelstrom_10
+  - chain_lightning,if=var.maelstrom_10
+  - chain_lightning,if=var.maelstrom_10
+  - crash_lightning
+  - flame_shock,if=active_dot.flame_shock<active_enemies&active_enemies<=6
+  - lava_lash,if=var.hot_hand_up
+  - fire_nova,if=active_dot.flame_shock>=3
+  - stormstrike,if=var.doom_winds_up
+  - windstrike,if=var.doom_winds_up
+  - chain_lightning,if=var.maelstrom_5
+  - chain_lightning,if=var.maelstrom_5
+  - lava_lash
+  - stormstrike
+  - windstrike
+  - frost_shock,if=var.hailstorm_up
+  - ice_strike,if=talent.ice_strike
+  - flametongue_weapon,if=buff.flametongue_weapon.remains<5
+
+  anti_idle:
+  - stormstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - windstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - lava_lash,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - lightning_bolt,if=target.exists&target.enemy&target.alive&var.maelstrom_5,ignore_queue=true
+
+  fallback:
+  - stormstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - windstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - lava_lash,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - crash_lightning,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - lightning_bolt,if=target.exists&target.enemy&target.alive&var.maelstrom_5,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - windfury_weapon,range_check=none,if=mainhand.enchant.up=0
+  - flametongue_weapon,range_check=none,if=offhand.enchant.up=0
+  - lightning_shield,range_check=none,if=buff.lightning_shield.down
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=dispel,if=config.use_dispel
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=totemic_call,if=var.has_totemic
+  - call_action_list,name=burst,if=var.in_burst
+  - call_action_list,name=aoe,if=var.want_aoe&!config.funnel_mode
+  - call_action_list,name=single
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

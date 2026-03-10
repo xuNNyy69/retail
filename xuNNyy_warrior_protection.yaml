@@ -1,0 +1,164 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 73
+name: xuNNyy_warrior_protection
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  auto_taunt:
+    label: "Auto Taunt"
+    type: checkbox
+    default: true
+  shield_block_hp:
+    label: "Shield Block below HP%"
+    type: slider
+    min: 40
+    max: 100
+    default: 100
+  defensive_hp:
+    label: "Major Defensive HP%"
+    type: slider
+    min: 20
+    max: 80
+    default: 50
+
+variables:
+  execute_phase: target.health.pct<20|talent.massacre&target.health.pct<35
+  in_avatar: buff.avatar.up
+  violent_outburst_up: buff.violent_outburst.up
+  burst_of_power_2: buff.burst_of_power.stack>=2
+  sudden_death_up: buff.sudden_death.up
+  revenge_buff: buff.revenge.up
+  colossal_might_ok: buff.colossal_might.stack>=3
+  shield_block_low: buff.shield_block.remains<=gcd*2
+
+lists:
+  interrupts:
+  - pummel,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - storm_bolt,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - shield_block,if=(var.shield_block_low|!buff.shield_block.up|cooldown.shield_block.charges>=2)&health.pct<=config.shield_block_hp
+  - ignore_pain,if=rage>=75|buff.seeing_red.stack>=7,use_off_gcd=1
+  - last_stand,if=health.pct<=config.defensive_hp
+  - die_by_the_sword,if=health.pct<=config.defensive_hp
+  - rallying_cry,if=health.pct<=config.defensive_hp
+  - enraged_regeneration,if=health.pct<=config.defensive_hp
+  - spell_reflection,if=target.casting
+
+  items:
+  - use_item,slot=trinket1,if=config.use_trinkets&var.in_avatar
+  - use_item,slot=trinket2,if=config.use_trinkets&var.in_avatar
+  - potion,if=config.use_potions&var.in_avatar
+
+  cooldowns:
+  - charge,if=!player.combat
+  - avatar
+  - ravager
+  - demoralizing_shout
+  - champions_spear,if=talent.champions_spear
+  - thunderous_roar
+  - shield_charge
+
+  aoe:
+  - thunder_blast,if=talent.lightning_strikes&dot.rend.remains<=1
+  - thunder_clap,if=dot.rend.remains<=1
+  - thunder_blast,if=talent.lightning_strikes&active_enemies>=2&var.in_avatar
+  - execute,if=active_enemies<=3&!talent.demolish&(rage>=50|var.sudden_death_up)&talent.heavy_handed
+  - thunder_clap,if=active_enemies>=4&var.in_avatar&talent.lightning_strikes
+  - thunder_clap,if=active_enemies>6&var.in_avatar
+  - revenge,if=talent.demolish&rage>=50
+  - revenge,if=rage>=70&active_enemies>=3
+  - shield_slam,if=rage<=60|var.violent_outburst_up
+  - thunder_blast,if=talent.lightning_strikes
+  - thunder_clap
+  - revenge,if=rage>=30
+
+  generic:
+  - thunder_blast,if=talent.lightning_strikes&buff.thunder_blast.stack>=2&buff.burst_of_power.stack<=1&var.in_avatar
+  - shield_slam,if=var.burst_of_power_2&buff.thunder_blast.stack<=1|var.violent_outburst_up
+  - thunder_blast,if=talent.lightning_strikes&var.in_avatar
+  - shield_slam
+  - demolish,if=talent.demolish&var.colossal_might_ok
+  - revenge,if=talent.demolish&rage>=50
+  - thunder_blast,if=talent.lightning_strikes
+  - thunder_blast,if=talent.lightning_strikes&dot.rend.remains<=2
+  - thunder_clap,if=dot.rend.remains<=2
+  - thunder_blast,if=talent.lightning_strikes&(active_enemies>=1|cooldown.shield_slam.remains>0)
+  - execute,if=(active_enemies<=3&!talent.demolish|active_enemies<=2&talent.demolish)&(rage>=70|rage>=40&cooldown.shield_slam.remains>0|var.sudden_death_up&talent.sudden_death)
+  - thunder_clap,if=(active_enemies>=1|cooldown.shield_slam.remains>0)&talent.lightning_strikes&rage<=80
+  - revenge,if=rage>=80&!var.execute_phase|var.revenge_buff&var.execute_phase&rage<=18&cooldown.shield_slam.remains>0|var.revenge_buff&!var.execute_phase
+  - execute,if=(active_enemies<=3&!talent.demolish|active_enemies<=2&talent.demolish)&talent.deep_wounds
+  - revenge
+  - thunder_clap
+  - devastate
+
+  racials:
+  - return,if=!state.cds
+  - berserking,if=buff.avatar.up,use_off_gcd=1
+  - blood_fury,if=buff.avatar.up,use_off_gcd=1
+  - fireblood,if=buff.avatar.up,use_off_gcd=1
+  - ancestral_call,if=buff.avatar.up,use_off_gcd=1
+  - lights_judgment
+  - bag_of_tricks
+  - arcane_torrent,use_off_gcd=1
+
+  anti_idle:
+  - shield_slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - devastate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - heroic_throw,if=target.exists&target.enemy&target.alive
+  - devastate,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - battle_shout,range_check=none,if=!buff.battle_shout.up
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - taunt,if=config.auto_taunt,use_off_gcd=1
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets
+  - thunder_blast,if=talent.lightning_strikes&active_enemies>=2&buff.thunder_blast.stack>=2
+  - call_action_list,name=aoe,if=active_enemies>=3
+  - call_action_list,name=generic
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

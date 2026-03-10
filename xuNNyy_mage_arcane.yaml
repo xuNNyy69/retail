@@ -1,0 +1,159 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 62
+name: xuNNyy_mage_arcane
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  in_ranged: target.range<=40
+  in_cd_window: buff.arcane_surge.up|debuff.touch_of_the_magi.up
+  is_spellslinger: "!talent.spellfire_spheres"
+  is_sunfury: talent.spellfire_spheres
+  aoe_target_count: 3
+
+lists:
+  interrupts:
+  - counterspell,if=config.use_interrupts&target.casting&var.in_ranged,use_off_gcd=1,ignore_movement=true
+
+  defensives:
+  - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
+  - mirror_image,if=health.pct<=40&!buff.ice_block.up,ignore_movement=true
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_cd_window|target.time_to_die<20),ignore_movement=true
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_cd_window|target.time_to_die<20),ignore_movement=true
+
+  cooldowns:
+  - potion,if=buff.arcane_surge.up,ignore_movement=true
+  - call_action_list,name=cd_opener
+
+  cd_opener:
+  - touch_of_the_magi,if=usable.touch_of_the_magi&buff.arcane_surge.up&var.is_spellslinger,ignore_movement=true
+  - touch_of_the_magi,if=usable.touch_of_the_magi&buff.arcane_surge.up&buff.arcane_surge.remains<=5,ignore_movement=true
+  - touch_of_the_magi,if=usable.touch_of_the_magi&!buff.arcane_surge.up&arcane_charge=4,ignore_movement=true
+  - arcane_blast,if=buff.presence_of_mind.up,ignore_movement=true
+  - arcane_orb,if=talent.high_voltage&time<5&arcane_charge<4,ignore_movement=true
+  - arcane_barrage,if=buff.arcane_tempo.up&usable.evocation&buff.arcane_tempo.remains<=gcd,ignore_movement=true
+  - evocation,if=cooldown.arcane_surge.remains<=4&!buff.arcane_surge.up&mana.pct<=60,ignore_movement=true
+  - evocation,if=!buff.arcane_surge.up&mana.pct<=35,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.nether_precision.up&var.in_cd_window,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.arcane_harmony.stack>=30&var.in_cd_window,ignore_movement=true
+  - arcane_surge,if=usable.arcane_surge&arcane_charge=4&(!talent.evocation|cooldown.evocation.remains<=gcd|buff.arcane_surge.up),ignore_movement=true
+  - arcane_surge,if=usable.arcane_surge&arcane_charge=4&mana.pct>=70,ignore_movement=true
+
+  spellslinger:
+  - shifting_power,if=!buff.arcane_surge.up&!debuff.touch_of_the_magi.up&!buff.presence_of_mind.up&cooldown.arcane_surge.remains>=12,ignore_movement=true
+  - nether_tempest,if=talent.nether_tempest&(debuff.nether_tempest.down|debuff.nether_tempest.remains<3),ignore_movement=true
+  - cancel_buff,buff=presence_of_mind,if=buff.presence_of_mind.stack=1&prev_gcd.1.arcane_blast
+  - presence_of_mind,if=debuff.touch_of_the_magi.remains<=4&buff.nether_precision.up&arcane_charge=4,ignore_movement=true
+  - presence_of_mind,if=debuff.touch_of_the_magi.remains<=2&arcane_charge=4,ignore_movement=true
+  - supernova,if=buff.unerring_proficiency.stack>=30&var.in_cd_window,ignore_movement=true
+  - supernova,if=buff.unerring_proficiency.stack>=30&cooldown.arcane_surge.remains>=20,ignore_movement=true
+  - arcane_orb,if=buff.clearcasting.up&arcane_charge<4,ignore_movement=true
+  - arcane_orb,if=arcane_charge<4&(!var.want_aoe|active_enemies<var.aoe_target_count),ignore_movement=true
+  - arcane_orb,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charge<4,ignore_movement=true
+  - arcane_explosion,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charge<4&target.range<=10,ignore_movement=true
+  - arcane_barrage,if=buff.arcane_tempo.up&buff.arcane_tempo.remains<=gcd&arcane_charge=4,ignore_movement=true
+  - arcane_barrage,if=talent.polished_focus&buff.arcane_salvo.stack>=20&arcane_charge=4,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.nether_precision.up&arcane_charge=4,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.arcane_harmony.stack>=30,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.clearcasting.stack>=2&arcane_charge=4,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&var.in_cd_window,ignore_movement=true
+  - arcane_barrage,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charge=4,ignore_movement=true
+  - arcane_blast,if=arcane_charge<4|mana.pct>=30,ignore_movement=true
+  - arcane_barrage,if=arcane_charge=4&mana.pct<30,ignore_movement=true
+  - arcane_barrage,ignore_movement=true
+
+  sunfury:
+  - shifting_power,if=!buff.arcane_surge.up&!debuff.touch_of_the_magi.up&!buff.arcane_soul.up&!buff.presence_of_mind.up&cooldown.arcane_surge.remains>=15,ignore_movement=true
+  - nether_tempest,if=talent.nether_tempest&(debuff.nether_tempest.down|debuff.nether_tempest.remains<3),ignore_movement=true
+  - cancel_buff,buff=presence_of_mind,if=buff.presence_of_mind.stack=1&prev_gcd.1.arcane_blast
+  - presence_of_mind,if=debuff.touch_of_the_magi.remains<=4&buff.nether_precision.up&arcane_charge=4,ignore_movement=true
+  - presence_of_mind,if=buff.arcane_soul.up&arcane_charge=4&buff.nether_precision.up,ignore_movement=true
+  - arcane_missiles,if=buff.arcane_soul.up&buff.clearcasting.up&buff.nether_precision.up,ignore_movement=true
+  - arcane_missiles,if=buff.arcane_soul.up&buff.clearcasting.up&buff.arcane_harmony.stack>=30,ignore_movement=true
+  - arcane_missiles,if=buff.arcane_soul.up&buff.clearcasting.up,ignore_movement=true
+  - arcane_barrage,if=buff.arcane_soul.up&arcane_charge=4&!buff.nether_precision.up,ignore_movement=true
+  - arcane_orb,if=arcane_charge<3&!buff.arcane_soul.up,ignore_movement=true
+  - arcane_orb,if=arcane_charge<3&buff.arcane_soul.up&cooldown.arcane_soul.remains>=10,ignore_movement=true
+  - arcane_explosion,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charge<3&target.range<=10,ignore_movement=true
+  - arcane_barrage,if=buff.arcane_tempo.up&buff.arcane_tempo.remains<=gcd&arcane_charge=4,ignore_movement=true
+  - arcane_barrage,if=buff.intuition.up&buff.intuition.remains<=gcd&arcane_charge=4,ignore_movement=true
+  - arcane_barrage,if=buff.arcane_harmony.stack>=30&arcane_charge=4&!buff.nether_precision.up&!buff.arcane_soul.up,ignore_movement=true
+  - arcane_barrage,if=buff.arcane_salvo.stack>=16&arcane_charge=4&!buff.arcane_soul.up,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.nether_precision.up&arcane_charge=4,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.arcane_harmony.stack>=30&arcane_charge=4,ignore_movement=true
+  - arcane_missiles,if=buff.clearcasting.up&buff.clearcasting.stack>=2,ignore_movement=true
+  - arcane_barrage,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charge=4,ignore_movement=true
+  - arcane_blast,if=arcane_charge<4|mana.pct>=30,ignore_movement=true
+  - arcane_barrage,if=arcane_charge=4&mana.pct<30,ignore_movement=true
+  - arcane_barrage,ignore_movement=true
+
+  racials:
+  - berserking,if=usable.berserking&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
+  - blood_fury,if=usable.blood_fury&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
+  - fireblood,if=usable.fireblood&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
+  - ancestral_call,if=usable.ancestral_call&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
+
+  anti_idle:
+  - arcane_blast,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
+
+  fallback:
+  - arcane_blast,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
+  - arcane_barrage,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - arcane_intellect,range_check=none,if=!buff.arcane_intellect.up
+  - ice_barrier,range_check=none,if=talent.ice_barrier&buff.ice_barrier.down
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts work while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - stop_casting,if=(player.casting|player.channeling)&(buff.clearcasting.stack>=2|buff.arcane_surge.up|buff.nether_precision.up)
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=spellslinger,if=var.is_spellslinger
+  - call_action_list,name=sunfury,if=var.is_sunfury
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

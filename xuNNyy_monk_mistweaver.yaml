@@ -1,0 +1,306 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 270
+name: xuNNyy_monk_mistweaver
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  use_dispel:
+    label: "Use Dispel (Detox)"
+    type: checkbox
+    default: true
+  heal_only:
+    label: "Heal Only (No DPS)"
+    type: checkbox
+    default: false
+  use_soothing_mist:
+    label: "Use Soothing Mist"
+    type: checkbox
+    default: true
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  emergency_hp:
+    label: "Emergency HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 40
+  major_heal_hp:
+    label: "Major Heal HP%"
+    type: slider
+    min: 30
+    max: 90
+    default: 65
+  light_heal_hp:
+    label: "Light Heal HP%"
+    type: slider
+    min: 50
+    max: 100
+    default: 85
+  life_cocoon_hp:
+    label: "Life Cocoon HP%"
+    type: slider
+    min: 10
+    max: 70
+    default: 35
+  revival_hp:
+    label: "Revival HP%"
+    type: slider
+    min: 20
+    max: 90
+    default: 55
+  revival_min_injured:
+    label: "Revival Min Injured"
+    type: slider
+    min: 2
+    max: 10
+    default: 3
+  sheiluns_min_stacks:
+    label: "Sheilun's Gift Min Stacks"
+    type: slider
+    min: 4
+    max: 15
+    default: 8
+  fistweave_group_hp:
+    label: "Safe to Fistweave HP%"
+    type: slider
+    min: 50
+    max: 100
+    default: 85
+  fistweave_max_injured:
+    label: "Fistweave Max Injured"
+    type: slider
+    min: 0
+    max: 5
+    default: 2
+  defensives_hp:
+    label: "Fortifying Brew HP%"
+    type: slider
+    min: 10
+    max: 99
+    default: 45
+  mana_tea_min_stacks:
+    label: "Mana Tea Min Stacks"
+    type: slider
+    min: 10
+    max: 20
+    default: 12
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+
+  # Talent / hero tree detection
+  has_cotc: talent.conduit_of_the_celestials
+  has_chi_ji: talent.invoke_chi_ji_the_red_crane
+  has_yulon: talent.invoke_yulon_the_jade_serpent
+  has_teachings: talent.teachings_of_the_monastery
+  has_faeline: talent.faeline_stomp
+  has_dance: talent.dance_of_chiji
+  has_chi_burst: talent.chi_burst
+  has_mana_tea: talent.mana_tea
+  has_sheilun: talent.sheiluns_gift
+  has_touch_of_death: talent.touch_of_death
+
+  # Buff states
+  tft_up: buff.thunder_focus_tea.up
+  chiji_up: buff.invoke_chi_ji_the_red_crane.up
+  yulon_up: buff.invoke_yulon_the_jade_serpent.up
+  invoke_up: var.chiji_up|var.yulon_up
+  dance_up: buff.dance_of_chiji.up
+  teachings_stack: buff.teachings_of_the_monastery.stack
+  sheilun_ready: buff.sheiluns_gift.stack>=config.sheiluns_min_stacks
+  sheilun_capped: buff.sheiluns_gift.stack>=14
+
+  # Group health pressure
+  need_emergency: group.lowest.health.pct<config.emergency_hp
+  multi_emergency: group.count(cycle.health.pct<config.emergency_hp)>=2
+  need_major_heal: group.lowest.health.pct<config.major_heal_hp
+  need_light_heal: group.lowest.health.pct<config.light_heal_hp
+  need_revival: group.count(cycle.health.pct<config.revival_hp)>=config.revival_min_injured
+  rmist_needed: group.lowest.health.pct<config.light_heal_hp
+  rmist_overcap: cooldown.renewing_mist.charges>=2
+
+  # Safe to fistweave
+  safe_to_fistweave: group.lowest.health.pct>=config.fistweave_group_hp&group.count(cycle.health.pct<config.fistweave_group_hp)<=config.fistweave_max_injured
+
+  # Mana
+  mana_tea_ready: var.has_mana_tea&buff.mana_tea.stack>=config.mana_tea_min_stacks
+  mana_tea_threshold: mana.pct<50
+
+lists:
+  interrupts:
+  - spear_hand_strike,if=target.casting.interruptible,use_off_gcd=1
+
+  dispel:
+  - detox,cycle_targets=1,if=cycle.dispelable.magic|cycle.dispelable.poison|cycle.dispelable.disease
+
+  defensives:
+  - fortifying_brew,if=dangerous_debuff.up|health.pct<config.defensives_hp
+  - diffuse_magic,if=dangerous_debuff.magic.up|player.has_magic_debuff,use_off_gcd=1
+  - dampen_harm,if=dangerous_debuff.physical.up,use_off_gcd=1
+  - touch_of_karma,if=health.pct<config.defensives_hp&target.exists&target.enemy,use_off_gcd=1
+
+  cancel_casts:
+  - stop_casting,casting_check=soothing_mist,if=player.channeling&(var.need_emergency|cooldown.life_cocoon.ready&group.lowest.health.pct<config.life_cocoon_hp)
+  - stop_casting,casting_check=soothing_mist,if=player.channeling&var.rmist_overcap
+  - stop_casting,casting_check=soothing_mist,if=player.channeling&!var.need_major_heal&var.safe_to_fistweave
+
+  sm_healing:
+  - vivify,target=lowest,if=var.need_emergency
+  - enveloping_mist,target=lowest,if=var.tft_up&var.need_major_heal
+  - enveloping_mist,target=lowest,if=var.need_major_heal
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready&var.need_major_heal
+  - vivify,target=lowest,if=var.need_major_heal
+  - renewing_mist,target=lowest,if=var.rmist_overcap
+
+  emergency:
+  - life_cocoon,target=lowest,if=group.lowest.health.pct<config.life_cocoon_hp
+  - revival,if=var.multi_emergency|var.need_revival
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
+  - vivify,target=lowest
+  - renewing_mist,target=lowest,if=cooldown.renewing_mist.charges>=1
+
+  cooldowns:
+  - thunder_focus_tea,use_off_gcd=1,if=!var.tft_up
+  - invoke_chi_ji_the_red_crane,if=var.has_chi_ji&(var.need_emergency|var.need_major_heal|active_enemies>=config.aoe_threshold)
+  - invoke_yulon_the_jade_serpent,if=var.has_yulon&!var.has_chi_ji&(var.need_major_heal|var.need_revival|active_enemies>=config.aoe_threshold)
+  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready&!var.need_emergency
+  - mana_tea,if=var.mana_tea_ready&(!var.need_major_heal|var.mana_tea_threshold)
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
+  - potion,if=config.use_potions&(var.need_emergency|var.invoke_up)
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.invoke_up|var.tft_up
+  - blood_fury,use_off_gcd=1,if=var.invoke_up|var.tft_up
+  - fireblood,use_off_gcd=1,if=dangerous_debuff.up
+  - ancestral_call,use_off_gcd=1,if=var.invoke_up|var.tft_up
+  - arcane_torrent,use_off_gcd=1,if=mana.pct<=75
+  - lights_judgment
+  - bag_of_tricks
+
+  healing:
+  - renewing_mist,target=lowest,if=var.tft_up&(var.rmist_needed|var.rmist_overcap)
+  - renewing_mist,target=lowest,if=var.rmist_overcap
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
+  - life_cocoon,target=lowest,if=group.lowest.health.pct<config.life_cocoon_hp
+  - soothing_mist,target=lowest,if=config.use_soothing_mist&var.need_major_heal&!player.moving&!player.casting&!player.channeling
+  - enveloping_mist,target=lowest,if=var.need_major_heal
+  - vivify,target=lowest,if=var.need_major_heal
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
+  - renewing_mist,target=lowest,if=var.rmist_needed
+  - essence_font,if=group.count(cycle.health.pct<config.major_heal_hp)>=2&!var.need_emergency
+  - vivify,target=lowest,if=var.need_light_heal
+  - renewing_mist,target=lowest,if=cooldown.renewing_mist.charges>=1
+  - rising_sun_kick,if=!config.heal_only
+  # TOKEN: verify rushing_wind_kick works for spec 270 (MW). May need rising_sun_kick instead.
+  - rushing_wind_kick,if=!config.heal_only
+
+  fistweave_st:
+  - renewing_mist,target=lowest,if=var.rmist_overcap
+  - touch_of_death,if=var.has_touch_of_death&target.health.pct<=15
+  - thunder_focus_tea,if=!var.tft_up&(cooldown.rising_sun_kick.remains<gcd|var.rmist_overcap),use_off_gcd=1
+  - rising_sun_kick
+  - rushing_wind_kick
+  - blackout_kick,if=var.has_teachings&var.teachings_stack>=3
+  - faeline_stomp,if=var.has_faeline
+  - chi_burst,if=var.has_chi_burst
+  - blackout_kick,if=var.has_teachings&var.teachings_stack>=1&cooldown.rising_sun_kick.remains>gcd
+  - spinning_crane_kick,if=var.has_dance&var.dance_up
+  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
+  - tiger_palm
+
+  fistweave_aoe:
+  - renewing_mist,target=lowest,if=var.rmist_needed|var.rmist_overcap
+  - touch_of_death,if=var.has_touch_of_death&target.health.pct<=15
+  - spinning_crane_kick,if=var.has_dance&var.dance_up
+  - thunder_focus_tea,if=!var.tft_up&(var.rmist_overcap|cooldown.rising_sun_kick.remains<gcd),use_off_gcd=1
+  - rising_sun_kick
+  - rushing_wind_kick
+  - faeline_stomp,if=var.has_faeline
+  - chi_burst,if=var.has_chi_burst
+  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
+  - spinning_crane_kick,if=active_enemies>=config.aoe_threshold
+  - blackout_kick,if=var.has_teachings&var.teachings_stack>=1&cooldown.rising_sun_kick.remains>gcd
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
+  - tiger_palm
+
+  anti_idle:
+  - rising_sun_kick,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - rushing_wind_kick,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - renewing_mist,target=lowest,if=var.rmist_needed
+  - vivify,target=lowest,if=var.need_major_heal
+  - rising_sun_kick,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
+  - rushing_wind_kick,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
+  - tiger_palm,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
+
+  out_of_combat:
+  - renewing_mist,target=lowest,if=var.rmist_needed
+  - vivify,target=lowest,if=var.need_major_heal
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  - call_action_list,name=out_of_combat,if=!player.combat
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  - call_action_list,name=cancel_casts
+  - call_action_list,name=sm_healing,if=player.channeling
+  # Interrupts
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=dispel,if=config.use_dispel
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  - return,if=player.casting|player.channeling
+  - call_action_list,name=emergency,if=var.need_emergency
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=healing,if=var.need_emergency|!var.safe_to_fistweave
+  - return,if=config.heal_only
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - call_action_list,name=fistweave_aoe,if=var.safe_to_fistweave&var.want_aoe
+  - call_action_list,name=fistweave_st,if=var.safe_to_fistweave
+  - call_action_list,name=healing
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback

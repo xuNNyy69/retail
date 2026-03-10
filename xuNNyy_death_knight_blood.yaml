@@ -1,0 +1,248 @@
+version: "2.0"
+author: xuNNyy
+patch: 12.1
+spec: 250
+name: xuNNyy_deathknight_blood
+entry: main
+
+config:
+  use_trinkets:
+    label: "Use Items"
+    type: checkbox
+    default: true
+  use_potions:
+    label: "Use Potions"
+    type: checkbox
+    default: true
+  use_cooldowns:
+    label: "Use Cooldowns"
+    type: checkbox
+    default: true
+  use_defensives:
+    label: "Use Defensives"
+    type: checkbox
+    default: true
+  use_interrupts:
+    label: "Use Interrupts"
+    type: checkbox
+    default: true
+  auto_taunt:
+    label: "Auto Taunt"
+    type: checkbox
+    default: false
+  anti_idle_mode:
+    label: "Anti Idle Mode"
+    type: checkbox
+    default: true
+  aoe_threshold:
+    label: "AoE Threshold"
+    type: slider
+    min: 2
+    max: 8
+    default: 3
+  defensive_hp:
+    label: "Major Defensive HP%"
+    type: slider
+    min: 20
+    max: 70
+    default: 45
+  self_heal_hp:
+    label: "Death Strike HP%"
+    type: slider
+    min: 30
+    max: 95
+    default: 65
+  boneshield_min_stacks:
+    label: "Bone Shield Min Stacks"
+    type: slider
+    min: 3
+    max: 10
+    default: 5
+
+variables:
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+
+  # Runic Power
+  rp_ok: runic_power>=45
+  ds_deficit_ok: runic_power>=105
+  ds_deficit_drw_san: runic_power>=89
+  ds_deficit_drw_db: runic_power>=99
+
+  # Rune states
+  rune_ok: rune>=2
+  rune_low: rune<=1
+
+  # Bone Shield
+  bone_critical: buff.bone_shield.down|buff.bone_shield.stack<=1
+  bone_low: buff.bone_shield.stack<config.boneshield_min_stacks
+  bone_ok: buff.bone_shield.stack>=7
+
+  # Cooldown / buff tracking
+  drw_up: buff.dancing_rune_weapon.up
+  vb_up: buff.vampiric_blood.up
+  crimson_proc: buff.crimson_scourge.up
+  boiling_proc: buff.boiling_point.up
+  bb_charges_high: cooldown.blood_boil.charges>=2
+  dnd_active: buff.death_and_decay.up
+
+  # Hero tree detection
+  has_sanlayn: talent.vampiric_strike
+  has_deathbringer: talent.reapers_mark
+
+  # Sanlayn proc tracking
+  vs_proc: buff.vampiric_strike.up
+  essence_expiring: buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.remains<1.5
+  iosorrow_up: buff.infliction_of_sorrow.up
+
+  # Deathbringer proc tracking
+  exterminate_up: buff.exterminate.up
+  coagulopathy_expiring: buff.coagulopathy.up&buff.coagulopathy.remains<=gcd
+
+  # Death Strike survival conditions
+  ds_emergency: health.pct<=(config.self_heal_hp-20)&var.rp_ok
+  ds_coag: var.coagulopathy_expiring&var.rp_ok
+  ds_hp: health.pct<=config.self_heal_hp&var.rp_ok&!var.bone_critical
+
+lists:
+
+  taunt:
+  - dark_command,if=config.auto_taunt&player.combat&target.threat<3,use_off_gcd=1
+
+  interrupts:
+  - mind_freeze,if=target.casting.interruptible,use_off_gcd=1
+
+  defensives:
+  - anti_magic_shell,if=dangerous_debuff.magic.up|nameplate.casting.magic,use_off_gcd=1
+  - rune_tap,if=health.pct<=config.defensive_hp,use_off_gcd=1
+  - vampiric_blood,if=dangerous_debuff.up&health.pct<=config.defensive_hp,use_off_gcd=1
+  - vampiric_blood,if=health.pct<=(config.defensive_hp-10),use_off_gcd=1
+  - icebound_fortitude,if=dangerous_debuff.physical.up&health.pct<=config.defensive_hp,use_off_gcd=1
+  - icebound_fortitude,if=health.pct<=(config.defensive_hp-10)&buff.vampiric_blood.down,use_off_gcd=1
+  - lichborne,if=health.pct<=(config.defensive_hp-15),use_off_gcd=1
+
+  self_healing:
+  - death_strike,if=var.ds_coag
+  - death_strike,if=var.ds_emergency
+  - death_strike,if=var.ds_hp
+
+  items:
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.drw_up|var.vb_up|active_enemies>=config.aoe_threshold)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.drw_up|var.vb_up|active_enemies>=config.aoe_threshold)
+  - potion,if=config.use_potions&(var.drw_up|health.pct<=config.defensive_hp)
+
+  cooldowns:
+  - dancing_rune_weapon
+  - raise_dead,if=!pet.exists|pet.dead
+  - vampiric_blood,if=var.drw_up|active_enemies>=config.aoe_threshold
+  - empower_rune_weapon,if=var.rune_low&runic_power<40
+  - tombstone,if=talent.tombstone&var.bone_ok&!var.drw_up
+  - abomination_limb,if=talent.abomination_limb
+  - consumption,if=talent.consumption
+  - bonestorm,if=talent.bonestorm&runic_power>=80&(var.want_aoe|var.drw_up)
+
+  racials:
+  - berserking,use_off_gcd=1,if=var.drw_up
+  - blood_fury,use_off_gcd=1,if=var.drw_up
+  - fireblood,use_off_gcd=1,if=var.drw_up|dangerous_debuff.up
+  - ancestral_call,use_off_gcd=1,if=var.drw_up
+  - arcane_torrent,use_off_gcd=1,if=runic_power<=60
+  - lights_judgment
+  - bag_of_tricks
+
+  maintenance:
+  - outbreak,if=debuff.blood_plague.down
+  - marrowrend,if=var.bone_critical
+  - marrowrend,if=var.exterminate_up
+  - marrowrend,if=var.bone_low&var.rune_ok
+  - heart_strike,if=rune>=4
+  - vampiric_strike,if=rune>=4
+  - blood_boil,if=var.boiling_proc&rune<4
+  - blood_boil,if=var.bb_charges_high
+
+  sanlayn:
+  - heart_strike,if=var.essence_expiring
+  - vampiric_strike,if=var.essence_expiring
+  - death_strike,if=var.drw_up&var.ds_deficit_drw_san
+  - death_strike,if=var.ds_deficit_ok
+  - soul_reaper,if=talent.soul_reaper&target.health.pct<=35
+  - heart_strike,if=var.dnd_active&(var.iosorrow_up|var.vs_proc)
+  - vampiric_strike,if=var.dnd_active&(var.iosorrow_up|var.vs_proc)
+  - bonestorm,if=talent.bonestorm&runic_power>=50
+  - heart_strike,if=var.vs_proc
+  - vampiric_strike,if=var.vs_proc
+  - blood_boil,if=debuff.blood_plague.down
+  - death_and_decay,if=var.crimson_proc
+  - heart_strike,if=var.rune_ok
+  - vampiric_strike,if=var.rune_ok
+  - blood_boil
+  - heart_strike,ignore_queue=true
+  - vampiric_strike,ignore_queue=true
+
+  deathbringer:
+  - reapers_mark,if=config.use_cooldowns
+  - death_strike,if=var.drw_up&var.ds_deficit_drw_db
+  - death_strike,if=var.ds_deficit_ok
+  - bonestorm,if=talent.bonestorm&runic_power>=50
+  - soul_reaper,if=talent.soul_reaper&target.health.pct<=35
+  - deaths_caress,if=debuff.blood_plague.down
+  - death_and_decay,if=!var.dnd_active
+  - heart_strike,if=buff.coagulopathy.stack<5
+  - vampiric_strike,if=buff.coagulopathy.stack<5
+  - heart_strike,if=var.rune_ok
+  - vampiric_strike,if=var.rune_ok
+  - blood_boil
+  - heart_strike,ignore_queue=true
+  - vampiric_strike,ignore_queue=true
+
+  st:
+  - death_and_decay,if=var.crimson_proc
+  - heart_strike,if=var.rune_ok
+  - vampiric_strike,if=var.rune_ok
+  - death_strike,if=var.ds_deficit_ok
+  - soul_reaper,if=talent.soul_reaper&target.health.pct<=35
+  - blood_boil
+  - heart_strike,ignore_queue=true
+  - vampiric_strike,ignore_queue=true
+
+  aoe:
+  - death_and_decay,if=!var.dnd_active|var.crimson_proc
+  - deaths_caress,if=debuff.blood_plague.down
+  - blood_boil
+  - heart_strike,if=var.dnd_active&var.rune_ok
+  - vampiric_strike,if=var.dnd_active&var.rune_ok
+
+  anti_idle:
+  - heart_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - vampiric_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  fallback:
+  - blood_boil,if=target.exists&target.enemy&target.alive,ignore_queue=true
+
+  main:
+  - call_action_list,name=spell_queue
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=auto_target
+  # Combat check
+  - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+  - return,if=!player.combat&config.auto_combat.has(0)
+  # Interrupts (before cast guard so off-GCD interrupts fire while casting)
+  - call_action_list,name=interrupts,if=config.use_interrupts
+  - call_action_list,name=taunt
+  # Defensives
+  - call_action_list,name=defensives,if=config.use_defensives
+  - call_action_list,name=self_healing
+  # Target check
+  - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+  - return,if=!target.valid&config.auto_combat.has(0)
+  - return,if=player.casting|player.channeling
+  - auto_attack
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=maintenance
+  - call_action_list,name=aoe,if=var.want_aoe
+  - call_action_list,name=sanlayn,if=var.has_sanlayn
+  - call_action_list,name=deathbringer,if=var.has_deathbringer
+  - call_action_list,name=st
+  - call_action_list,name=anti_idle,if=config.anti_idle_mode
+  - call_action_list,name=fallback
