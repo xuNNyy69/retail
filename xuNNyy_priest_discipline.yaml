@@ -81,7 +81,7 @@ lists:
   - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
 
   dispel:
-  - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable.magic
+  - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable
 
   defensives:
   - desperate_prayer,if=config.use_defensives&health.pct<=50
@@ -97,11 +97,11 @@ lists:
   # Guide: Disc is squishy; don't hesitate to use Pain Suppression selfishly
   # ===========================================================
   emergency:
-  - pain_suppression,if=config.use_cooldowns&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
-  - pain_suppression,if=config.use_cooldowns&var.anyone_emergency,use_off_gcd=1
-  - penance,if=var.anyone_emergency
+  - pain_suppression,target=tanks.lowest,if=config.use_cooldowns&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
+  - pain_suppression,target=lowest,if=config.use_cooldowns&var.anyone_emergency,use_off_gcd=1
+  - penance,target=lowest,if=var.anyone_emergency
   - power_word_shield,cycle_targets=1,if=var.anyone_emergency&cycle.health.pct<config.emergency_hp
-  - flash_heal,if=var.anyone_emergency
+  - flash_heal,target=lowest,if=var.anyone_emergency
 
   # ===========================================================
   # Evangelism Ramp (Oracle)

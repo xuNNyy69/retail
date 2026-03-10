@@ -54,8 +54,8 @@ lists:
   - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_combustion,ignore_movement=true
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_combustion,ignore_movement=true
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_combustion
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_combustion
   - potion,if=config.use_potions&buff.combustion.up,ignore_movement=true
 
   cooldowns:

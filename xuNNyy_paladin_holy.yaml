@@ -103,7 +103,7 @@ lists:
   - rebuke,if=target.casting.interruptible,use_off_gcd=1
 
   dispel:
-  - cleanse,cycle=members,if=config.use_dispel&(cycle.dispelable.magic|cycle.dispelable.poison|cycle.dispelable.disease)
+  - cleanse,cycle=members,if=config.use_dispel&cycle.dispelable
 
   defensives:
   - divine_protection,if=health.pct<=50,use_off_gcd=1

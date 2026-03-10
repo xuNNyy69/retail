@@ -99,7 +99,7 @@ lists:
   - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
 
   dispel:
-  - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable.magic
+  - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable
   - mass_dispel,if=config.use_dispel&group.count(cycle.dispelable.magic)>=3
 
   defensives:
@@ -115,10 +115,10 @@ lists:
   # Emergency healing -- critical HP
   # ===========================================================
   emergency:
-  - guardian_spirit,if=config.use_cooldowns&cooldown.guardian_spirit.ready&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
-  - holy_word_serenity,if=var.serenity_ready&var.anyone_emergency
-  - flash_heal,if=var.anyone_emergency
-  - prayer_of_mending,if=cooldown.prayer_of_mending.ready&var.anyone_emergency
+  - guardian_spirit,target=tanks.lowest,if=config.use_cooldowns&cooldown.guardian_spirit.ready&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
+  - holy_word_serenity,target=lowest,if=var.serenity_ready&var.anyone_emergency
+  - flash_heal,target=lowest,if=var.anyone_emergency
+  - prayer_of_mending,target=lowest,if=cooldown.prayer_of_mending.ready&var.anyone_emergency
 
   # ===========================================================
   # Major cooldowns
@@ -130,7 +130,7 @@ lists:
   - apotheosis,if=cooldown.apotheosis.ready&var.multi_injured
   - divine_hymn,if=cooldown.divine_hymn.ready&var.multi_injured
   - power_infusion,if=cooldown.power_infusion.ready,use_off_gcd=1
-  - guardian_spirit,if=cooldown.guardian_spirit.ready&var.tank_low,use_off_gcd=1
+  - guardian_spirit,target=tanks.lowest,if=cooldown.guardian_spirit.ready&var.tank_low,use_off_gcd=1
 
   racials:
   - berserking,use_off_gcd=1,if=var.apotheosis_up|var.multi_injured
@@ -147,43 +147,43 @@ lists:
   healing:
   # Prayer of Mending: never let sit at 2 charges; main Oracle HoT engine
   # Guide: cast as often as possible, even at full health to prepare
-  - prayer_of_mending,if=cooldown.prayer_of_mending.charges>=2
-  - prayer_of_mending,if=cooldown.prayer_of_mending.ready&(var.apotheosis_up|var.multi_injured)
+  - prayer_of_mending,target=lowest,if=cooldown.prayer_of_mending.charges>=2
+  - prayer_of_mending,target=lowest,if=cooldown.prayer_of_mending.ready&(var.apotheosis_up|var.multi_injured)
 
   # Holy Words: avoid reaching 2 charges (triggers Epiphany / Lasting Words)
   # Serenity: single-target burst
-  - holy_word_serenity,if=cooldown.holy_word_serenity.charges>=2
+  - holy_word_serenity,target=lowest,if=cooldown.holy_word_serenity.charges>=2
   - holy_word_sanctify,if=cooldown.holy_word_sanctify.charges>=2
-  - holy_word_serenity,if=var.serenity_ready&(group.tanks.lowest.health.pct<config.serenity_hp|group.lowest.health.pct<config.serenity_hp)
+  - holy_word_serenity,target=lowest,if=var.serenity_ready&(group.tanks.lowest.health.pct<config.serenity_hp|group.lowest.health.pct<config.serenity_hp)
   # Sanctify: AoE burst
   - holy_word_sanctify,if=var.sanctify_ready&var.multi_injured
 
   # Benediction proc (Apex talent: upgraded instant Flash Heal)
   # Guide: spend immediately; spawns Divine Image via tier set
-  - flash_heal,if=var.benediction_up
+  - flash_heal,target=lowest,if=var.benediction_up
 
   # Prayer of Mending: on CD as filler
-  - prayer_of_mending,if=cooldown.prayer_of_mending.ready
+  - prayer_of_mending,target=lowest,if=cooldown.prayer_of_mending.ready
 
   # Holy Nova: Lightburst AoE proc
   - holy_nova,if=talent.lightburst&active_enemies>=2&var.multi_injured
 
   # Apotheosis window: spam Holy Words as fast as possible
-  - holy_word_serenity,if=var.apotheosis_up&var.serenity_ready
+  - holy_word_serenity,target=lowest,if=var.apotheosis_up&var.serenity_ready
   - holy_word_sanctify,if=var.apotheosis_up&var.sanctify_ready
 
   # Holy Words: general use when injured players present
-  - holy_word_serenity,if=var.serenity_ready&group.lowest.health.pct<config.serenity_hp
+  - holy_word_serenity,target=lowest,if=var.serenity_ready&group.lowest.health.pct<config.serenity_hp
   - holy_word_sanctify,if=var.sanctify_ready&group.lowest.health.pct<config.sanctify_hp
 
   # Prayer of Healing: group AoE at mana-permit; reduces Sanctify CD via Voice of Harmony
   - prayer_of_healing,if=var.multi_injured&group.lowest.health.pct<config.prayer_of_healing_hp
 
   # Surge of Light proc: instant free Flash Heal
-  - flash_heal,if=var.surge_of_light_up
+  - flash_heal,target=lowest,if=var.surge_of_light_up
 
   # Flash Heal: spot heal below threshold
-  - flash_heal,if=group.lowest.health.pct<config.flash_heal_hp
+  - flash_heal,target=lowest,if=group.lowest.health.pct<config.flash_heal_hp
 
   # ===========================================================
   # Archon-specific: Halo for AoE healing burst

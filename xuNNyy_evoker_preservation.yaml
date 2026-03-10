@@ -115,7 +115,7 @@ lists:
   - quell,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
 
   dispel:
-  - naturalize,cycle_targets=1,if=config.use_dispel&cycle.dispelable.poison
+  - naturalize,cycle_targets=1,if=config.use_dispel&cycle.dispelable
 
   defensives:
   - obsidian_scales,if=config.use_defensives&health.pct<=50
@@ -130,10 +130,10 @@ lists:
   # Emergency healing -- someone is critically low
   # ===========================================================
   emergency:
-  - verdant_embrace,if=var.anyone_emergency
+  - verdant_embrace,target=lowest,if=var.anyone_emergency
   - emerald_blossom,if=var.multi_injured&var.anyone_emergency
   - rewind,if=config.use_cooldowns&var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2
-  - verdant_embrace,if=var.tank_low
+  - verdant_embrace,target=tanks.lowest,if=var.tank_low
 
   # ===========================================================
   # Major cooldowns
@@ -164,7 +164,7 @@ lists:
 
   # Reversion: blanket coverage on tank and injured players
   - reversion,cycle_targets=1,if=var.reversion_ready&cycle.tank&cycle.buff.reversion.down
-  - reversion,if=var.reversion_ready&group.tanks.lowest.health.pct<config.reversion_hp&buff.reversion.down
+  - reversion,target=tanks.lowest,if=var.reversion_ready&group.tanks.lowest.health.pct<config.reversion_hp
 
   # Dream Breath: core rolling HoT (empower_to=1 for lowest cast time per guide)
   - dream_breath,if=var.dream_breath_ready,empower_to=1
@@ -175,32 +175,32 @@ lists:
   # Twin Echoes (from Verdant Embrace + tier-set Emerald Blossom) doubles Echo
   # ===========================================================
   echo_healing:
-  - echo,if=var.twin_echoes_up&var.anyone_injured
+  - echo,target=lowest,if=var.twin_echoes_up&var.anyone_injured
   # Verdant Embrace: strongest reliable single-target heal; applies Lifebind
   # Drives tier-set Emerald Blossom for Twin Echoes setup
-  - verdant_embrace,if=group.tanks.lowest.health.pct<config.verdant_embrace_hp
+  - verdant_embrace,target=tanks.lowest,if=group.tanks.lowest.health.pct<config.verdant_embrace_hp
 
   # Merithra's Blessing proc: use immediately -- strongest heal in the kit
-  - merithras_blessing,if=var.merithras_proc
+  - merithras_blessing,target=lowest,if=var.merithras_proc
 
   # Echo → Reversion: Golden Hour burst (heals % of recent damage taken)
   # Best single-target setup: double Reversion gives 21% healing amp
-  - echo,if=group.lowest.health.pct<config.echo_hp&cooldown.reversion.charges>=1
-  - reversion,if=buff.echo.up
+  - echo,target=lowest,if=group.lowest.health.pct<config.echo_hp&cooldown.reversion.charges>=1
+  - reversion,target=lowest,if=buff.echo.up
 
   # Echo → Verdant Embrace: strong Chronowarden sustained heal
-  - echo,if=var.is_chronowarden&group.lowest.health.pct<config.verdant_embrace_hp
-  - verdant_embrace,if=buff.echo.up&var.is_chronowarden
+  - echo,target=lowest,if=var.is_chronowarden&group.lowest.health.pct<config.verdant_embrace_hp
+  - verdant_embrace,target=lowest,if=buff.echo.up&var.is_chronowarden
 
   # Echo → Dream Breath: for sustained multi-target damage
-  - echo,if=var.multi_injured&buff.dream_breath.down
+  - echo,target=lowest,if=var.multi_injured&buff.dream_breath.down
   - dream_breath,if=buff.echo.up,empower_to=1
 
   # Emerald Blossom: backup AoE heal when stronger options unavailable
   - emerald_blossom,if=var.multi_injured&group.lowest.health.pct<config.emerald_blossom_hp
 
   # Verdant Embrace: general spot heal / keep Lifebind rolling
-  - verdant_embrace,if=group.lowest.health.pct<config.verdant_embrace_hp
+  - verdant_embrace,target=lowest,if=group.lowest.health.pct<config.verdant_embrace_hp
 
   # ===========================================================
   # DPS fill -- contributes to Essence Burst fishing + Chrono Flame ramp

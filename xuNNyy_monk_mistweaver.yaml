@@ -161,7 +161,7 @@ lists:
   - spear_hand_strike,if=target.casting.interruptible,use_off_gcd=1
 
   dispel:
-  - detox,cycle_targets=1,if=cycle.dispelable.magic|cycle.dispelable.poison|cycle.dispelable.disease
+  - detox,cycle_targets=1,if=cycle.dispelable
 
   defensives:
   - fortifying_brew,if=dangerous_debuff.up|health.pct<config.defensives_hp
