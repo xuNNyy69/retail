@@ -43,11 +43,11 @@ lists:
   - storm_bolt,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
-  - die_by_the_sword,if=config.use_defensives&health.pct<=35
-  - ignore_pain,if=config.use_defensives&health.pct<=55&rage>=40
-  - spell_reflection,if=config.use_defensives&target.casting
-  - rallying_cry,if=config.use_defensives&health.pct<=20
-  - bitter_immunity,if=config.use_defensives&health.pct<=25
+  - die_by_the_sword,if=health.pct<=35
+  - ignore_pain,if=health.pct<=55&rage>=40
+  - spell_reflection,if=target.casting
+  - rallying_cry,if=health.pct<=20
+  - bitter_immunity,if=health.pct<=25
 
   trinkets:
   - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)

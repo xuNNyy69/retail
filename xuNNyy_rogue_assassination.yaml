@@ -38,7 +38,7 @@ variables:
 
 lists:
   interrupts:
-  - kick,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - kick,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - cloak_of_shadows,if=health.pct<=40

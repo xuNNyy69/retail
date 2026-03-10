@@ -60,12 +60,12 @@ variables:
 
 lists:
   interrupts:
-  - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - silence,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
-  - dispersion,if=config.use_defensives&health.pct<=20
-  - fade,if=config.use_defensives&health.pct<=50,use_off_gcd=1
-  - desperate_prayer,if=config.use_defensives&health.pct<=50
+  - dispersion,if=health.pct<=20
+  - fade,if=health.pct<=50,use_off_gcd=1
+  - desperate_prayer,if=health.pct<=50
 
   racials:
   - berserking,use_off_gcd=1,if=var.voidform_up
@@ -96,8 +96,8 @@ lists:
   # Halo: Archon's signature; high priority, uses Insanity
   - halo,if=config.use_cooldowns
 
-  # Voidform: major DPS cooldown
-  - voidform,if=config.use_cooldowns
+  # Void Eruption: major DPS cooldown (enters Voidform)
+  - void_eruption,if=config.use_cooldowns
 
   # Power Infusion: align with Voidform
   - power_infusion,if=config.use_cooldowns&var.voidform_up
@@ -137,8 +137,8 @@ lists:
   - shadow_word_pain,if=var.swp_refreshable&talent.invoked_nightmare
   - vampiric_touch,if=var.vt_refreshable
 
-  # Voidform: main cooldown
-  - voidform,if=config.use_cooldowns
+  # Void Eruption: main cooldown (enters Voidform)
+  - void_eruption,if=config.use_cooldowns
 
   # Power Infusion: align with Voidform
   - power_infusion,if=config.use_cooldowns&var.voidform_up

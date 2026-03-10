@@ -43,7 +43,7 @@ variables:
 
 lists:
   interrupts:
-  - quell,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - quell,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - obsidian_scales,if=health.pct<=50,use_off_gcd=1

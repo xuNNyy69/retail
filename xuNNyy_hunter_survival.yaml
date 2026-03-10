@@ -57,12 +57,12 @@ variables:
 
 lists:
   interrupts:
-  - counter_shot,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - counter_shot,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
-  - exhilaration,if=config.use_defensives&health.pct<=55
-  - survival_of_the_fittest,if=config.use_defensives&health.pct<=40
-  - aspect_of_the_turtle,if=config.use_defensives&health.pct<=20
+  - exhilaration,if=health.pct<=55
+  - survival_of_the_fittest,if=health.pct<=40
+  - aspect_of_the_turtle,if=health.pct<=20
 
   racials:
   - berserking,use_off_gcd=1,if=var.takedown_active
@@ -162,7 +162,7 @@ lists:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
-  - hunters_mark,if=!buff.hunters_mark.up&!player.combat,range_check=none
+  - hunters_mark,if=!debuff.hunters_mark.up&!player.combat,range_check=none
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)

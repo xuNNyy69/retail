@@ -221,15 +221,12 @@ lists:
   - vivify,target=lowest,if=var.need_light_heal
   - renewing_mist,target=lowest,if=cooldown.renewing_mist.charges>=1
   - rising_sun_kick,if=!config.heal_only
-  # TOKEN: verify rushing_wind_kick works for spec 270 (MW). May need rising_sun_kick instead.
-  - rushing_wind_kick,if=!config.heal_only
 
   fistweave_st:
   - renewing_mist,target=lowest,if=var.rmist_overcap
   - touch_of_death,if=var.has_touch_of_death&target.health.pct<=15
   - thunder_focus_tea,if=!var.tft_up&(cooldown.rising_sun_kick.remains<gcd|var.rmist_overcap),use_off_gcd=1
   - rising_sun_kick
-  - rushing_wind_kick
   - blackout_kick,if=var.has_teachings&var.teachings_stack>=3
   - faeline_stomp,if=var.has_faeline
   - chi_burst,if=var.has_chi_burst
@@ -245,7 +242,6 @@ lists:
   - spinning_crane_kick,if=var.has_dance&var.dance_up
   - thunder_focus_tea,if=!var.tft_up&(var.rmist_overcap|cooldown.rising_sun_kick.remains<gcd),use_off_gcd=1
   - rising_sun_kick
-  - rushing_wind_kick
   - faeline_stomp,if=var.has_faeline
   - chi_burst,if=var.has_chi_burst
   - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
@@ -258,7 +254,6 @@ lists:
   - renewing_mist,target=lowest,if=var.rmist_needed
   - vivify,target=lowest,if=var.need_major_heal
   - rising_sun_kick,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
-  - rushing_wind_kick,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
   - tiger_palm,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
 
   out_of_combat:

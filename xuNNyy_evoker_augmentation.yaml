@@ -49,7 +49,7 @@ variables:
 
 lists:
   interrupts:
-  - quell,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - quell,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - renewing_blaze,if=health.pct<=65,use_off_gcd=1

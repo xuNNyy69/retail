@@ -40,7 +40,7 @@ variables:
 
 lists:
   interrupts:
-  - counter_shot,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - counter_shot,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - exhilaration,if=health.pct<=55

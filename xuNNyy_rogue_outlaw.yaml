@@ -53,9 +53,7 @@ lists:
   - roll_the_bones,if=var.rtb_stage<=1&combo_points>=4
   - keep_it_rolling,if=talent.keep_it_rolling&var.rtb_stage>=2
 
-  # preparation and blade_rush absent from action_tokens.txt; guarded by talent check.
   cds:
-  - preparation,if=talent.preparation&!cooldown.between_the_eyes.ready&!cooldown.adrenaline_rush.ready&(!talent.blade_rush|!cooldown.blade_rush.ready)
   - adrenaline_rush,if=!buff.adrenaline_rush.up&combo_points<=2,use_off_gcd=1
   - blade_rush,if=talent.blade_rush
   - vanish,if=combo_points<5&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up

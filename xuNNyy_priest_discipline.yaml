@@ -74,14 +74,14 @@ variables:
 
 lists:
   interrupts:
-  - silence,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - silence,if=target.casting.interruptible,use_off_gcd=1
 
   dispel:
   - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable
 
   defensives:
-  - desperate_prayer,if=config.use_defensives&health.pct<=50
-  - fade,if=config.use_defensives&health.pct<=60,use_off_gcd=1
+  - desperate_prayer,if=health.pct<=50
+  - fade,if=health.pct<=60,use_off_gcd=1
 
   items:
   - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)

@@ -39,7 +39,7 @@ variables:
 
 lists:
   interrupts:
-  - axe_toss,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - axe_toss,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - unending_resolve,if=health.pct<=45

@@ -44,7 +44,7 @@ variables:
 
 lists:
   interrupts:
-  - counterspell,if=config.use_interrupts&target.casting&var.in_ranged,use_off_gcd=1,ignore_movement=true
+  - counterspell,if=target.casting&var.in_ranged,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true

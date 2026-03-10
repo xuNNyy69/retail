@@ -69,14 +69,14 @@ variables:
 
 lists:
   interrupts:
-  - mind_freeze,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
-  - asphyxiate,if=config.use_interrupts&target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
+  - mind_freeze,if=target.casting.interruptible,use_off_gcd=1
+  - asphyxiate,if=target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
 
   defensives:
-  - anti_magic_shell,if=config.use_defensives&player.dangerous_debuff.magic.up,use_off_gcd=1
-  - icebound_fortitude,if=config.use_defensives&(player.dangerous_debuff.up|health.pct<=35)
-  - lichborne,if=config.use_defensives&health.pct<=30
-  - death_strike,if=config.use_defensives&health.pct<=config.death_strike_hp&runic_power>=35
+  - anti_magic_shell,if=player.dangerous_debuff.magic.up,use_off_gcd=1
+  - icebound_fortitude,if=(player.dangerous_debuff.up|health.pct<=35)
+  - lichborne,if=health.pct<=30
+  - death_strike,if=health.pct<=config.death_strike_hp&runic_power>=35
 
   items:
   - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)

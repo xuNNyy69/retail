@@ -64,7 +64,7 @@ variables:
 
 lists:
   interrupts:
-  - disrupt,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - disrupt,if=target.casting.interruptible,use_off_gcd=1
 
   taunt:
   - torment,if=config.auto_taunt&target.exists&target.enemy&target.threat<100

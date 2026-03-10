@@ -108,14 +108,14 @@ variables:
 
 lists:
   interrupts:
-  - quell,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - quell,if=target.casting.interruptible,use_off_gcd=1
 
   dispel:
   - naturalize,cycle_targets=1,if=config.use_dispel&cycle.dispelable
 
   defensives:
-  - obsidian_scales,if=config.use_defensives&health.pct<=50
-  - renewing_blaze,if=config.use_defensives&health.pct<=45
+  - obsidian_scales,if=health.pct<=50
+  - renewing_blaze,if=health.pct<=45
 
   items:
   - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.multi_injured|var.anyone_emergency)

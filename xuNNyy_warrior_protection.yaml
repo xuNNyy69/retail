@@ -55,8 +55,8 @@ variables:
 
 lists:
   interrupts:
-  - pummel,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
-  - storm_bolt,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - pummel,if=target.casting.interruptible,use_off_gcd=1
+  - storm_bolt,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - shield_block,if=(var.shield_block_low|!buff.shield_block.up|cooldown.shield_block.charges>=2)&health.pct<=config.shield_block_hp

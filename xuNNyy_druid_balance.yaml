@@ -57,8 +57,8 @@ variables:
 
 lists:
   interrupts:
-  - solar_beam,if=config.use_interrupts&target.casting.interruptible&var.in_lunar
-  - skull_bash,if=config.use_interrupts&target.casting.interruptible
+  - solar_beam,if=target.casting.interruptible&var.in_lunar
+  - skull_bash,if=target.casting.interruptible
 
   defensives:
   - barkskin,if=health.pct<=40&buff.barkskin.down
@@ -80,10 +80,6 @@ lists:
   # ============================================================
   # Single Target -- Keeper of the Grove (talent.force_of_nature)
   # ============================================================
-  # NOTE: solar_eclipse / lunar_eclipse confirmed in sc_druid.cpp
-  # (spell IDs 1233346 / 1233272) but absent from action_tokens.txt.
-  # If the engine cannot resolve these tokens, eclipse entry stalls here;
-  # remove both solar_eclipse lines and fall through to single_target.
   single_target_kotg:
   - return,if=!var.is_kotg
   # Warrior of Elune: off-GCD instant-starfire setup when in lunar
@@ -94,7 +90,6 @@ lists:
   # Fury of Elune: fill AP when low (matches SimC kotg_st order pre-eclipse)
   # 5+passive_asp < astral_power.deficit -> approximated: astral_power<80
   - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power<80
-  # TOKEN UNVALIDATED: solar_eclipse/lunar_eclipse not in action_tokens.txt
   # Solar Eclipse entry -- KOTG runs solar path; enter at ~90% AP per guide
   - solar_eclipse,if=var.eclipse_down&astral_power>=85
   # CA / Incarn: align with solar eclipse + sufficient AP for burst spend
@@ -145,7 +140,6 @@ lists:
   - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any
   # Incarn: fire outside eclipse when Fury of Elune is ready � guide EC burst trigger
   - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_down&(cooldown.fury_of_elune.remains=0|!talent.fury_of_elune)
-  # TOKEN UNVALIDATED: solar_eclipse/lunar_eclipse not in action_tokens.txt
   # Lunar Eclipse entry -- EC runs lunar path; enter at ~90% AP per guide
   - lunar_eclipse,if=var.eclipse_down&astral_power>=85
   # CA: mid-eclipse if Incarn not talented
@@ -191,7 +185,6 @@ lists:
   - sunfire,if=dot.sunfire.remains<4
   # Fury of Elune
   - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power<80
-  # TOKEN UNVALIDATED: solar_eclipse/lunar_eclipse not in action_tokens.txt
   # Solar eclipse entry (default path); enter at ~90% AP
   - solar_eclipse,if=var.eclipse_down&astral_power>=85
   # CA / Incarn during eclipse
@@ -244,7 +237,6 @@ lists:
   - fury_of_elune,if=talent.fury_of_elune&astral_power<80
   # Force of Nature: KOTG -- use in CA or eclipse window
   - force_of_nature,if=talent.force_of_nature&var.is_kotg&(var.ca_active|var.eclipse_any)
-  # TOKEN UNVALIDATED: solar_eclipse/lunar_eclipse not in action_tokens.txt
   # Eclipse entry -- KOTG favors solar; EC favors lunar on 3+ targets; default solar
   - solar_eclipse,if=var.is_kotg&var.eclipse_down
   - solar_eclipse,if=var.is_ec&var.eclipse_down&active_enemies<=3

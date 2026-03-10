@@ -56,11 +56,11 @@ variables:
 
 lists:
   interrupts:
-  - skull_bash,if=config.use_interrupts&target.casting.interruptible
+  - skull_bash,if=target.casting.interruptible
 
   defensives:
-  - barkskin,if=config.use_defensives&health.pct<=40,use_off_gcd=1
-  - survival_instincts,if=config.use_defensives&health.pct<=30
+  - barkskin,if=health.pct<=40,use_off_gcd=1
+  - survival_instincts,if=health.pct<=30
 
   racials:
   - berserking,use_off_gcd=1,if=var.berserk_up
