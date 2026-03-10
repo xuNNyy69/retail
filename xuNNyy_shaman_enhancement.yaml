@@ -115,7 +115,6 @@ lists:
   - elemental_blast,if=var.eb_ready
   - lightning_bolt,if=var.maelstrom_10&!var.want_aoe
   - chain_lightning,if=var.maelstrom_10&var.want_aoe
-  - chain_lightning,if=var.maelstrom_10&var.want_aoe
   - stormstrike
   - windstrike
   - lava_lash,if=var.hot_hand_up
@@ -123,7 +122,6 @@ lists:
   - lava_burst,if=var.lava_surge_up
   - lava_lash
   - lightning_bolt,if=var.maelstrom_8
-  - chain_lightning,if=var.maelstrom_5&var.want_aoe
   - chain_lightning,if=var.maelstrom_5&var.want_aoe
 
   single:
@@ -156,14 +154,12 @@ lists:
   - tempest,if=var.tempest_ready&var.has_stormbringer
   - elemental_blast,if=var.eb_ready&var.maelstrom_10
   - chain_lightning,if=var.maelstrom_10
-  - chain_lightning,if=var.maelstrom_10
   - crash_lightning
   - flame_shock,if=active_dot.flame_shock<active_enemies&active_enemies<=6
   - lava_lash,if=var.hot_hand_up
   - fire_nova,if=active_dot.flame_shock>=3
   - stormstrike,if=var.doom_winds_up
   - windstrike,if=var.doom_winds_up
-  - chain_lightning,if=var.maelstrom_5
   - chain_lightning,if=var.maelstrom_5
   - lava_lash
   - stormstrike

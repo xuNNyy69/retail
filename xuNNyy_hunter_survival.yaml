@@ -43,7 +43,7 @@ variables:
 
   # Key buff states
   tip_of_spear_up: buff.tip_of_the_spear.up
-  sentinels_mark_up: buff.sentinels_mark.up
+  sentinels_mark_up: debuff.sentinels_mark.up
   # Pack Leader: Howl beast procs
   howl_wyvern_up: buff.howl_of_the_pack_leader_wyvern.up
   howl_active: "buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up"

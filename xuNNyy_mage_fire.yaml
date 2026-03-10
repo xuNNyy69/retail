@@ -85,8 +85,8 @@ lists:
   - pyroblast,if=var.hot_streak_react,ignore_movement=true
   - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
-  - scorch,if=talent.improved_scorch&target.health_pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
-  - scorch,if=target.health_pct<=30,ignore_movement=true
+  - scorch,if=talent.improved_scorch&target.health.pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
+  - scorch,if=target.health.pct<=30,ignore_movement=true
   - frostfire_bolt,ignore_movement=true
 
   # Base / Spellslinger build — Combustion window
@@ -115,8 +115,8 @@ lists:
   - pyroblast,if=var.hot_streak_react,ignore_movement=true
   - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
-  - scorch,if=talent.improved_scorch&target.health_pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
-  - scorch,if=target.health_pct<=30,ignore_movement=true
+  - scorch,if=talent.improved_scorch&target.health.pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
+  - scorch,if=target.health.pct<=30,ignore_movement=true
   - fireball,ignore_movement=true
 
   racials:

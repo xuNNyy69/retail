@@ -46,8 +46,8 @@ lists:
   - mirror_image,if=health.pct<=40&!buff.ice_block.up,ignore_movement=true
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_cd_window|target.time_to_die<20),ignore_movement=true
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_cd_window|target.time_to_die<20),ignore_movement=true
+  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_cd_window|target.time_to_die<20)
+  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_cd_window|target.time_to_die<20)
 
   cooldowns:
   - potion,if=buff.arcane_surge.up,ignore_movement=true

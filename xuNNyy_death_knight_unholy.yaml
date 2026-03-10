@@ -51,8 +51,8 @@ variables:
   has_rider: talent.apocalypse_now
   has_deathbringer: talent.reapers_mark
   pet_missing: pet.exists=0|pet.dead
-  wounds_up: buff.lesser_ghoul_ready.up
-  wounds_low: buff.lesser_ghoul_ready.down
+  wounds_up: debuff.festering_wound.up
+  wounds_low: debuff.festering_wound.stack<4
   vp_refresh: debuff.virulent_plague.down|debuff.virulent_plague.remains<4
   # APL: spending_rp = rune<2 | buff.sudden_doom.react — spend DC when rune-starved or proc up
   rp_spend: rune<2|buff.sudden_doom.up

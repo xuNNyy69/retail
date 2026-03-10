@@ -62,8 +62,8 @@ lists:
 
   soul_harvester:
   - haunt,if=cooldown.haunt.ready
-  - agony,target_if=min:dot.agony.remains,if=dot.agony.refreshable&active_dot.agony<active_enemies
-  - corruption,target_if=min:dot.corruption.remains,if=dot.corruption.refreshable&active_dot.corruption<active_enemies
+  - agony,if=dot.agony.refreshable&active_dot.agony<active_enemies
+  - corruption,if=dot.corruption.refreshable&active_dot.corruption<active_enemies
   - summon_darkglare,if=config.use_cooldowns
   - seed_of_corruption,if=active_enemies>=config.aoe_threshold&(buff.summon_darkglare.up|soul_shards>=4)
   - unstable_affliction,if=(buff.summon_darkglare.up|soul_shards>=4|buff.shard_instability.up)&active_enemies<config.aoe_threshold
@@ -72,7 +72,7 @@ lists:
 
   hellcaller:
   - haunt,if=cooldown.haunt.ready
-  - agony,target_if=min:dot.agony.remains,if=dot.agony.refreshable&active_dot.agony<active_enemies
+  - agony,if=dot.agony.refreshable&active_dot.agony<active_enemies
   - wither,if=!dot.wither.ticking|dot.wither.refreshable
   - summon_darkglare,if=config.use_cooldowns
   - malevolence,if=config.use_cooldowns
