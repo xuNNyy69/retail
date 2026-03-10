@@ -38,10 +38,6 @@ config:
     label: "Use Soothing Mist"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -258,11 +254,6 @@ lists:
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
   - tiger_palm
 
-  anti_idle:
-  - rising_sun_kick,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - rushing_wind_kick,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - renewing_mist,target=lowest,if=var.rmist_needed
   - vivify,target=lowest,if=var.need_major_heal
@@ -302,5 +293,4 @@ lists:
   - call_action_list,name=fistweave_aoe,if=var.safe_to_fistweave&var.want_aoe
   - call_action_list,name=fistweave_st,if=var.safe_to_fistweave
   - call_action_list,name=healing
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

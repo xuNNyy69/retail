@@ -30,10 +30,6 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: false
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -211,10 +207,6 @@ lists:
   - heart_strike,if=var.dnd_active&var.rune_ok
   - vampiric_strike,if=var.dnd_active&var.rune_ok
 
-  anti_idle:
-  - heart_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - vampiric_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - blood_boil,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -244,5 +236,4 @@ lists:
   - call_action_list,name=sanlayn,if=var.has_sanlayn
   - call_action_list,name=deathbringer,if=var.has_deathbringer
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

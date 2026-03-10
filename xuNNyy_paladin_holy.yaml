@@ -34,10 +34,6 @@ config:
     label: "Heal Only (No DPS)"
     type: checkbox
     default: false
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -194,10 +190,6 @@ lists:
   - hammer_of_wrath,if=talent.hammer_of_wrath&(var.aw_up|target.health.pct<20)&var.safe_to_damage
   - consecration,if=var.safe_to_damage
 
-  anti_idle:
-  - judgment,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - holy_light,target=lowest,ignore_queue=true
-
   fallback:
   - holy_light,target=lowest,ignore_queue=true
 
@@ -227,5 +219,4 @@ lists:
   - call_action_list,name=burst_healing,if=var.in_burst
   - call_action_list,name=healing
   - call_action_list,name=damage
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

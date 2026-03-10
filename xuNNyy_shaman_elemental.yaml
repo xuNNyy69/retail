@@ -22,10 +22,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   use_cooldowns:
     label: "Use Cooldowns"
     type: checkbox
@@ -84,10 +80,6 @@ lists:
   - lightning_bolt
   - frost_shock
 
-  anti_idle:
-  - lightning_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - flame_shock,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - spiritwalkers_grace,if=player.moving,use_off_gcd=1
   - lightning_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -117,5 +109,4 @@ lists:
   - potion,if=config.use_potions
   - call_action_list,name=aoe,if=active_enemies>=2
   - call_action_list,name=single_target
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

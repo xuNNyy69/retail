@@ -26,10 +26,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -92,10 +88,6 @@ lists:
   - envenom,if=combo_points>=4&(debuff.deathmark.up|buff.darkest_night.up|buff.envenom.up)
   - envenom,if=combo_points>=5
 
-  anti_idle:
-  - mutilate,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - fan_of_knives,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - mutilate,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -120,5 +112,4 @@ lists:
   - call_action_list,name=generate,if=combo_points<5
   - call_action_list,name=spend,if=combo_points>=5
   - call_action_list,name=generate,if=combo_points<5
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

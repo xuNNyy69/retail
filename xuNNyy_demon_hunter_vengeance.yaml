@@ -26,10 +26,6 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   auto_taunt:
     label: "Auto Taunt"
     type: checkbox
@@ -220,10 +216,6 @@ lists:
   - shear
   - throw_glaive
 
-  anti_idle:
-  - shear,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - shear,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -249,5 +241,4 @@ lists:
   - call_action_list,name=racials,if=config.use_cooldowns
   - call_action_list,name=ar,if=var.is_ar
   - call_action_list,name=anni,if=!var.is_ar
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

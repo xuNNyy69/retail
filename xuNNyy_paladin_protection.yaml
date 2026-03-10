@@ -30,10 +30,6 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -134,10 +130,6 @@ lists:
   - hammer_of_the_righteous,if=usable.hammer_of_the_righteous
   - consecration,if=usable.consecration
 
-  anti_idle:
-  - judgment,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - hammer_of_the_righteous,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - hammer_of_the_righteous,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -163,5 +155,4 @@ lists:
   - call_action_list,name=lightsmith,if=talent.lightsmith
   - call_action_list,name=templar,if=talent.templar
   - call_action_list,name=standard
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

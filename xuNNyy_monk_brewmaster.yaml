@@ -30,10 +30,6 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -173,10 +169,6 @@ lists:
   - spinning_crane_kick,if=var.energy_filler
   - tiger_palm,if=var.energy_filler
 
-  anti_idle:
-  - keg_smash,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -203,5 +195,4 @@ lists:
   - call_action_list,name=racials,if=config.use_cooldowns
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

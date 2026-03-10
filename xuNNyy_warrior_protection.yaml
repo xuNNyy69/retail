@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   auto_taunt:
     label: "Auto Taunt"
     type: checkbox
@@ -128,10 +124,6 @@ lists:
   - bag_of_tricks
   - arcane_torrent,use_off_gcd=1
 
-  anti_idle:
-  - shield_slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - devastate,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - heroic_throw,if=target.exists&target.enemy&target.alive
   - devastate,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -160,5 +152,4 @@ lists:
   - thunder_blast,if=talent.lightning_strikes&active_enemies>=2&buff.thunder_blast.stack>=2
   - call_action_list,name=aoe,if=active_enemies>=3
   - call_action_list,name=generic
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

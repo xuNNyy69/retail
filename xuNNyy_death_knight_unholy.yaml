@@ -26,10 +26,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -211,10 +207,6 @@ lists:
   - arcane_torrent,if=rune<2&runic_power<20,use_off_gcd=1
   - arcane_pulse,if=rune<2&runic_power<20
 
-  anti_idle:
-  - death_coil,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - festering_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - deaths_caress,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - scourge_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -246,5 +238,4 @@ lists:
   - call_action_list,name=funnel,if=var.want_funnel
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

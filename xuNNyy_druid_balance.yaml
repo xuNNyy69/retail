@@ -26,10 +26,6 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: Anti Idle Mode
-    type: checkbox
-    default: true
   aoe_threshold:
     label: AoE Threshold
     type: slider
@@ -278,10 +274,6 @@ lists:
   - starfire,if=talent.lunar_calling|active_enemies>3|var.in_lunar
   - wrath
 
-  anti_idle:
-  - moonfire,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -310,5 +302,4 @@ lists:
   - call_action_list,name=single_target_kotg,if=var.is_kotg&!var.is_ec&active_enemies=1
   - call_action_list,name=single_target,if=active_enemies=1
   - call_action_list,name=aoe,if=var.want_aoe
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

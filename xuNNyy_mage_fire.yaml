@@ -26,10 +26,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -129,9 +125,6 @@ lists:
   - fireblood,if=usable.fireblood&buff.combustion.up,use_off_gcd=1,ignore_movement=true
   - ancestral_call,if=usable.ancestral_call&buff.combustion.up,use_off_gcd=1,ignore_movement=true
 
-  anti_idle:
-  - fireball,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
-
   fallback:
   - fireball,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
   - scorch,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
@@ -161,5 +154,4 @@ lists:
   - call_action_list,name=ff_filler,if=var.is_frostfire&!var.in_combustion
   - call_action_list,name=sf_combustion,if=!var.is_frostfire&var.in_combustion
   - call_action_list,name=sf_filler,if=!var.is_frostfire
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

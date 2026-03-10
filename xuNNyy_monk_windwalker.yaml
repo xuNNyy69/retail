@@ -26,10 +26,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -201,10 +197,6 @@ lists:
   - blackout_kick,if=var.bok_proc
   - blackout_kick,if=var.chi_for_bok
 
-  anti_idle:
-  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - blackout_kick,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -234,5 +226,4 @@ lists:
   - call_action_list,name=cotc_st,if=var.has_cotc
   - call_action_list,name=shado_aoe,if=var.has_shado_pan&var.want_aoe
   - call_action_list,name=shado_st,if=var.has_shado_pan
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

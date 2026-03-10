@@ -26,10 +26,6 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -112,10 +108,6 @@ lists:
   - lights_judgment
   - bag_of_tricks
 
-  anti_idle:
-  - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - azure_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -139,5 +131,4 @@ lists:
   - potion,if=config.use_potions&var.have_em
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

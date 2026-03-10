@@ -26,10 +26,6 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: Anti Idle Mode
-    type: checkbox
-    default: true
   aoe_threshold:
     label: AoE Threshold
     type: slider
@@ -97,10 +93,6 @@ lists:
   - drain_soul
   - shadow_bolt
 
-  anti_idle:
-  - corruption,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -121,5 +113,4 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - call_action_list,name=default
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

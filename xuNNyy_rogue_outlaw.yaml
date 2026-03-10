@@ -26,10 +26,6 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -90,10 +86,6 @@ lists:
   - ambush,if=talent.hidden_opportunity
   - sinister_strike
 
-  anti_idle:
-  - sinister_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - dispatch,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - sinister_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -120,5 +112,4 @@ lists:
   - arcane_torrent,if=energy<85+energy.regen,use_off_gcd=1
   - arcane_pulse,use_off_gcd=1
   - lights_judgment,use_off_gcd=1
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

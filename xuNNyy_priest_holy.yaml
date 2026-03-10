@@ -30,10 +30,6 @@ config:
     label: "Use Dispel"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -201,10 +197,6 @@ lists:
   - shadow_word_pain,if=!talent.holy_fire&dot.shadow_word_pain.refreshable
   - smite
 
-  anti_idle:
-  - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - prayer_of_mending,if=cooldown.prayer_of_mending.ready,ignore_queue=true
-
   fallback:
   - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -233,5 +225,4 @@ lists:
   - call_action_list,name=archon_heal,if=var.is_archon&config.use_cooldowns
   - call_action_list,name=healing
   - call_action_list,name=dps
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

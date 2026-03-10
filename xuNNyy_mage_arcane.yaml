@@ -22,10 +22,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -125,9 +121,6 @@ lists:
   - fireblood,if=usable.fireblood&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
   - ancestral_call,if=usable.ancestral_call&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
 
-  anti_idle:
-  - arcane_blast,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
-
   fallback:
   - arcane_blast,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
   - arcane_barrage,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
@@ -155,5 +148,4 @@ lists:
   - call_action_list,name=cooldowns,if=config.use_cooldowns
   - call_action_list,name=spellslinger,if=var.is_spellslinger
   - call_action_list,name=sunfury,if=var.is_sunfury
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -225,12 +221,6 @@ lists:
   - bag_of_tricks
   - arcane_torrent,use_off_gcd=1,if=rage<60
 
-  anti_idle:
-  - bloodbath,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - bloodthirst,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - crushing_blow,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - raging_blow,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - heroic_throw
   - slam,if=talent.annihilator&target.exists&target.enemy&target.alive,ignore_queue=true
@@ -264,5 +254,4 @@ lists:
   - call_action_list,name=aoe,if=var.want_aoe&var.in_melee
   - call_action_list,name=cleave,if=var.want_cleave
   - call_action_list,name=st,if=var.in_melee
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

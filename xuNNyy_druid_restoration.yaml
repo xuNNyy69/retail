@@ -34,10 +34,6 @@ config:
     label: "Heal Only (No DPS)"
     type: checkbox
     default: false
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -203,10 +199,6 @@ lists:
   - ferocious_bite,if=combo_points>=4&dot.rip.remains>4
   - shred
 
-  anti_idle:
-  - shred,if=buff.cat_form.up&target.exists&target.enemy&target.alive,ignore_queue=true
-  - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - shred,if=buff.cat_form.up&target.exists&target.enemy&target.alive,ignore_queue=true
   - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -238,5 +230,4 @@ lists:
   - call_action_list,name=group_maintenance
   - regrowth,target=lowest,if=var.natures_swiftness_up
   - call_action_list,name=catweave,if=!config.heal_only&var.safe_to_dps&target.range<=8
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

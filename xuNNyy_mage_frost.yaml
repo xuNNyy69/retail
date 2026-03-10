@@ -28,10 +28,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -166,11 +162,6 @@ lists:
   - frostfire_bolt,if=var.is_frostfire&buff.ice_floes.up&player.moving
   - frostbolt,if=var.is_spellslinger&buff.ice_floes.up&player.moving
 
-  anti_idle:
-  - frostfire_bolt,if=var.is_frostfire&target.exists&target.enemy&target.alive,ignore_queue=true
-  - frostbolt,if=var.is_spellslinger&target.exists&target.enemy&target.alive,ignore_queue=true
-  - ice_lance,if=target.exists&target.enemy&target.alive&var.shatterable&player.moving,ignore_queue=true
-
   fallback:
   - frostfire_bolt,if=var.is_frostfire&target.exists&target.enemy&target.alive,ignore_queue=true
   - frostbolt,if=var.is_spellslinger&target.exists&target.enemy&target.alive,ignore_queue=true
@@ -204,5 +195,4 @@ lists:
   - call_action_list,name=ss_aoe,if=var.is_spellslinger&var.want_aoe
   - call_action_list,name=ss_cleave,if=var.is_spellslinger&state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
   - call_action_list,name=ss_st,if=var.is_spellslinger
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -159,10 +155,6 @@ lists:
   # Wildfire Bomb: baseline
   - wildfire_bomb
 
-  anti_idle:
-  - raptor_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - raptor_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -187,5 +179,4 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

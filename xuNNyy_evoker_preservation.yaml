@@ -34,10 +34,6 @@ config:
     label: "Heal Only (No DPS)"
     type: checkbox
     default: false
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -213,9 +209,6 @@ lists:
   - disintegrate,if=talent.energy_loop
   - living_flame
 
-  anti_idle:
-  - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -246,5 +239,4 @@ lists:
   - call_action_list,name=dps,if=!config.heal_only&var.safe_to_dps
   # Living Flame: idle Essence Burst fishing when group is healthy
   - living_flame,if=var.safe_to_dps&!config.heal_only
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

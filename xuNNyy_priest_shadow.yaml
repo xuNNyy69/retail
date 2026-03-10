@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -186,10 +182,6 @@ lists:
   # SWP spread: manual supplement
   - shadow_word_pain,cycle_targets=1,if=dot.shadow_word_pain.refreshable&(var.voidform_up|active_enemies<=5)
 
-  anti_idle:
-  - mind_flay,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - shadow_word_pain,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - mind_flay,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -215,5 +207,4 @@ lists:
   # Hero-tree routing
   - call_action_list,name=archon,if=var.is_archon
   - call_action_list,name=voidweaver,if=var.is_voidweaver
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

@@ -30,10 +30,6 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -195,10 +191,6 @@ lists:
   - moonfire,if=var.has_lunation&var.in_bear
   - swipe,if=!var.has_lunation|active_enemies>4
 
-  anti_idle:
-  - mangle,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - thrash,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - mangle,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -228,5 +220,4 @@ lists:
   - call_action_list,name=rage_spenders
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

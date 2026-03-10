@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -107,10 +103,6 @@ lists:
   - black_arrow
   - cobra_shot
 
-  anti_idle:
-  - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -136,5 +128,4 @@ lists:
   - call_action_list,name=drcleave,if=var.is_dr&active_enemies>1
   - call_action_list,name=cleave,if=var.want_aoe
   - call_action_list,name=st
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

@@ -30,10 +30,6 @@ config:
     label: "Use Purge"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -176,12 +172,6 @@ lists:
   - ice_strike,if=talent.ice_strike
   - flametongue_weapon,if=buff.flametongue_weapon.remains<5
 
-  anti_idle:
-  - stormstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - windstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - lava_lash,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - lightning_bolt,if=target.exists&target.enemy&target.alive&var.maelstrom_5,ignore_queue=true
-
   fallback:
   - stormstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - windstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -216,5 +206,4 @@ lists:
   - call_action_list,name=burst,if=var.in_burst
   - call_action_list,name=aoe,if=var.want_aoe&!config.funnel_mode
   - call_action_list,name=single
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

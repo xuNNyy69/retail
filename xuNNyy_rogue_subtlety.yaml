@@ -26,10 +26,6 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -101,10 +97,6 @@ lists:
   - arcane_torrent,if=energy<85+energy.regen,use_off_gcd=1
   - lights_judgment
 
-  anti_idle:
-  - backstab,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - eviscerate,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - backstab,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -131,5 +123,4 @@ lists:
   - call_action_list,name=finish,if=combo_points>=6
   - call_action_list,name=build
   - call_action_list,name=fill,if=!var.in_dance
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

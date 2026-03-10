@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -156,10 +152,6 @@ lists:
   - wrecking_throw
   - slam
 
-  anti_idle:
-  - slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - mortal_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - heroic_throw,if=target.exists&target.enemy&target.alive
   - slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -191,5 +183,4 @@ lists:
   - call_action_list,name=slayer_aoe,if=talent.slayer_dps&active_enemies>2
   - call_action_list,name=slayer_execute,if=talent.slayer_dps&var.execute_phase
   - call_action_list,name=slayer_st,if=talent.slayer_dps
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

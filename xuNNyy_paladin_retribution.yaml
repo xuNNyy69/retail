@@ -26,10 +26,6 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -130,10 +126,6 @@ lists:
   - ancestral_call,if=usable.ancestral_call&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true
   - bag_of_tricks,if=usable.bag_of_tricks,ignore_movement=true
 
-  anti_idle:
-  - crusader_strike,if=usable.crusader_strike&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
-  - judgment,if=usable.judgment&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
-
   fallback:
   - crusader_strike,if=usable.crusader_strike&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
 
@@ -157,5 +149,4 @@ lists:
   - call_action_list,name=cooldowns
   - call_action_list,name=racials
   - call_action_list,name=generators
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

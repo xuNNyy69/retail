@@ -26,10 +26,6 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -186,10 +182,6 @@ lists:
   - annihilation,if=var.fury_ok
   - demons_bite
 
-  anti_idle:
-  - demons_bite,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - throw_glaive
   - demons_bite,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -218,5 +210,4 @@ lists:
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=hero_tree_ar,if=config.use_cooldowns&var.is_ar
   - call_action_list,name=hero_tree_fs,if=config.use_cooldowns&!var.is_ar
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

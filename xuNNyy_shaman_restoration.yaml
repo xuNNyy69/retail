@@ -30,10 +30,6 @@ config:
     label: "Use Purge"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -196,9 +192,6 @@ lists:
   - chain_lightning,if=var.want_aoe,ignore_movement=true
   - lightning_bolt,ignore_movement=true
 
-  anti_idle:
-  - healing_wave,target=lowest,if=player.combat&var.need_light_heal,ignore_queue=true,ignore_movement=true
-
   fallback:
   - healing_wave,target=lowest,if=player.combat&var.need_light_heal,ignore_queue=true,ignore_movement=true
 
@@ -235,5 +228,4 @@ lists:
   - call_action_list,name=spot_healing,if=var.need_major_heal|var.need_light_heal
   - call_action_list,name=moving_healing,if=player.moving
   - call_action_list,name=damage,if=var.safe_to_damage
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback

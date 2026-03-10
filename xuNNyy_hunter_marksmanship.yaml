@@ -26,10 +26,6 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
-  anti_idle_mode:
-    label: "Anti Idle Mode"
-    type: checkbox
-    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -179,10 +175,6 @@ lists:
   # Steady Shot: filler
   - steady_shot
 
-  anti_idle:
-  - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - arcane_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
-
   fallback:
   - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
@@ -218,6 +210,5 @@ lists:
   - arcane_shot,if=var.precise_shots_up
   - rapid_fire
   - aimed_shot
-  - call_action_list,name=anti_idle,if=config.anti_idle_mode
   - call_action_list,name=fallback
   - steady_shot
