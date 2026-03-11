@@ -83,7 +83,6 @@ lists:
 
   cooldowns:
   - icy_veins,if=usable.icy_veins&!buff.icy_veins.up,ignore_movement=true
-  - ray_of_frost,if=!player.moving
   - potion,if=config.use_potions&(prev_gcd.1.icy_veins|buff.icy_veins.up),ignore_movement=true
   - comet_storm,if=var.is_frostfire
   - frozen_orb,if=var.want_aoe&var.fof_low&debuff.winters_chill.down
@@ -91,6 +90,7 @@ lists:
 
   ff_aoe:
   - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - ice_lance,if=buff.fingers_of_frost.stack>=2
   - glacial_spike,if=var.icicles_full
   - blizzard,if=talent.ice_caller|talent.freezing_rain
   - ice_lance,if=debuff.winters_chill.up
@@ -102,6 +102,7 @@ lists:
   ff_st:
   - ray_of_frost,if=debuff.winters_chill.stack>=2
   - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
+  - ice_lance,if=buff.fingers_of_frost.stack>=2
   - glacial_spike,if=var.icicles_full
   - ice_lance,if=debuff.winters_chill.up
   - ice_lance,if=buff.fingers_of_frost.up
@@ -121,7 +122,7 @@ lists:
   ss_aoe:
   - blizzard,if=var.freezing_winds
   - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
-  - glacial_spike,if=var.icicles_full&(var.brain_freeze|var.shatterable)
+  - glacial_spike,if=var.icicles_full
   - blizzard,if=active_enemies>=7|talent.ice_caller|talent.freezing_rain
   - ice_lance,if=debuff.winters_chill.up
   - ice_lance,if=buff.fingers_of_frost.up
@@ -133,7 +134,7 @@ lists:
 
   ss_cleave:
   - frozen_orb,if=var.fof_low&debuff.winters_chill.down
-  - glacial_spike,if=var.icicles_full&(var.brain_freeze|var.shatterable)
+  - glacial_spike,if=var.icicles_full
   - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
   - comet_storm,if=debuff.winters_chill.up
   - ice_lance,if=debuff.winters_chill.up
@@ -144,13 +145,14 @@ lists:
 
   ss_st:
   - flurry,if=var.brain_freeze&!var.thermal_void&debuff.winters_chill.down
-  - glacial_spike,if=var.icicles_full&var.shatterable
+  - ice_lance,if=buff.fingers_of_frost.stack>=2
+  - glacial_spike,if=var.icicles_full
   - comet_storm,if=debuff.winters_chill.up
-  - ray_of_frost,if=debuff.winters_chill.stack>=1&!buff.icy_veins.up
   - ice_lance,if=debuff.winters_chill.up
   - ice_lance,if=buff.fingers_of_frost.up
   - ice_lance,if=var.freezing_ss
   - flurry,if=debuff.winters_chill.down
+  - ray_of_frost,if=!buff.icy_veins.up
   - frostbolt
   - glacial_spike
 

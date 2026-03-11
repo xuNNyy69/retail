@@ -55,6 +55,7 @@ lists:
   - guardian_of_ancient_kings,if=health.pct<=40&!var.in_aw
   - ardent_defender,if=health.pct<=20
   - word_of_glory,if=buff.shining_light_free.up
+  - word_of_glory,if=health.pct<=50&holy_power>=3
 
   # Trinkets fire during Avenging Wrath window
   trinkets:
@@ -64,24 +65,24 @@ lists:
   # Major cooldowns — Avenging Wrath synced to Divine Toll window,
   # Divine Toll held for AW or used as Righteous Protector filler
   cooldowns:
-  - avenging_wrath,if=usable.avenging_wrath&cooldown.divine_toll.remains<=10
+  - avenging_wrath,if=usable.avenging_wrath
   - potion,if=config.use_potions&var.in_aw
   - fireblood,if=var.in_aw,use_off_gcd=1
   - blood_fury,if=var.in_aw,use_off_gcd=1
   - berserking,if=var.in_aw,use_off_gcd=1
   - ancestral_call,if=var.in_aw,use_off_gcd=1
-  - divine_toll,if=usable.divine_toll&(var.in_aw|(!talent.righteous_protector&cooldown.avenging_wrath.remains<30))
+  - divine_toll,if=usable.divine_toll&holy_power<=2
 
   # Generic fallback — used when neither Lightsmith nor Templar is detected
   standard:
   - hammer_of_light,if=buff.hammer_of_light_ready.up
-  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=5|buff.divine_purpose.up)
+  - judgment,if=usable.judgment
+  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=3|buff.divine_purpose.up)
   - holy_armaments,if=!buff.sacred_weapon.up|buff.sacred_weapon.remains<5
   - avengers_shield,if=usable.avengers_shield&(active_enemies>=2|buff.vanguard.up)
   - consecration,if=usable.consecration&buff.divine_guidance.stack>=5
   - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
   - hammer_of_wrath
-  - judgment,if=usable.judgment
   - avengers_shield,if=usable.avengers_shield
   - hammer_of_the_righteous,if=usable.hammer_of_the_righteous&buff.blessed_assurance.up
   - blessed_hammer,if=buff.blessed_assurance.up
@@ -93,15 +94,15 @@ lists:
   # Lightsmith hero tree (guide priority order)
   lightsmith:
   - consecration,if=usable.consecration&buff.divine_guidance.stack>=5
-  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=5|buff.divine_purpose.up)
-  - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
+  - judgment,if=usable.judgment
+  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=3|buff.divine_purpose.up)
   - avengers_shield,if=usable.avengers_shield&(active_enemies>=2|buff.vanguard.up)
+  - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
   - hammer_of_wrath
   # Sacred Weapon pandemic — refresh when missing or <5s remaining
   - holy_armaments,if=!buff.sacred_weapon.up|buff.sacred_weapon.remains<5
   - hammer_of_the_righteous,if=usable.hammer_of_the_righteous&buff.blessed_assurance.up
   - blessed_hammer,if=buff.blessed_assurance.up
-  - judgment,if=usable.judgment
   # Holy Bulwark — 2 charges outside AW (higher value dump)
   - holy_armaments,if=cooldown.holy_armaments.charges>=2&!var.in_aw
   - avengers_shield,if=usable.avengers_shield
@@ -114,11 +115,11 @@ lists:
   # Templar hero tree (guide priority order)
   templar:
   - hammer_of_light,if=buff.hammer_of_light_ready.up
-  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=5|buff.divine_purpose.up)
+  - judgment,if=usable.judgment
+  - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=3|buff.divine_purpose.up)
   - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
   # Interrupt with Punishment talent OR Glory of the Vanguard proc
   - avengers_shield,if=usable.avengers_shield&(target.casting.interruptible&talent.punishment|buff.vanguard.up)
-  - judgment,if=usable.judgment
   - hammer_of_wrath
   # Shake the Heavens buff guard — maintain via Blessed Hammer
   - blessed_hammer,if=var.shake_up

@@ -86,7 +86,7 @@ lists:
   finishers:
   - hammer_of_light,if=usable.hammer_of_light&(var.hammer_ready|!talent.divine_hammer|var.divine_hammer_up|cooldown.divine_hammer.remains>10),ignore_movement=true
   - divine_hammer,if=usable.divine_hammer&!var.divine_hammer_up,ignore_movement=true
-  - divine_storm,if=usable.divine_storm&var.ds_castable&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath|buff.empyrean_power.up),ignore_movement=true
+  - divine_storm,if=usable.divine_storm&var.ds_castable&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath|buff.empyrean_power.up|var.hp5),ignore_movement=true
   - justicars_vengeance,if=usable.justicars_vengeance&talent.justicars_vengeance&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath),ignore_movement=true
   - templars_verdict,if=usable.templars_verdict&!var.hammer_ready&(var.crusade_10|var.in_avenging_wrath|var.hp5),ignore_movement=true
 

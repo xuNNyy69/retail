@@ -100,7 +100,10 @@ lists:
   - void_eruption,if=config.use_cooldowns
 
   # Power Infusion: align with Voidform
-  - power_infusion,if=config.use_cooldowns&var.voidform_up
+  - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
+
+  # Void Torrent: high-damage channel, use on CD
+  - void_torrent
 
   # Void Volley: strong Insanity generator in Voidform window
   - void_volley,if=talent.void_volley
@@ -113,9 +116,6 @@ lists:
 
   # Mind Blast: core Insanity builder
   - mind_blast
-
-  # SWM during Voidform (additional cast opportunity)
-  - shadow_word_madness,if=var.voidform_up
 
   # Tentacle Slam: spread DoTs or Insanity gen when no new targets to dot
   - tentacle_slam,if=talent.tentacle_slam
@@ -141,7 +141,10 @@ lists:
   - void_eruption,if=config.use_cooldowns
 
   # Power Infusion: align with Voidform
-  - power_infusion,if=config.use_cooldowns&var.voidform_up
+  - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
+
+  # Void Torrent: high-damage channel, use on CD
+  - void_torrent
 
   # Void Volley: Insanity builder
   - void_volley,if=talent.void_volley
@@ -154,9 +157,6 @@ lists:
 
   # Mind Blast
   - mind_blast
-
-  # SWM in Voidform
-  - shadow_word_madness,if=var.voidform_up
 
   # Tentacle Slam
   - tentacle_slam,if=talent.tentacle_slam

@@ -64,21 +64,21 @@ lists:
   - haunt,if=cooldown.haunt.ready
   - agony,if=dot.agony.refreshable&active_dot.agony<active_enemies
   - corruption,if=dot.corruption.refreshable&active_dot.corruption<active_enemies
+  - dark_harvest,if=talent.dark_harvest&dot.agony.remains>3&dot.corruption.remains>3
   - summon_darkglare,if=config.use_cooldowns
-  - seed_of_corruption,if=active_enemies>=config.aoe_threshold&(buff.summon_darkglare.up|soul_shards>=4)
-  - unstable_affliction,if=(buff.summon_darkglare.up|soul_shards>=4|buff.shard_instability.up)&active_enemies<config.aoe_threshold
-  - dark_harvest,if=talent.dark_harvest&soul_shards<=1
+  - seed_of_corruption,if=active_enemies>=config.aoe_threshold&soul_shards>=3
+  - unstable_affliction,if=(buff.summon_darkglare.up|soul_shards>=3|buff.shard_instability.up)&active_enemies<config.aoe_threshold
   - malefic_grasp,if=buff.summon_darkglare.up&buff.summon_darkglare.remains<gcd
 
   hellcaller:
   - haunt,if=cooldown.haunt.ready
   - agony,if=dot.agony.refreshable&active_dot.agony<active_enemies
   - wither,if=!dot.wither.ticking|dot.wither.refreshable
+  - dark_harvest,if=talent.dark_harvest&dot.agony.remains>3&dot.wither.remains>3
   - summon_darkglare,if=config.use_cooldowns
   - malevolence,if=config.use_cooldowns
-  - seed_of_corruption,if=active_enemies>=config.aoe_threshold&(buff.summon_darkglare.up|buff.malevolence.up|soul_shards>=4)
-  - unstable_affliction,if=(buff.summon_darkglare.up|buff.malevolence.up|soul_shards>=4|buff.shard_instability.up)&active_enemies<config.aoe_threshold
-  - dark_harvest,if=talent.dark_harvest&dot.agony.remains>3&dot.wither.remains>3
+  - seed_of_corruption,if=active_enemies>=config.aoe_threshold&soul_shards>=3
+  - unstable_affliction,if=(buff.summon_darkglare.up|buff.malevolence.up|soul_shards>=3|buff.shard_instability.up)&active_enemies<config.aoe_threshold
   - malefic_grasp,if=buff.summon_darkglare.up&buff.summon_darkglare.remains<gcd
 
   default:

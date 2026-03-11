@@ -193,8 +193,11 @@ lists:
   # Guide: Holy Fire on CD (if talented), else SWP; Smite filler
   # ===========================================================
   dps:
+  - halo,if=var.is_archon&cooldown.halo.ready
   - holy_fire,if=talent.holy_fire
   - shadow_word_pain,if=!talent.holy_fire&dot.shadow_word_pain.refreshable
+  - holy_nova,if=talent.lightburst&active_enemies>=2
+  - holy_word_chastise
   - smite
 
   fallback:

@@ -77,6 +77,7 @@ lists:
   - arcane_orb,if=buff.clearcasting.up&arcane_charges<4,ignore_movement=true
   - arcane_orb,if=arcane_charges<4&(!var.want_aoe|active_enemies<var.aoe_target_count),ignore_movement=true
   - arcane_orb,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charges<4,ignore_movement=true
+  - arcane_pulse,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charges<4,ignore_movement=true
   - arcane_explosion,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charges<4&target.range<=10,ignore_movement=true
   - arcane_barrage,if=buff.arcane_tempo.up&buff.arcane_tempo.remains<=gcd&arcane_charges=4,ignore_movement=true
   - arcane_barrage,if=talent.polished_focus&buff.arcane_salvo.stack>=20&arcane_charges=4,ignore_movement=true
@@ -100,6 +101,7 @@ lists:
   - arcane_barrage,if=buff.arcane_soul.up&arcane_charges=4&!buff.nether_precision.up,ignore_movement=true
   - arcane_orb,if=arcane_charges<3&!buff.arcane_soul.up,ignore_movement=true
   - arcane_orb,if=arcane_charges<3&buff.arcane_soul.up&cooldown.arcane_soul.remains>=10,ignore_movement=true
+  - arcane_pulse,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charges<3,ignore_movement=true
   - arcane_explosion,if=var.want_aoe&active_enemies>=var.aoe_target_count&arcane_charges<3&target.range<=10,ignore_movement=true
   - arcane_barrage,if=buff.arcane_tempo.up&buff.arcane_tempo.remains<=gcd&arcane_charges=4,ignore_movement=true
   - arcane_barrage,if=buff.intuition.up&buff.intuition.remains<=gcd&arcane_charges=4,ignore_movement=true

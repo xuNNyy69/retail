@@ -122,7 +122,7 @@ lists:
   cooldowns:
   - avenging_wrath,if=usable.avenging_wrath&talent.avenging_wrath
   - avenging_crusader,if=usable.avenging_crusader&talent.avenging_crusader
-  - divine_toll,if=usable.divine_toll&holy_power<=3&(var.need_aoe_heal|var.in_burst|cooldown.avenging_wrath.remains<10)
+  - divine_toll,if=usable.divine_toll&holy_power<=2
   - holy_avenger,if=talent.holy_avenger&var.aw_up
   - beacon_of_virtue,if=talent.beacon_of_virtue&var.need_aoe_heal
   - tyrs_deliverance,if=talent.tyrs_deliverance&(var.need_aoe_heal|var.need_emergency|var.need_major_heal)
@@ -165,18 +165,18 @@ lists:
   - crusader_strike
 
   healing:
-  - holy_shock,target=lowest
-  - bestow_faith,target=lowest,if=talent.bestow_faith
   - light_of_dawn,if=var.hp_max&active_enemies>=2
   - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_max
   - word_of_glory,target=lowest,if=var.hp_max
+  - flash_of_light,target=lowest,if=var.iol_up&var.need_major_heal
+  - holy_shock,target=lowest
+  - bestow_faith,target=lowest,if=talent.bestow_faith
   - light_of_dawn,if=var.hp_high&(var.need_aoe_heal|active_enemies>=2)
   - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_high&var.need_major_heal
   - word_of_glory,target=lowest,if=var.hp_high&var.need_major_heal
   - eternal_flame,target=lowest,if=talent.eternal_flame&var.hp_3plus&var.need_major_heal
   - word_of_glory,target=lowest,if=var.hp_3plus&var.need_major_heal
   - bestow_faith,target=lowest,if=talent.bestow_faith&var.need_major_heal
-  - flash_of_light,target=lowest,if=var.iol_up&var.need_major_heal
   - holy_light,target=lowest,if=var.need_major_heal&var.mana_ok
   - flash_of_light,target=lowest,if=var.need_major_heal
   - judgment,if=!var.hp_max

@@ -55,6 +55,7 @@ variables:
   has_scalding: talent.scalding_brew
   has_rjw: talent.rushing_jade_wind
   has_moh: talent.aspect_of_harmony
+  has_shado_pan: talent.flurry_strikes
 
   boc_up: buff.blackout_combo.up
   charred_up: buff.charred_passions.up
@@ -91,7 +92,9 @@ lists:
   - fortifying_brew,if=health.pct<=config.defensive_hp
   - touch_of_karma,if=health.pct<=(config.defensive_hp+10)
   - celestial_brew,if=var.has_moh&var.moh_vitality_ready&!var.moh_spending&!var.boc_up
+  - celestial_infusion,if=var.has_moh&var.moh_vitality_ready&!var.moh_spending&!var.boc_up
   - celestial_brew,if=!var.has_moh&(stagger.pct>=65|(cooldown.purifying_brew.charges_fractional<0.6&stagger.pct>=40)|cooldown.celestial_brew.charges_fractional>1.8)
+  - celestial_infusion,if=!var.has_moh&(stagger.pct>=65|(cooldown.purifying_brew.charges_fractional<0.6&stagger.pct>=40)|cooldown.celestial_brew.charges_fractional>1.8)
 
   purify:
   - purifying_brew,if=!var.boc_up&stagger.pct>=65

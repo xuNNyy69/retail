@@ -64,7 +64,7 @@ lists:
   - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&!buff.heating_up.up&cooldown.fire_blast.charges>=2,ignore_movement=true
   - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
-  - meteor,if=talent.meteor&buff.combustion.remains>2,ignore_movement=true
+  - meteor,if=talent.meteor&buff.combustion.remains<=8,ignore_movement=true
   - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=var.hot_streak_react,ignore_movement=true
   - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
@@ -82,19 +82,20 @@ lists:
   - meteor,if=talent.meteor&cooldown.combustion.remains>=20,ignore_movement=true
   - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=var.hot_streak_react,ignore_movement=true
+  - scorch,if=buff.heat_shimmer.up,ignore_movement=true
   - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
   - scorch,if=talent.improved_scorch&target.health.pct<=30&buff.improved_scorch.stack<2,ignore_movement=true
   - scorch,if=target.health.pct<=30,ignore_movement=true
   - frostfire_bolt,ignore_movement=true
 
-  # Base / Spellslinger build — Combustion window
+  # Base / Sunfury build — Combustion window
   sf_combustion:
   - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&buff.heating_up.up&cooldown.fire_blast.charges>=1,ignore_movement=true
   - fire_blast,if=buff.combustion.up&!buff.hot_streak.up&!buff.heating_up.up&cooldown.fire_blast.charges>=2,ignore_movement=true
   - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
-  - meteor,if=talent.meteor&buff.combustion.remains>2,ignore_movement=true
+  - meteor,if=talent.meteor&buff.combustion.remains<=8,ignore_movement=true
   - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=var.hot_streak_react,ignore_movement=true
   - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
@@ -103,8 +104,9 @@ lists:
   - scorch,ignore_movement=true
   - fireball,ignore_movement=true
 
-  # Base / Spellslinger build — outside Combustion
+  # Base / Sunfury build — outside Combustion
   sf_filler:
+  - pyroblast,if=buff.hyperthermia.up,ignore_movement=true
   - shifting_power,if=cooldown.combustion.remains>=15,ignore_movement=true
   - fire_blast,if=!buff.hot_streak.up&buff.heating_up.up,ignore_movement=true
   - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
@@ -112,6 +114,7 @@ lists:
   - meteor,if=talent.meteor&cooldown.combustion.remains>=20,ignore_movement=true
   - flamestrike,if=var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=var.hot_streak_react,ignore_movement=true
+  - scorch,if=buff.heat_shimmer.up,ignore_movement=true
   - flamestrike,if=buff.fury_of_the_sun_king.up&var.want_aoe&active_enemies>=3,ignore_movement=true
   - pyroblast,if=buff.fury_of_the_sun_king.up,ignore_movement=true
   - scorch,if=talent.improved_scorch&target.health.pct<=30&buff.improved_scorch.stack<2,ignore_movement=true

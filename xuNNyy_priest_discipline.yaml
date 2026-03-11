@@ -162,12 +162,11 @@ lists:
   # SWP: must stay active for Atonement healing + Psychic Link cleave
   - shadow_word_pain,if=dot.shadow_word_pain.refreshable
 
-  # Mind Blast: skip if Power of the Dark Side proc is active
-  # (guide: Power of the Dark Side buffs Penance, so cast it first)
-  - mind_blast,if=!var.potds_up
-
-  # Penance: primary damage / healing conduit; use with PotDS proc always
+  # Penance: primary damage / healing conduit (top Archon M+ damage source)
   - penance
+
+  # Mind Blast: builder + PotDS proc generator
+  - mind_blast
 
   # Shadow Word: Death: execute range bonus damage
   - shadow_word_death,if=target.health.pct<20
@@ -207,6 +206,7 @@ lists:
   - return,if=player.casting|player.channeling
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - power_infusion,if=config.use_cooldowns&cooldown.power_infusion.ready,use_off_gcd=1
   # Emergency direct heals bypass all rotation logic
   - call_action_list,name=emergency,if=var.anyone_emergency
   # Ultimate Penitence ramp (higher value CD fires first)

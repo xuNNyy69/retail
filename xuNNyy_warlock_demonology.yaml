@@ -35,7 +35,6 @@ config:
 
 variables:
   in_tyrant: buff.demonic_tyrant.up
-  pool_for_tyrant: cooldown.summon_demonic_tyrant.remains<20&buff.demonic_core.stack<=2
 
 lists:
   interrupts:
@@ -65,19 +64,18 @@ lists:
   - potion,if=config.use_potions&var.in_tyrant
   - call_action_list,name=racials,if=config.use_cooldowns&var.in_tyrant,use_off_gcd=1
   - call_action_list,name=items,use_off_gcd=1
+  - power_siphon,if=talent.power_siphon&buff.demonic_core.stack<=2&buff.wild_imps.stack>=4
+  - call_dreadstalkers
+  - hand_of_guldan,if=soul_shards>=3
+  - ruination,if=talent.ruination
   - grimoire_imp_lord,if=config.use_cooldowns&talent.grimoire_imp_lord
   - grimoire_fel_ravager,if=config.use_cooldowns&talent.grimoire_fel_ravager
+  - summon_demonic_tyrant,if=config.use_cooldowns&buff.dreadstalkers.up
   - summon_doomguard,if=config.use_cooldowns&talent.summon_doomguard
-  - call_dreadstalkers,if=config.use_cooldowns&!var.pool_for_tyrant
-  - power_siphon,if=talent.power_siphon&buff.demonic_core.stack<3&buff.wild_imps.stack>=4
-  - summon_demonic_tyrant,if=config.use_cooldowns&soul_shards>=4&buff.dreadstalkers.up
-  - implosion,if=buff.wild_imps.stack>=6&(var.in_tyrant|active_enemies>=2)
-  - ruination,if=talent.ruination
-  - demonbolt,if=debuff.doom.down&soul_shards<4&buff.demonic_core.stack>=3&talent.doom
-  - demonbolt,if=soul_shards<4&buff.demonic_core.stack>=3&!talent.doom
+  - implosion,if=buff.wild_imps.stack>=6&(var.in_tyrant|active_enemies>=config.aoe_threshold)
+  - demonbolt,if=debuff.doom.down&soul_shards<4&buff.demonic_core.up&talent.doom
+  - demonbolt,if=soul_shards<4&buff.demonic_core.stack>=2
   - infernal_bolt,if=soul_shards<3&talent.infernal_bolt
-  - hand_of_guldan,if=soul_shards>=3
-  - demonbolt,if=buff.demonic_core.stack>=2
   - shadow_bolt
   - infernal_bolt,if=talent.infernal_bolt
 

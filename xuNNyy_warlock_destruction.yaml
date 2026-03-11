@@ -66,24 +66,25 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets
   - wither,if=talent.wither&(!dot.wither.ticking|dot.wither.refreshable)
   - immolate,if=!talent.wither&(dot.immolate.down|dot.immolate.refreshable)&(!talent.soul_fire|cooldown.soul_fire.remains>gcd)
-  - chaos_bolt,if=talent.diabolic_ritual&!var.in_ritual&soul_shards>=2
   - summon_infernal,if=talent.summon_infernal&config.use_cooldowns
   - malevolence,if=talent.malevolence&config.use_cooldowns
+  - havoc,if=talent.havoc&active_enemies>=2
+  - cataclysm,if=talent.cataclysm&active_enemies>=config.aoe_threshold
+  - rain_of_fire,if=active_enemies>=config.aoe_threshold&soul_shards>=3
+  - ruination,if=talent.ruination&buff.ruination.up
+  - chaos_bolt,if=talent.diabolic_ritual&!var.in_ritual&soul_shards>=2
   - chaos_bolt,if=buff.malevolence.up&soul_shards>=2
+  - shadowburn,if=talent.shadowburn&(soul_shards>=4|buff.fiendish_cruelty.up)
+  - shadowburn,if=talent.shadowburn&target.health.pct<=20&soul_shards>=1
+  - chaos_bolt,if=soul_shards>=4
   - incinerate,if=buff.chaotic_inferno_buff.up&soul_shards<=4
-  - shadowburn,if=talent.shadowburn&soul_shards>=4&target.health.pct<=20
-  - shadowburn,if=talent.shadowburn&(buff.fiendish_cruelty.up|soul_shards>=5)
-  - soul_fire,if=buff.backdraft.up
+  - soul_fire,if=buff.backdraft.up&soul_shards<=4
   - conflagrate,if=cooldown.conflagrate.charges>=2
   - soul_fire,if=cooldown.soul_fire.ready&soul_shards<=4
-  - rain_of_fire,if=talent.wither&active_enemies>=config.aoe_threshold&soul_shards>=3
   - chaos_bolt,if=var.in_ritual&soul_shards>=2
-  - chaos_bolt,if=soul_shards>=4
-  - ruination,if=talent.ruination&buff.ruination.up
   - infernal_bolt,if=talent.infernal_bolt&soul_shards<=3
   - channel_demonfire,if=talent.channel_demonfire&(active_dot.immolate>=1|active_dot.wither>=1)
   - conflagrate,if=buff.backdraft.stack<2
-  - cataclysm,if=talent.cataclysm
   - incinerate
 
   fallback:

@@ -119,7 +119,8 @@ variables:
   has_chi_ji: talent.invoke_chi_ji_the_red_crane
   has_yulon: talent.invoke_yulon_the_jade_serpent
   has_teachings: talent.teachings_of_the_monastery
-  has_faeline: talent.faeline_stomp
+  has_jadefire: talent.jadefire_stomp
+  has_rwk: talent.rushing_wind_kick
   has_dance: talent.dance_of_chiji
   has_chi_burst: talent.chi_burst
   has_mana_tea: talent.mana_tea
@@ -227,8 +228,9 @@ lists:
   - touch_of_death,if=var.has_touch_of_death&target.health.pct<=15
   - thunder_focus_tea,if=!var.tft_up&(cooldown.rising_sun_kick.remains<gcd|var.rmist_overcap),use_off_gcd=1
   - rising_sun_kick
+  - rushing_wind_kick,if=var.has_rwk
   - blackout_kick,if=var.has_teachings&var.teachings_stack>=3
-  - faeline_stomp,if=var.has_faeline
+  - jadefire_stomp,if=var.has_jadefire
   - chi_burst,if=var.has_chi_burst
   - blackout_kick,if=var.has_teachings&var.teachings_stack>=1&cooldown.rising_sun_kick.remains>gcd
   - spinning_crane_kick,if=var.has_dance&var.dance_up
@@ -242,7 +244,8 @@ lists:
   - spinning_crane_kick,if=var.has_dance&var.dance_up
   - thunder_focus_tea,if=!var.tft_up&(var.rmist_overcap|cooldown.rising_sun_kick.remains<gcd),use_off_gcd=1
   - rising_sun_kick
-  - faeline_stomp,if=var.has_faeline
+  - rushing_wind_kick,if=var.has_rwk
+  - jadefire_stomp,if=var.has_jadefire
   - chi_burst,if=var.has_chi_burst
   - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
   - spinning_crane_kick,if=active_enemies>=config.aoe_threshold
