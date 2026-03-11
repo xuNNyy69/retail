@@ -32,6 +32,10 @@ config:
     min: 2
     max: 8
     default: 3
+  use_dispel:
+    label: "Use Dispel"
+    type: checkbox
+    default: true
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
@@ -62,6 +66,9 @@ lists:
   - return,if=!config.use_defensives
   - divine_protection,if=usable.divine_protection&health.pct<=50,use_off_gcd=1
   - divine_shield,if=usable.divine_shield&health.pct<=10,ignore_movement=true
+
+  dispel:
+  - cleanse_toxins,if=player.has_poison|player.has_disease
 
   items:
   - return,if=!config.use_trinkets
@@ -133,6 +140,7 @@ lists:
   - call_action_list,name=interrupts
   # Defensives
   - call_action_list,name=defensives
+  - call_action_list,name=dispel,if=config.use_dispel
   # Target check
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)

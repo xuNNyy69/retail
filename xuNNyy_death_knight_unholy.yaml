@@ -49,7 +49,6 @@ variables:
   opener_done: combat.time>8|!player.combat
   has_sanlayn: talent.vampiric_strike
   has_rider: talent.apocalypse_now
-  has_deathbringer: talent.reapers_mark
   pet_missing: pet.exists=0|pet.dead
   wounds_up: debuff.festering_wound.up
   wounds_low: debuff.festering_wound.stack<4
@@ -59,13 +58,11 @@ variables:
   dt_up: buff.dark_transformation.up
   gargoyle_window: buff.summon_gargoyle.up
   rp_gargoyle: runic_power>=60&var.gargoyle_window
-  in_execute: target.health.pct<=35
   # APL uses active_enemies>=3 for epidemic threshold (not config-based)
   epidemic_mode: talent.epidemic&active_enemies>=3
   # Wowhead: Soul Reaper on CD when talented (no execute gating in Midnight)
   sr_ready: talent.soul_reaper
   gift_up: var.has_sanlayn&buff.gift_of_the_sanlayn.up
-  sanguine_up: var.has_sanlayn&buff.sanguine_scent.up
   rider_active: var.has_rider&(buff.mograines_might.up|buff.nazgrims_march.up|buff.trollbanes_icy_fury.up|buff.whitemanes_famine.up)
 
 lists:
@@ -74,8 +71,8 @@ lists:
   - asphyxiate,if=target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
 
   defensives:
-  - anti_magic_shell,if=player.dangerous_debuff.magic.up,use_off_gcd=1
-  - icebound_fortitude,if=(player.dangerous_debuff.up|health.pct<=35)
+  - anti_magic_shell,if=dangerous_debuff.magic.up,use_off_gcd=1
+  - icebound_fortitude,if=(dangerous_debuff.up|health.pct<=35)
   - lichborne,if=health.pct<=30
   - death_strike,if=health.pct<=config.death_strike_hp&runic_power>=35
 
@@ -112,7 +109,10 @@ lists:
   - summon_gargoyle,if=talent.summon_gargoyle&runic_power>=60
   - raise_abomination,if=talent.raise_abomination
   - unholy_blight,if=talent.unholy_blight
-  - reapers_mark,if=var.has_deathbringer
+  - apocalypse,if=debuff.festering_wound.stack>=4
+  - vile_contagion,if=debuff.festering_wound.stack>=4&active_enemies>=2
+  - defile,if=talent.defile
+  - death_and_decay,if=!talent.defile&active_enemies>=2
   - unholy_assault,if=talent.unholy_assault&var.wounds_low
   - empower_rune_weapon,if=rune<2&runic_power<40
   - abomination_limb,if=talent.abomination_limb
@@ -122,6 +122,8 @@ lists:
   # Gift of the Sanlayn — highest-priority strike during Sanlayn hero tree
   - vampiric_strike,if=var.gift_up
   - scourge_strike,if=var.gift_up
+  # Soul Reaper during burst window
+  - soul_reaper,if=var.sr_ready
   # Putrefy 2 charges during burst (Wowhead FK #1)
   - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2
   # Scythe buff refresh (Wowhead FK #3)
@@ -136,7 +138,8 @@ lists:
   - death_coil,if=var.gargoyle_window&var.rp_gargoyle&!var.epidemic_mode
   - epidemic,if=var.gargoyle_window&var.rp_gargoyle&var.epidemic_mode
   # Rider of the Apocalypse buff dump
-  - death_coil,if=var.rider_active&runic_power>=40
+  - death_coil,if=var.rider_active&runic_power>=40&!var.epidemic_mode
+  - epidemic,if=var.rider_active&runic_power>=40&var.epidemic_mode
   # RP spend (Wowhead: Sudden Doom or 80+ RP)
   - death_coil,if=var.rp_spend&!var.epidemic_mode
   - epidemic,if=var.rp_spend&var.epidemic_mode
@@ -151,17 +154,23 @@ lists:
   - festering_scythe,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
   - festering_strike,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
   # Death Coil on Sudden Doom or 80+ RP (Wowhead #8)
-  - death_coil,if=var.rp_spend
+  # Epidemic at 3+ targets instead of DC (Wowhead #8)
+  - epidemic,if=var.epidemic_mode&var.rp_spend
+  - death_coil,if=!var.epidemic_mode&var.rp_spend
   - festering_strike,if=var.wounds_low
   - scourge_strike,if=var.wounds_up
   - vampiric_strike,if=var.wounds_up
-  - death_coil,if=var.rider_active&runic_power>=40
+  - death_coil,if=var.rider_active&runic_power>=40&!var.epidemic_mode
+  - epidemic,if=var.rider_active&runic_power>=40&var.epidemic_mode
   - scourge_strike
   - vampiric_strike
+  - epidemic,if=var.epidemic_mode&runic_power>=40,ignore_queue=true
   - death_coil,if=runic_power>=40,ignore_queue=true
 
   aoe:
   - outbreak,if=var.vp_refresh
+  # Soul Reaper on CD during AoE
+  - soul_reaper,if=var.sr_ready
   # APL: keep D&D ticking when desecrate talent is active
   - death_and_decay,if=talent.desecrate&cooldown.death_and_decay.ready
   # Scythe buff refresh on expiry during AoE
@@ -173,6 +182,9 @@ lists:
   - scourge_strike,if=var.wounds_up
   - vampiric_strike,if=var.wounds_up
   - festering_strike,if=var.wounds_low
+  # Rider of the Apocalypse buff dump during AoE
+  - epidemic,if=var.rider_active&var.epidemic_mode&runic_power>=40
+  - death_coil,if=var.rider_active&!var.epidemic_mode&runic_power>=40
   - death_coil,if=!var.epidemic_mode&var.rp_spend
   - epidemic,if=var.epidemic_mode&debuff.virulent_plague.up&runic_power>=40
   - death_coil,if=!var.epidemic_mode&runic_power>=40,ignore_queue=true
@@ -190,6 +202,8 @@ lists:
   # RP spend — epidemic for cleave value, DC for boss focus
   - epidemic,if=var.epidemic_mode&debuff.virulent_plague.up&var.rp_spend
   - death_coil,if=var.rp_spend
+  # Rider buff dump during funnel
+  - death_coil,if=var.rider_active&runic_power>=40
   - scourge_strike
   - vampiric_strike
   - death_coil,if=runic_power>=40,ignore_queue=true

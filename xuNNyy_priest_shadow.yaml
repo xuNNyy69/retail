@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  use_dispel:
+    label: "Use Purge/Dispel"
+    type: checkbox
+    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -66,6 +70,10 @@ lists:
   - dispersion,if=health.pct<=20
   - fade,if=health.pct<=50,use_off_gcd=1
   - desperate_prayer,if=health.pct<=50
+
+  dispel:
+  - dispel_magic,if=target.purgeable.magic
+  - purify_disease,if=player.has_disease
 
   racials:
   - berserking,use_off_gcd=1,if=var.voidform_up
@@ -196,6 +204,8 @@ lists:
   - call_action_list,name=interrupts,if=config.use_interrupts
   # Defensives
   - call_action_list,name=defensives,if=config.use_defensives
+  # Dispel/Purge
+  - call_action_list,name=dispel,if=config.use_dispel
   # Target check
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)

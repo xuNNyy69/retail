@@ -54,6 +54,10 @@ config:
     min: 40
     max: 100
     default: 100
+  use_dispel:
+    label: "Use Dispel/Soothe"
+    type: checkbox
+    default: true
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
@@ -69,11 +73,12 @@ variables:
   has_killing_blow: talent.killing_blow
   has_bristling: talent.bristling_fur
   has_dotc: talent.ravage|talent.wildpower_surge
+  has_gc: talent.lunar_calling
 
   # Buff states
   ravage_up: buff.ravage.up
   incarnation_up: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up|buff.wild_guardian.up
-  feline_potential_up: buff.feline_potential.up
+  gore_up: buff.gore.up
   gg_up: buff.galactic_guardian.up
   ironfur_up: buff.ironfur.up
   ironfur_low: buff.ironfur.remains<=gcd*2
@@ -81,8 +86,7 @@ variables:
   # Rage states
   rage_ok: rage>=40
   rage_mid: rage>=60
-  rage_high: rage>=90
-  rage_ec: rage>=80
+  rage_ec: rage>=70
 
   mangle_cap: rage<88&!var.has_sotf&!var.has_fos|rage<83&var.has_sotf&!var.has_fos|rage<108&var.has_fos&!var.has_sotf|rage<103&var.has_fos&var.has_sotf
 
@@ -103,15 +107,19 @@ lists:
   - survival_instincts,if=health.pct<=config.defensive_hp,use_off_gcd=1
   - barkskin,if=health.pct<=(config.defensive_hp+15),use_off_gcd=1
 
+  dispel:
+  - soothe,if=target.purgeable.enrage
+  - remove_corruption,if=player.has_curse|player.has_poison
+
   self_healing:
   - frenzied_regeneration,if=health.pct<=config.self_heal_hp&!buff.frenzied_regeneration.up
   - renewal,if=talent.renewal&health.pct<=(config.self_heal_hp-20)
   - healthstone,if=health.pct<=35
 
   items:
-  - trinket1,if=config.use_trinkets&trinket_1.sync,use_off_gcd=1
-  - trinket2,if=config.use_trinkets&trinket_2.sync,use_off_gcd=1
-  - potion,if=config.use_potions&health.pct<=config.defensive_hp
+  - trinket1,if=config.use_trinkets&(trinket_1.sync|var.incarnation_up|buff.lunar_beam.up),use_off_gcd=1
+  - trinket2,if=config.use_trinkets&(trinket_2.sync|var.incarnation_up|buff.lunar_beam.up),use_off_gcd=1
+  - potion,if=config.use_potions&(var.incarnation_up|buff.lunar_beam.up)
 
   cooldowns:
   # EC (Elune's Chosen): Lunar Beam as close to on CD as possible (Lunation CDR from Thrash + Moonfire)
@@ -126,7 +134,7 @@ lists:
   - rage_of_the_sleeper,if=talent.rage_of_the_sleeper
   - sundering_roar,if=talent.sundering_roar&debuff.thrash.stack<5
   - bristling_fur,if=var.has_bristling&cooldown.mangle.remains>0&cooldown.thrash.remains>0&var.bristling_rage&!var.ravage_up,use_off_gcd=1
-  - barkskin,if=var.incarnation_up|cooldown.incarnation_guardian_of_ursoc.remains<3,use_off_gcd=1
+  - barkskin,if=var.incarnation_up&health.pct>(config.defensive_hp+15),use_off_gcd=1
 
   racials:
   - berserking,use_off_gcd=1,if=var.incarnation_up
@@ -140,60 +148,68 @@ lists:
   rage_spenders:
   - ironfur,if=config.use_defensives&!var.ironfur_up&!var.ravage_up&var.rage_ok&health.pct<=config.ironfur_hp
   - ironfur,if=config.use_defensives&var.ironfur_low&var.rage_ok&health.pct<=config.ironfur_hp
-  # EC spends at 80 rage (preserve HP window before spending); DotC standard at 60/40
-  - raze,if=var.want_aoe&!var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_mid)
-  - maul,if=var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_ok)
-  - maul,if=!var.want_aoe&!var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_mid)
+  # EC spends at 70+ rage; DotC at 60/40; universal 90+ overcap safety; skip raze if Thrash needs refresh
+  - raze,if=var.want_aoe&!var.ravage_up&!debuff.thrash.refreshable&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_mid|rage>=90)
+  - maul,if=var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_ok|rage>=90)
+  - maul,if=!var.want_aoe&!var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_mid|rage>=90)
 
   # Internal: Dream of Cenarius / Ravage proc handling + optional catweave
   bear_dotc:
+  # Moonfire DoT: maintain Scintillating Moonlight even during DotC catweave windows
+  - moonfire,if=var.in_bear&!var.has_gc&(dot.moonfire.down|dot.moonfire.refreshable)
   # Red Moon: Mangle before Ravage spend (extends debuff, grants bonus rage — guide priority)
   - mangle,if=var.has_red_moon&debuff.red_moon.up
-  # Ravage proc: consume at low threshold (Gore proc = free Mangle reset + rage)
+  # Gore proc: immediate Mangle for bonus rage
+  - mangle,if=var.gore_up&var.mangle_cap
+  # Ravage proc: consume at threshold (Gore proc = free Mangle reset + rage)
   - maul,if=var.ravage_up&rage>=40&!var.has_killing_blow
   - maul,if=var.ravage_up&rage>=60&var.has_killing_blow
   # Catweave (DotC + Wildpower Surge only): empowered Rip window at 6 Feline Potential stacks
   - ferocious_bite,if=talent.wildpower_surge&buff.feline_potential.stack>=6&dot.rip.up&dot.rip.remains>8
-  - rip,if=talent.wildpower_surge&buff.feline_potential.stack>=6
-  - ferocious_bite,if=talent.wildpower_surge&combo_points>=2&dot.rip.up&dot.rip.remains>8
-  - rip,if=talent.wildpower_surge&combo_points>=2&dot.rip.down
-  # Rake: shifts into Cat Form (Fluid Form makes this free); use as 6-stack form trigger
-  - rake,if=talent.wildpower_surge&buff.feline_potential.stack>=6&(dot.rake.refreshable|dot.rake.down)
+  - rip,if=talent.wildpower_surge&buff.feline_potential.stack>=6&(dot.rip.refreshable|dot.rip.down)
+  - ferocious_bite,if=talent.wildpower_surge&combo_points>=4&dot.rip.up&dot.rip.remains>8
+  - rip,if=talent.wildpower_surge&combo_points>=4&dot.rip.down
 
   st:
-  # Moonfire DoT maintenance (Scintillating Moonlight uptime — top offensive priority)
-  - moonfire,if=var.in_bear&(dot.moonfire.down|dot.moonfire.refreshable)
+  # Moonfire DoT maintenance (skip if Lunar Calling handles it via Thrash)
+  - moonfire,if=var.in_bear&!var.has_gc&(dot.moonfire.down|dot.moonfire.refreshable)
   - call_action_list,name=bear_dotc,if=var.has_dotc
   - thrash,if=debuff.thrash.refreshable|debuff.thrash.down
+  # Lunar Calling: extra Thrash value (applies Moonfire via Thrash)
+  - thrash,if=var.has_gc
   - mangle,if=var.incarnation_up
+  # Gore proc: immediate Mangle for bonus rage
+  - mangle,if=var.gore_up&var.mangle_cap
   - mangle,if=var.mangle_cap
   - thrash
-  # Galactic Guardian proc: always consume immediately
-  - moonfire,if=var.gg_up&var.in_bear
+  # Galactic Guardian proc
+  - moonfire,if=var.gg_up&var.in_bear&!var.has_red_moon
   # EC (Elune's Chosen): Moonfire as filler — Lunation CDR value; pushes Swipe out entirely
-  - moonfire,if=var.has_lunation&var.in_bear
-  # DotC: Swipe as filler; or multi-target even for EC
-  - swipe,if=!var.has_lunation|active_enemies>4
+  - moonfire,if=var.has_lunation&var.in_bear&!var.has_red_moon
+  # DotC / Red Moon / multi-target: Swipe as filler
+  - swipe,if=!var.has_lunation|var.has_red_moon|active_enemies>4
 
   aoe:
-  # Moonfire DoT maintenance (Scintillating Moonlight; Twin Moonfire spreads to adds)
-  - moonfire,if=var.in_bear&(dot.moonfire.down|dot.moonfire.refreshable)
+  # Moonfire DoT maintenance (skip if Lunar Calling handles it via Thrash)
+  - moonfire,if=var.in_bear&!var.has_gc&(dot.moonfire.down|dot.moonfire.refreshable)
   - thrash,if=debuff.thrash.refreshable|debuff.thrash.down
+  # Lunar Calling: extra Thrash value
+  - thrash,if=var.has_gc
   # Red Moon: Mangle first — extends debuff, grants bonus rage
   - mangle,if=var.has_red_moon&debuff.red_moon.up
-  # Rage spenders — EC at 80, DotC at 60
-  - raze,if=!var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_mid)
-  - maul,if=var.ravage_up&(var.has_lunation&var.rage_ec|!var.has_lunation&var.rage_ok)
   - mangle,if=var.incarnation_up
+  # Gore proc: immediate Mangle for bonus rage
+  - mangle,if=var.gore_up&var.mangle_cap
   # Galactic Guardian proc
-  - moonfire,if=var.gg_up&var.in_bear
+  - moonfire,if=var.gg_up&var.in_bear&!var.has_red_moon
   - mangle,if=var.mangle_cap
   - thrash
-  # EC: Moonfire filler; DotC: Swipe filler
-  - moonfire,if=var.has_lunation&var.in_bear
-  - swipe,if=!var.has_lunation|active_enemies>4
+  # EC: Moonfire filler; DotC / Red Moon: Swipe filler
+  - moonfire,if=var.has_lunation&var.in_bear&!var.has_red_moon
+  - swipe,if=!var.has_lunation|var.has_red_moon|active_enemies>4
 
   fallback:
+  - moonfire,if=target.exists&target.enemy&target.alive&target.range>8,ignore_queue=true
   - mangle,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
@@ -210,15 +226,16 @@ lists:
   - call_action_list,name=taunt
   # Defensives + self healing
   - call_action_list,name=defensives,if=config.use_defensives
+  - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=self_healing
   # Target check
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=items,if=config.use_trinkets
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
+  - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   - call_action_list,name=rage_spenders
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st

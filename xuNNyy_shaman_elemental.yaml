@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  use_dispel:
+    label: "Use Purge/Dispel"
+    type: checkbox
+    default: true
 
 variables:
   # mael_cap base is 100; swelling_maelstrom/primordial_capacity add 50/25 respectively.
@@ -39,6 +43,10 @@ lists:
 
   defensives:
   - astral_shift,if=health.pct<=35
+
+  dispel:
+  - purge,if=target.purgeable,use_off_gcd=1
+  - cleanse_spirit,if=player.has_curse
 
   items:
   - trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
@@ -97,6 +105,8 @@ lists:
   - call_action_list,name=interrupts,if=config.use_interrupts
   # Defensives
   - call_action_list,name=defensives,if=config.use_defensives
+  # Dispel/Purge
+  - call_action_list,name=dispel,if=config.use_dispel
   # Target check
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)

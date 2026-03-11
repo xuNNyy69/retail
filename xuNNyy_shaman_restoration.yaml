@@ -114,6 +114,7 @@ lists:
 
   dispel:
   - purge,if=target.purgeable,use_off_gcd=1
+  - purify_spirit,cycle=members,if=cycle.dispelable.curse|cycle.dispelable.magic
 
   defensives:
   - astral_shift,if=health.pct<=config.defensive_hp,use_off_gcd=1

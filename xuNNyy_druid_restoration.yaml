@@ -129,6 +129,7 @@ lists:
   - skull_bash.focus,if=interrupt.focus.check,use_off_gcd=1
 
   dispel:
+  - soothe,if=target.purgeable.enrage
   - nature_dispel,cycle_targets=1,if=cycle.dispelable
 
   defensives:

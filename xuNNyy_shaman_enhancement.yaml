@@ -78,6 +78,7 @@ lists:
 
   dispel:
   - purge,if=target.purgeable,use_off_gcd=1
+  - cleanse_spirit,if=player.has_curse
 
   defensives:
   - astral_shift,if=health.pct<=config.defensive_hp,use_off_gcd=1
