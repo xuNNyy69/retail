@@ -100,10 +100,10 @@ lists:
   - arcane_shot,if=var.precise_shots_up
   # Volley: maintains Trick Shots passively
   - volley,if=talent.volley
-  # Aimed Shot: normal priority
-  - aimed_shot
-  # Rapid Fire: normal
+  # Rapid Fire: Bulletstorm buff for next Aimed Shot
   - rapid_fire
+  # Aimed Shot: normal priority (Bulletstorm-buffed)
+  - aimed_shot
   # Arcane Shot: focus dump to prevent capping
   - arcane_shot,if=var.focus_dump
   # Steady Shot: filler
@@ -156,10 +156,10 @@ lists:
   - arcane_shot,if=var.precise_shots_up
   # Volley: if talented
   - volley,if=talent.volley
-  # Aimed Shot: normal priority
-  - aimed_shot
-  # Rapid Fire
+  # Rapid Fire: Bulletstorm buff for next Aimed Shot
   - rapid_fire
+  # Aimed Shot: normal priority (Bulletstorm-buffed)
+  - aimed_shot
   # Arcane Shot: focus dump to prevent capping
   - arcane_shot,if=var.focus_dump
   # Steady Shot: filler

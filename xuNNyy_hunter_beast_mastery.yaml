@@ -31,12 +31,13 @@ config:
     type: slider
     min: 2
     max: 8
-    default: 3
+    default: 2
 
 variables:
   in_bw: buff.bestial_wrath.up
   want_aoe: active_enemies>=config.aoe_threshold
   is_dr: talent.black_arrow
+  howl_active: "buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up|buff.natures_ally.up"
 
 lists:
   interrupts:
@@ -60,27 +61,27 @@ lists:
 
   st:
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - bestial_wrath,if=config.use_cooldowns
-  - kill_command,if=buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up|buff.natures_ally.up
+  - kill_command,if=var.howl_active
+  - kill_shot,if=target.health.pct<=20
   - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
   - barbed_shot
   - cobra_shot
 
   cleave:
+  - multishot,if=!buff.beast_cleave.up
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
-  - wild_thrash,if=talent.wild_thrash
   - bestial_wrath,if=config.use_cooldowns
+  - kill_shot,if=target.health.pct<=20
+  - wild_thrash,if=talent.wild_thrash
   - kill_command
-  - cobra_shot,if=cooldown.wild_thrash.remains>gcd&buff.hogstrider.up&active_enemies<4
   - barbed_shot
-  - cobra_shot,if=cooldown.wild_thrash.remains>gcd
+  - cobra_shot
 
   drst:
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - bestial_wrath,if=config.use_cooldowns
+  - kill_shot,if=target.health.pct<=20|var.in_bw
   - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
   - black_arrow,if=buff.withering_fire.up
   - wailing_arrow,if=buff.wailing_arrow.up
@@ -90,10 +91,10 @@ lists:
   - cobra_shot
 
   drcleave:
-  - wild_thrash,if=talent.wild_thrash&!buff.beast_cleave.up
+  - multishot,if=!buff.beast_cleave.up
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - bestial_wrath,if=config.use_cooldowns
+  - kill_shot,if=target.health.pct<=20|var.in_bw
   - wailing_arrow,if=buff.wailing_arrow.up
   - wild_thrash,if=talent.wild_thrash
   - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
@@ -110,6 +111,7 @@ lists:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
+  - hunters_mark,if=target.exists&target.enemy&!debuff.hunters_mark.up&!player.combat
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)

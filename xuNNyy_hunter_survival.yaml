@@ -83,38 +83,31 @@ lists:
   # spend stacks on Takedown/Boomstick; Wildfire Bomb situationally
   # ===========================================================
   st:
-  # Pack Leader: Howl beast ability is highest priority when ready
+  # Pack Leader: Howl beast ability highest priority
   - kill_command,if=var.is_pl&var.howl_active
-
-  # Kill Command: primary TotS generator; keep rolling
-  - kill_command
-
-  # Sentinel: Wildfire Bomb when Sentinel's Mark is active
-  - wildfire_bomb,if=var.is_sentinel&var.sentinels_mark_up
-
-  # Wildfire Bomb: prevent charge cap
-  - wildfire_bomb,if=var.bomb_capping
-
-  # DPS Cooldowns (Takedown + Boomstick are mandatory talents)
-  - takedown,if=config.use_cooldowns
-  - boomstick,if=config.use_cooldowns
-
-  # Sentinel: Moonlight Chakram proc
+  # Sentinel: Moonlight Chakram (replaces Takedown keybind)
   - moonlight_chakram,if=talent.moonlight_chakram&var.is_sentinel
-
-  # Pack Leader: Wildfire Bomb with Wyvern active + TotS stacks
+  # Takedown: use with TotS stacks for max damage
+  - takedown,if=config.use_cooldowns&var.tip_of_spear_up
+  # Boomstick: use with TotS stack
+  - boomstick,if=config.use_cooldowns&var.tip_of_spear_up
+  # Wildfire Bomb: charge cap prevention
+  - wildfire_bomb,if=var.bomb_capping
+  # Sentinel: Wildfire Bomb with Sentinel's Mark + TotS
+  - wildfire_bomb,if=var.is_sentinel&var.sentinels_mark_up&var.tip_of_spear_up
+  # Pack Leader: Wildfire Bomb with Wyvern + TotS
   - wildfire_bomb,if=var.is_pl&var.howl_wyvern_up&var.tip_of_spear_up
-
-  # Flamefang Pitch: optional AoE-focused CD
-  - flamefang_pitch,if=talent.flamefang_pitch&config.use_cooldowns
-
-  # Raptor Swipe: with Tip of the Spear buff
+  # Kill Shot: execute range
+  - kill_shot,if=target.health.pct<=20
+  # Raptor Swipe: with TotS
   - raptor_swipe,if=talent.raptor_swipe&var.tip_of_spear_up
-
-  # Raptor Strike: general melee filler
+  # Flamefang Pitch
+  - flamefang_pitch,if=talent.flamefang_pitch&config.use_cooldowns
+  # Raptor Strike: general filler
   - raptor_strike
-
-  # Wildfire Bomb: baseline usage
+  # Kill Command: TotS generator when spenders on CD
+  - kill_command
+  # Wildfire Bomb: baseline
   - wildfire_bomb
 
   # ===========================================================
@@ -122,36 +115,28 @@ lists:
   # Same core with Wildfire Bomb prioritized more for spread damage
   # ===========================================================
   aoe:
-  # Pack Leader: Howl beast ability top priority
-  - kill_command,if=var.is_pl&var.howl_active
-
-  # Kill Command: generate TotS
-  - kill_command
-
-  # Boomstick: AoE cone -- strong in 2+ targets
+  # Boomstick: AoE cone is #1 priority in multi-target
   - boomstick,if=config.use_cooldowns
-
-  # Wildfire Bomb: prevent charge cap
-  - wildfire_bomb,if=var.bomb_capping
-
-  # Sentinel: Wildfire Bomb with Sentinel's Mark
-  - wildfire_bomb,if=var.is_sentinel&var.sentinels_mark_up
-
-  # Takedown cooldown
-  - takedown,if=config.use_cooldowns
-
+  # Pack Leader: Howl beast ability
+  - kill_command,if=var.is_pl&var.howl_active
   # Sentinel: Moonlight Chakram
   - moonlight_chakram,if=talent.moonlight_chakram&var.is_sentinel
-
+  # Wildfire Bomb: charge cap prevention
+  - wildfire_bomb,if=var.bomb_capping
+  # Takedown with TotS
+  - takedown,if=config.use_cooldowns&var.tip_of_spear_up
+  # Sentinel: Wildfire Bomb with Sentinel's Mark
+  - wildfire_bomb,if=var.is_sentinel&var.sentinels_mark_up
   # Flamefang Pitch: AoE burst
   - flamefang_pitch,if=talent.flamefang_pitch&config.use_cooldowns
-
+  # Kill Shot: execute
+  - kill_shot,if=target.health.pct<=20
   # Raptor Swipe with TotS
   - raptor_swipe,if=talent.raptor_swipe&var.tip_of_spear_up
-
-  # Raptor Strike
+  # Raptor Strike: filler
   - raptor_strike
-
+  # Kill Command: TotS generator
+  - kill_command
   # Wildfire Bomb: baseline
   - wildfire_bomb
 
