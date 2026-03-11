@@ -32,10 +32,6 @@ config:
     min: 2
     max: 8
     default: 3
-  funnel_mode:
-    label: "Funnel (Boss Focus)"
-    type: checkbox
-    default: true
   death_strike_hp:
     label: "Death Strike HP%"
     type: slider
@@ -46,12 +42,10 @@ config:
 variables:
   # --- State ---
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
-  want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
   opener_done: combat.time>6|!player.combat
 
   # --- Hero tree detection (hero_tree.X not supported; use defining talent) ---
   has_deathbringer: talent.reaper_of_souls
-  has_rider: talent.apocalypse_now
 
   # --- Pet ---
   pet_missing: pet.exists=0|pet.dead
@@ -66,13 +60,12 @@ variables:
   razorice5: debuff.razorice.stack>=5
 
   # --- Hero-tree proc shortcuts ---
-  rider_buff_up: var.has_rider&(buff.mograines_might.up|buff.trollbanes_icy_fury.up)
   exterminate_ready: var.has_deathbringer&buff.exterminate.up
   cold_heart_ready: buff.cold_heart.stack>=20&talent.cold_heart
 
   # --- Pooling variables (SimC: rp_pooling / rune_pooling) ---
   # rp_pooling: BoS coming up in ~4 GCDs (approx 12 s) and RP is low - hold fino BoS fires
-  rp_pooling: talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<12&runic_power<60
+  rp_pooling: talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<12&!var.breath_up
   # rune_pooling: Deathbringer Reaper's Mark is imminent (<6 s) and runes are scarce
   rune_pooling: var.has_deathbringer&cooldown.reapers_mark.remains<6&rune<3
 
@@ -81,7 +74,7 @@ variables:
   in_grip_range: target.range<=30&target.range>8
 
   # --- Misc ---
-  ff_refresh: debuff.frost_fever.down|debuff.frost_fever.remains<4
+  ff_refresh: debuff.frost_fever.down|debuff.frost_fever.remains<6
 
 lists:
   # -------------------------------------------------------------------------
@@ -96,8 +89,8 @@ lists:
   # SimC high_prio: antimagic_shell,if=runic_power.deficit>40 => runic_power<60
   # -------------------------------------------------------------------------
   defensives:
-  - anti_magic_shell,if=runic_power<60,use_off_gcd=1
-  - icebound_fortitude,if=(player.dangerous_debuff.up|health.pct<=35)
+  - anti_magic_shell,if=(dangerous_debuff.magic.up|var.breath_up&runic_power<70),use_off_gcd=1
+  - icebound_fortitude,if=(dangerous_debuff.up|health.pct<=35)
   - lichborne,if=health.pct<=30
   - death_strike,if=health.pct<=config.death_strike_hp&runic_power>=35
 
@@ -150,13 +143,19 @@ lists:
   # Breath of Sindragosa: start inside pillar window (Wowhead #4)
   - breath_of_sindragosa,use_off_gcd=1,if=talent.breath_of_sindragosa&!var.breath_up&var.pillar_up
   # Frostwyrm's Fury: only when no active RM or Exterminate (Wowhead #5)
-  - frostwyrms_fury,if=var.pillar_up&!var.exterminate_ready&cooldown.reapers_mark.remains>gcd
-  # Empower Rune Weapon: off-GCD � fire at 2 full charges to avoid cap (guide #3)
-  - empower_rune_weapon,use_off_gcd=1,if=cooldown.empower_rune_weapon.charges_fractional>=2
-  # ERW: BoS just came off CD and RP is low � resource prep before window (guide #3)
-  - empower_rune_weapon,use_off_gcd=1,if=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains=0&runic_power<60
-  # ERW: emergency rune/RP starvation fallback (guide #11)
-  - empower_rune_weapon,use_off_gcd=1,if=rune<2|runic_power<35
+  - frostwyrms_fury,if=var.pillar_up&(!var.has_deathbringer|(!var.exterminate_ready&cooldown.reapers_mark.remains>gcd))
+  # ERW: sustain during active Breath — avoid dropping channel
+  - empower_rune_weapon,use_off_gcd=1,if=var.breath_up&(rune<2|runic_power<50)
+  # ERW: BoS prep — 1 charge when BoS ready and RP low
+  - empower_rune_weapon,use_off_gcd=1,if=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.ready&!var.breath_up&runic_power<60
+  # ERW: emergency rune/RP starvation (only when BoS not imminent)
+  - empower_rune_weapon,use_off_gcd=1,if=rune<1&runic_power<25&(!talent.breath_of_sindragosa|cooldown.breath_of_sindragosa.remains>15)
+  # Chill Streak: AoE burst cooldown
+  - chill_streak,if=active_enemies>=2&var.in_melee
+  # Abomination Limb: AoE grip + damage
+  - abomination_limb,if=var.in_melee
+  # Absolute Zero: AoE stun + damage
+  - absolute_zero,if=active_enemies>=2&var.in_melee
   # Horn of Winter as rune/RP recovery
   - horn_of_winter,if=rune<2&runic_power<60
 
@@ -183,7 +182,6 @@ lists:
   - obliterate,if=var.km_stack2
   - howling_blast,if=var.rime_up
   - obliterate,if=var.km_up&rune>=3
-  - frost_strike,if=var.razorice5&talent.shattering_blade
   - obliterate,if=var.exterminate_ready
   - obliterate,if=rune>=2
   - horn_of_winter,if=runic_power<40&rune<2
@@ -208,11 +206,11 @@ lists:
   # Rime: standard Howling Blast
   - howling_blast,if=var.rime_up
   # (Wowhead #8) Frost Strike to avoid RP waste
-  - frost_strike,if=runic_power>=80&!var.rp_pooling
+  - frost_strike,if=runic_power>=80&!var.rp_pooling&!var.breath_up
   # (Wowhead #9) KM without rune pooling constraint
   - obliterate,if=var.km_up&!var.rune_pooling
   # (Wowhead #11) Frost Strike outside of BoS prep window
-  - frost_strike,if=!var.rp_pooling
+  - frost_strike,if=!var.rp_pooling&!var.breath_up
   # (Wowhead #12) Rune dump outside obliteration window
   - obliterate,if=!var.rune_pooling&!var.obliteration_active
   # Obliteration window filler
@@ -229,7 +227,9 @@ lists:
   - obliterate,if=var.km_stack2
   - obliterate,if=var.km_up
   - howling_blast,if=var.rime_up
-  - frost_strike,if=runic_power>=80
+  # Obliteration FS fishing: during Pillar, FS can proc KM stacks
+  - frost_strike,if=var.obliteration_active&runic_power>=50
+  - frost_strike,if=runic_power>=70
   - obliterate,if=rune>=2
 
   # -------------------------------------------------------------------------
@@ -279,8 +279,8 @@ lists:
   # FALLBACK
   # -------------------------------------------------------------------------
   fallback:
+  - frost_strike,if=target.exists&target.enemy&target.alive&runic_power>=25,ignore_queue=true
   - howling_blast,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - frost_strike,if=target.exists&target.enemy&target.alive&runic_power>=35,ignore_queue=true
 
   # -------------------------------------------------------------------------
   # MAIN ENTRY
