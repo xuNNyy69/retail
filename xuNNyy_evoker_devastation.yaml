@@ -4,6 +4,7 @@ patch: 12.1
 spec: 1467
 name: xuNNyy_evoker_devastation
 entry: main
+movement_allowed: buff.hover.up
 
 config:
   use_trinkets:
@@ -40,10 +41,13 @@ variables:
   eb_burst: buff.essence_burst.up
   fb_refresh: dot.fire_breath_damage.remains<3
   tts_up: buff.tip_the_scales.up
+  fb_dot_up: dot.fire_breath_damage.ticking
 
 lists:
   interrupts:
-  - quell,if=target.casting.interruptible,use_off_gcd=1
+  - quell,if=interrupt.target.check,use_off_gcd=1
+  - quell.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
+  - quell.focus,range_check=focus,if=interrupt.focus.check,use_off_gcd=1
 
   defensives:
   - obsidian_scales,if=health.pct<=50,use_off_gcd=1
@@ -64,12 +68,14 @@ lists:
   cooldowns:
   - dragonrage,if=!var.in_dr
   - deep_breath,if=var.is_sc
-  - tip_the_scales,use_off_gcd=1,if=var.in_dr
+  - tip_the_scales,use_off_gcd=1
 
   st_fs:
   - fire_breath,empower_to=1,if=var.fb_refresh|cooldown.fire_breath.charges>=2
+  - engulf,if=var.fb_dot_up
   - eternity_surge,empower_to=1
   - disintegrate,if=var.in_dr|var.eb_burst|buff.iridescence_blue.up
+  - pyre,if=buff.charged_blast.stack>=10
   - azure_sweep,if=talent.azure_sweep
   - living_flame,if=buff.burnout.up|buff.leaping_flames.up|buff.ancient_flame.up
   - azure_strike,if=active_enemies>1
@@ -78,19 +84,17 @@ lists:
 
   aoe_fs:
   - fire_breath,empower_to=1,if=var.fb_refresh|cooldown.fire_breath.charges>=2
-  - tip_the_scales,use_off_gcd=1,if=var.in_dr
+  - engulf,if=var.fb_dot_up&active_enemies>=2
   - eternity_surge,empower_to=1
-  - pyre,if=buff.charged_blast.stack>=12|active_enemies>=4
-  - deep_breath,if=talent.imminent_destruction&!dot.fire_breath_damage.ticking
+  - pyre,if=buff.charged_blast.stack>=5|active_enemies>=3|var.eb_burst
   - azure_sweep,if=talent.azure_sweep
   - living_flame,if=buff.leaping_flames.up
   - azure_strike
 
   st_sc:
-  - fire_breath,empower_to=1,if=var.fb_refresh|var.tts_up
   - eternity_surge,empower_to=1
+  - fire_breath,empower_to=1,if=var.fb_refresh|var.tts_up
   - disintegrate,if=talent.mass_disintegrate&(var.in_dr|var.eb_burst|essence>=3)
-  - pyre,if=buff.charged_blast.stack>=5
   - disintegrate,if=var.in_dr|var.eb_burst
   - azure_sweep,if=talent.azure_sweep
   - living_flame,if=buff.burnout.up|buff.leaping_flames.up
@@ -99,11 +103,11 @@ lists:
   - azure_strike
 
   aoe_sc:
-  - deep_breath,if=talent.imminent_destruction
+  - deep_breath
   - fire_breath,empower_to=1
   - eternity_surge,empower_to=1
   - disintegrate,if=talent.mass_disintegrate&(var.in_dr|var.eb_burst|essence>=3)
-  - pyre,if=buff.charged_blast.stack>=5|active_enemies>=3
+  - pyre,if=buff.charged_blast.stack>=5|active_enemies>=3|var.eb_burst
   - azure_sweep,if=talent.azure_sweep
   - living_flame,if=buff.leaping_flames.up
   - azure_strike

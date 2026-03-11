@@ -57,6 +57,8 @@ variables:
 lists:
   interrupts:
   - skull_bash,if=target.casting.interruptible
+  - skull_bash.mouseover,if=interrupt.mouseover.check
+  - skull_bash.focus,if=interrupt.focus.check
 
   defensives:
   - barkskin,if=health.pct<=40,use_off_gcd=1
@@ -121,6 +123,7 @@ lists:
 
   # Shred: primary CP builder; proc Panther's Guile (never queue 2 blindly)
   - shred
+  - ravage
 
   # ===========================================================
   # AoE priority (3+ targets)
@@ -160,22 +163,28 @@ lists:
   # Rake at low target count without DCR (guide: up to ~4 targets)
   - rake,if=!talent.double_clawed_rake&active_enemies<=4&dot.rake.refreshable
 
+  # Ravage: high priority when proc available
+  - ravage
   # Swipe: primary AoE CP builder
   - swipe
 
   # Shred: low CPs with Panther's Guile on priority target
   - shred,if=talent.panthers_guile&var.cp_low
+  - ravage,if=talent.panthers_guile&var.cp_low
 
   # Moonfire on priority targets
   - moonfire,cycle_targets=1,if=talent.lunar_inspiration&dot.moonfire.refreshable
 
   fallback:
   - shred,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - ravage,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
+  - mark_of_the_wild,range_check=none,if=!buff.mark_of_the_wild.up
+  - cat_form,range_check=none,if=!buff.cat_form.up
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)

@@ -125,6 +125,8 @@ lists:
 
   interrupts:
   - skull_bash,if=target.casting.interruptible,use_off_gcd=1
+  - skull_bash.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
+  - skull_bash.focus,if=interrupt.focus.check,use_off_gcd=1
 
   dispel:
   - nature_dispel,cycle_targets=1,if=cycle.dispelable
@@ -193,11 +195,13 @@ lists:
   catweave:
   - cat_form,if=!buff.cat_form.up&target.range<=8
   - tigers_fury,use_off_gcd=1,if=energy<=35
+  - feral_frenzy,if=talent.feral_frenzy&combo_points<=2
   - rake,if=dot.rake.refreshable
   - swipe,if=active_enemies>=config.aoe_threshold
   - rip,if=combo_points>=4&dot.rip.refreshable
   - ferocious_bite,if=combo_points>=4&dot.rip.remains>4
   - shred
+  - ravage
 
   fallback:
   - shred,if=buff.cat_form.up&target.exists&target.enemy&target.alive,ignore_queue=true
@@ -229,5 +233,6 @@ lists:
   - call_action_list,name=ramp_healing,if=var.multi_injured
   - call_action_list,name=group_maintenance
   - regrowth,target=lowest,if=var.natures_swiftness_up
+  - moonfire,if=!config.heal_only&var.safe_to_dps&target.exists&target.enemy&dot.moonfire.refreshable
   - call_action_list,name=catweave,if=!config.heal_only&var.safe_to_dps&target.range<=8
   - call_action_list,name=fallback

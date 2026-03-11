@@ -174,7 +174,6 @@ lists:
   # Single Target -- Default (no hero-tree talent specialisation)
   # ============================================================
   single_target:
-  - return,if=active_enemies>1
   # Warrior of Elune off-GCD
   - warrior_of_elune,if=talent.warrior_of_elune&buff.warrior_of_elune.down&var.in_lunar,use_off_gcd=1
   # DoT refresh -- hard threshold
@@ -219,7 +218,6 @@ lists:
   # AoE (active_enemies > 1)
   # ============================================================
   aoe:
-  - return,if=active_enemies<=1
   # Starfall at AP overcap -- prevent waste before DoTs applied
   - starfall,if=astral_power>=90
   # DoT refresh -- hard threshold first
@@ -280,8 +278,8 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=racials,if=config.use_cooldowns
   # Hero-tree routing: EC -> KOTG -> default ST -> AoE
-  - call_action_list,name=single_target_ec,if=var.is_ec&active_enemies=1
-  - call_action_list,name=single_target_kotg,if=var.is_kotg&!var.is_ec&active_enemies=1
-  - call_action_list,name=single_target,if=active_enemies=1
+  - call_action_list,name=single_target_ec,if=var.is_ec&!var.want_aoe
+  - call_action_list,name=single_target_kotg,if=var.is_kotg&!var.is_ec&!var.want_aoe
+  - call_action_list,name=single_target,if=!var.want_aoe
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=fallback

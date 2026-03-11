@@ -4,6 +4,7 @@ patch: 12.1
 spec: 1473
 name: xuNNyy_evoker_augmentation
 entry: main
+movement_allowed: buff.hover.up
 
 config:
   use_trinkets:
@@ -49,7 +50,9 @@ variables:
 
 lists:
   interrupts:
-  - quell,if=target.casting.interruptible,use_off_gcd=1
+  - quell,if=interrupt.target.check,use_off_gcd=1
+  - quell.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
+  - quell.focus,range_check=focus,if=interrupt.focus.check,use_off_gcd=1
 
   defensives:
   - renewing_blaze,if=health.pct<=65,use_off_gcd=1
@@ -62,15 +65,14 @@ lists:
 
   buffs:
   - ebon_might,if=!var.have_em|var.ebon_might_low
-  - prescience,if=cooldown.prescience.charges_fractional>=0.9,use_off_gcd=1
-  - blistering_scales,if=talent.blistering_scales
-  - shifting_sands,if=talent.shifting_sands
+  - prescience,if=cooldown.prescience.charges>=1,use_off_gcd=1
+  - blistering_scales,target=tanks.lowest,if=talent.blistering_scales&cooldown.blistering_scales.ready
 
   cooldowns:
-  - breath_of_eons,if=var.have_em&var.breath_ready
+  - breath_of_eons,if=var.have_em
   - deep_breath,if=!talent.breath_of_eons
-  - tip_the_scales,use_off_gcd=1,if=var.have_em&cooldown.fire_breath.ready
-  - time_skip,if=talent.time_skip
+  - tip_the_scales,use_off_gcd=1,if=var.have_em&(cooldown.fire_breath.ready|cooldown.upheaval.ready)
+  - time_skip,if=talent.time_skip&var.have_em
 
   fb:
   - fire_breath,empower_to=1,if=var.have_em
@@ -80,25 +82,27 @@ lists:
   - call_action_list,name=buffs
   - call_action_list,name=cooldowns,if=config.use_cooldowns
   - call_action_list,name=fb,if=cooldown.fire_breath.ready&!var.pool_for_boe
-  - upheaval,empower_to=1,if=cooldown.upheaval.ready&var.have_em&!var.pool_for_boe
+  - upheaval,empower_to=1,if=var.have_em&!var.pool_for_boe
   - eruption,if=var.essence_burst
   - eruption,if=var.essence_high&var.have_em
   - chrono_flame,if=var.has_chronowarden&var.ancient_flame_up
   - living_flame,if=var.leaping_flames_up|var.ancient_flame_up
   - azure_strike
   - living_flame
+  - chrono_flame
 
   aoe:
   - call_action_list,name=buffs
   - call_action_list,name=cooldowns,if=config.use_cooldowns
   - call_action_list,name=fb,if=cooldown.fire_breath.ready&!var.pool_for_boe
-  - upheaval,empower_to=1,if=cooldown.upheaval.ready&var.have_em&!var.pool_for_boe
+  - upheaval,empower_to=1,if=var.have_em&!var.pool_for_boe
   - eruption,if=var.essence_burst
-  - eruption,if=var.essence_high&var.have_em
-  - chrono_flame,if=var.has_chronowarden&var.ancient_flame_up
-  - living_flame,if=var.leaping_flames_up|var.ancient_flame_up
+  - eruption,if=var.have_em&essence>=2
+  - chrono_flame,if=var.has_chronowarden
   - azure_strike
+  - living_flame,if=var.leaping_flames_up
   - living_flame
+  - chrono_flame
 
   racials:
   - berserking,if=var.have_em,use_off_gcd=1
@@ -110,6 +114,7 @@ lists:
 
   fallback:
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - chrono_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue

@@ -96,6 +96,8 @@ lists:
 
   interrupts:
   - skull_bash,if=target.casting.interruptible,use_off_gcd=1
+  - skull_bash.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
+  - skull_bash.focus,if=interrupt.focus.check,use_off_gcd=1
 
   defensives:
   - survival_instincts,if=health.pct<=config.defensive_hp,use_off_gcd=1
