@@ -70,64 +70,62 @@ lists:
   - bag_of_tricks,if=var.in_meta|buff.eye_beam.up
 
   cooldowns:
-  - metamorphosis,if=!var.in_meta&(cooldown.eye_beam.remains>=gcd*2|talent.chaotic_transformation)
-  - the_hunt,if=talent.the_hunt&debuff.essence_break.down&!var.ar_proc
-  - glaive_tempest,if=var.want_aoe|var.eb_window
+  - the_hunt,if=talent.the_hunt
+  - metamorphosis,if=!var.in_meta&(cooldown.eye_beam.remains>gcd|!talent.chaotic_transformation)
+  - glaive_tempest,if=talent.glaive_tempest&(var.want_aoe|var.eb_window)
 
   # Called only when var.in_meta. Handles in-meta priorities for both AR and FS.
-  # Morph pairs are base-before-morph adjacent: blade_dance/death_sweep, chaos_strike/annihilation.
+  # Morph pairs: blade_dance/death_sweep, chaos_strike/annihilation (base then morph, identical conditions).
   meta:
-  # P1: EB window / meta-clip prevention / demonsurge consume
-  - blade_dance,if=var.eb_window|var.demonsurge_ready|buff.metamorphosis.remains<gcd
-  - death_sweep,if=var.eb_window|var.demonsurge_ready|buff.metamorphosis.remains<gcd
-  - chaos_strike,if=var.eb_window|buff.metamorphosis.remains<gcd
-  - annihilation,if=var.eb_window|buff.metamorphosis.remains<gcd
-  # P2: Essence Break setup — blade_dance aligns, sufficient fury
+  # P1: Demonsurge consumption / EB window / meta-clip — spend empowerments before Eye Beam refreshes
+  - blade_dance,if=var.demonsurge_up|var.eb_window|buff.metamorphosis.remains<gcd
+  - death_sweep,if=var.demonsurge_up|var.eb_window|buff.metamorphosis.remains<gcd
+  - chaos_strike,if=var.demonsurge_up|var.eb_window|buff.metamorphosis.remains<gcd
+  - annihilation,if=var.demonsurge_up|var.eb_window|buff.metamorphosis.remains<gcd
+  # P2: FS — empowered Immolation Aura during Demonsurge
+  - immolation_aura,if=var.demonsurge_up
+  # P3: Eye Beam on cooldown — core Demonsurge generator (FS) and strong AoE
+  - eye_beam,if=!var.eb_window
+  # P4: Essence Break setup — Blade Dance nearly ready, sufficient fury
   - essence_break,if=talent.essence_break&fury>=35&cooldown.blade_dance.remains<gcd*2
-  # P3: AR glaive cycle in meta
-  - reaver_glaive,if=talent.reaver_glaive&var.is_ar&!var.ar_proc&buff.rending_strike.down&buff.glaive_flurry.down
-  - chaos_strike,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
-  - annihilation,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
+  # P5: AR glaive cycle in meta
+  - reaver_glaive,if=var.is_ar&buff.rending_strike.down&buff.glaive_flurry.down
+  - chaos_strike,if=var.is_ar&var.rending_flurry
+  - annihilation,if=var.is_ar&var.rending_flurry
   - blade_dance,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
   - death_sweep,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
-  # P4: FS demonsurge extension via immolation_aura
-  - immolation_aura,if=var.demonsurge_up
-  # P5: Eye Beam alignment (outside EB window)
-  - eye_beam,if=config.use_cooldowns&!var.eb_window
-  # P6: Blade Dance / Death Sweep utility
+  # P6: Blade Dance on cooldown
   - blade_dance,if=var.use_blade_dance
   - death_sweep,if=var.use_blade_dance
-  # P7: High-fury spend
-  - chaos_strike,if=fury>=65
-  - annihilation,if=fury>=65
-  # P8: Fury generation
-  - felblade,if=fury<60
-  - immolation_aura,if=fury<80
-  # P9: General spend / filler
+  # P7: Fury spend
   - chaos_strike,if=var.fury_ok
   - annihilation,if=var.fury_ok
+  # P8: Fury generation / filler
+  - immolation_aura,if=fury<80
+  - felblade,if=fury<60
+  - throw_glaive
   - fel_rush
 
-  # Aldrachi Reaver hero tree — out-of-meta (and remaining in-meta) rotation.
+  # Aldrachi Reaver — out-of-meta rotation. Focus on glaive cycle and Eye Beam.
   hero_tree_ar:
-  # AR glaive setup: cast when no proc and both empowered buffs are down
-  - reaver_glaive,if=talent.reaver_glaive&!var.ar_proc&buff.rending_strike.down&buff.glaive_flurry.down
-  # AR empowered sequence: consume rending_strike + glaive_flurry buffs
-  - chaos_strike,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
-  - annihilation,if=var.is_ar&buff.rending_strike.up&buff.glaive_flurry.up
-  - blade_dance,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
-  - death_sweep,if=var.is_ar&buff.glaive_flurry.up&buff.rending_strike.down
-  # Eye Beam
+  # AR glaive activation: use when empowered buffs aren't running
+  - reaver_glaive,if=buff.rending_strike.down&buff.glaive_flurry.down
+  # AR empowered consumption
+  - chaos_strike,if=var.rending_flurry
+  - annihilation,if=var.rending_flurry
+  - blade_dance,if=buff.glaive_flurry.up&buff.rending_strike.down
+  - death_sweep,if=buff.glaive_flurry.up&buff.rending_strike.down
+  # Eye Beam on cooldown
   - eye_beam
   - sigil_of_flame,if=talent.sigil_of_flame
   # Essence Break setup
   - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2
-  # EB window priority spend
+  # EB window and Blade Dance priority
   - blade_dance,if=var.eb_window|var.use_blade_dance
   - death_sweep,if=var.eb_window|var.use_blade_dance
   - chaos_strike,if=var.eb_window|var.fury_high
   - annihilation,if=var.eb_window|var.fury_high
-  # Regular blade dance
+  # Blade Dance on CD
   - blade_dance
   - death_sweep
   # General fury spend
@@ -136,50 +134,54 @@ lists:
   # Fury generation / filler
   - immolation_aura,if=fury<80
   - felblade,if=fury<60
+  - throw_glaive
   - fel_rush
   - demons_bite
 
-  # Felscarred hero tree — out-of-meta (and remaining in-meta) rotation.
+  # Fel-Scarred — out-of-meta rotation. Eye Beam on CD is the primary goal.
   hero_tree_fs:
-  # FS demonsurge: Eye Beam leads, then blade dance window, then CS window
-  - eye_beam,if=var.demonsurge_up
+  # Spend existing Demonsurge empowerments before Eye Beam refreshes them
   - blade_dance,if=var.demonsurge_up
   - death_sweep,if=var.demonsurge_up
   - chaos_strike,if=var.demonsurge_up
   - annihilation,if=var.demonsurge_up
-  # Eye Beam outside EB window
-  - eye_beam,if=!var.eb_window
+  # Eye Beam on cooldown (core Demonsurge generator)
+  - eye_beam
   - sigil_of_flame,if=talent.sigil_of_flame
   # Essence Break setup
   - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2
-  # EB window priority spend
-  - blade_dance,if=var.eb_window|var.use_blade_dance
-  - death_sweep,if=var.eb_window|var.use_blade_dance
-  - chaos_strike,if=var.eb_window|var.fury_high
-  - annihilation,if=var.eb_window|var.fury_high
-  # Regular blade dance
-  - blade_dance
-  - death_sweep
+  # EB window spending
+  - blade_dance,if=var.eb_window
+  - death_sweep,if=var.eb_window
+  - chaos_strike,if=var.eb_window
+  - annihilation,if=var.eb_window
+  # Blade Dance on cooldown
+  - blade_dance,if=var.use_blade_dance
+  - death_sweep,if=var.use_blade_dance
   # General fury spend
   - chaos_strike,if=var.fury_ok
   - annihilation,if=var.fury_ok
   # Fury generation / filler
   - immolation_aura,if=fury<80
   - felblade,if=fury<60
+  - throw_glaive
   - fel_rush
   - demons_bite
 
   aoe:
-  - eye_beam,if=config.use_cooldowns
-  - glaive_tempest
-  - sigil_of_flame,if=talent.sigil_of_flame
+  - eye_beam
+  - glaive_tempest,if=talent.glaive_tempest
   - blade_dance
   - death_sweep
+  - sigil_of_flame,if=talent.sigil_of_flame
   - immolation_aura
-  - fel_barrage,if=talent.fel_barrage
-  - chaos_nova,if=active_enemies>=4
+  - essence_break,if=talent.essence_break&fury>=35
   - chaos_strike,if=var.fury_ok
   - annihilation,if=var.fury_ok
+  - fel_barrage,if=talent.fel_barrage
+  - chaos_nova,if=active_enemies>=4
+  - felblade,if=fury<60
+  - throw_glaive
   - demons_bite
 
   fallback:
@@ -205,9 +207,9 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
-  - immolation_aura,if=buff.immolation_aura.down&fury<100
+  - immolation_aura,if=buff.immolation_aura.down
   - call_action_list,name=meta,if=var.in_meta
   - call_action_list,name=aoe,if=var.want_aoe
-  - call_action_list,name=hero_tree_ar,if=config.use_cooldowns&var.is_ar
-  - call_action_list,name=hero_tree_fs,if=config.use_cooldowns&!var.is_ar
+  - call_action_list,name=hero_tree_ar,if=var.is_ar
+  - call_action_list,name=hero_tree_fs,if=!var.is_ar
   - call_action_list,name=fallback

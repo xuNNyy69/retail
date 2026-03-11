@@ -140,28 +140,26 @@ lists:
   - the_hunt,if=talent.the_hunt
 
   ar_fillers:
-  # AoE IA opener
-  - immolation_aura,if=var.want_aoe&player.combat
-  # Fragment generation: stepped thresholds (fiery_demise=3, meta=4, baseline=6)
-  - shear,if=var.fiery_demise_active&soul_fragments<3
-  - shear,if=var.in_meta&soul_fragments<4
-  - shear,if=soul_fragments<6
-  # Spirit bomb at matching thresholds
+  # Spirit Bomb at stepped thresholds (fiery_demise=3, meta=4, baseline=6)
   - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
   - spirit_bomb,if=var.in_meta&soul_fragments>=4
   - spirit_bomb,if=soul_fragments>=6
-  # Continue shear during meta to cap fragments faster
-  - shear,if=var.in_meta
-  - sigil_of_flame,if=var.want_aoe
-  - sigil_of_doom,if=var.want_aoe
+  # Immolation Aura on cooldown (Guide #7)
   - immolation_aura
-  - shear
-  - felblade
+  # Sigil of Flame / morph (Guide #8)
   - sigil_of_flame
   - sigil_of_doom
-  # Guide #10: Soul Cleave at 3+ souls before filler use
-  - soul_cleave,if=soul_fragments>=3
+  # Soul Cleave with 1+ souls (Guide #10)
+  - soul_cleave,if=soul_fragments>=1
+  # Fel Devastation outside glaive windows, respect Fiery Demise (Guide #11)
+  - fel_devastation,if=fury>=50&buff.rending_strike.down&buff.glaive_flurry.down&(!talent.fiery_demise|dot.fiery_brand.ticking)
+  # Soul Cleave Fury dump (Guide #12)
   - soul_cleave
+  # Fragment generation: Shear (Guide #13)
+  - shear
+  # Felblade (Guide #14)
+  - felblade
+  # Throw Glaive filler (Guide #15)
   - throw_glaive
 
   # ============================================================
@@ -179,8 +177,8 @@ lists:
   # Guide #1: Fiery Brand highest priority
   - fiery_brand,if=dot.fiery_brand.down&(cooldown.fiery_brand.charges>=2|!talent.fiery_demise)
   - fiery_brand,if=talent.fiery_demise&dot.fiery_brand.down&(cooldown.soul_carver.remains<8|cooldown.sigil_of_spite.remains<8)
-  # Guide #2: Metamorphosis after Fiery Brand
-  - metamorphosis,if=!var.in_meta
+  # Guide #2: Metamorphosis after Fiery Brand (hold if Spirit Bomb nearly ready)
+  - metamorphosis,if=!var.in_meta&cooldown.spirit_bomb.remains>10
   # Fragment guard before sigil_of_spite to prevent overcap
   - sigil_of_spite,if=talent.sigil_of_spite&soul_fragments<=3
   # Guide #7: Soul Carver � Fiery Brand on target with 3s+ remaining
@@ -191,34 +189,43 @@ lists:
   - the_hunt,if=talent.the_hunt
 
   anni_meta:
-  # Fiery demise window during meta: lower threshold amplifies more hits
+  # Fiery demise window: amplified Spirit Bomb at threshold 3
   - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
   - immolation_aura,if=var.fiery_demise_active&talent.charred_flesh
-  # Standard meta cycling at 4 fragments
+  # Standard: Spirit Bomb at 4 fragments
   - spirit_bomb,if=soul_fragments>=4
-  - shear,if=soul_fragments<4
+  # Immolation Aura on cooldown (Guide #7)
+  - immolation_aura
+  # Sigil of Flame / morph (Guide #8)
   - sigil_of_flame
   - sigil_of_doom
+  # Soul Cleave with souls (Guide #10)
+  - soul_cleave,if=soul_fragments>=1
+  # Fragment generation
+  - shear,if=soul_fragments<4
+  - felblade,if=fury.deficit>=30
 
   anni_fillers:
   # Fiery demise window outside meta
   - spirit_bomb,if=var.fiery_demise_active&soul_fragments>=3
-  # Baseline spirit_bomb threshold (guide: 6 souls)
+  # Baseline Spirit Bomb at 6 souls (Guide #6)
   - spirit_bomb,if=soul_fragments>=6
-  # Fragment generation
-  - shear,if=soul_fragments<6
-  - immolation_aura,if=var.want_aoe
-  - shear
-  - sigil_of_flame,if=var.want_aoe
-  - sigil_of_doom,if=var.want_aoe
-  - felblade
+  # Immolation Aura on cooldown (Guide #7)
   - immolation_aura
+  # Sigil of Flame / morph (Guide #8)
   - sigil_of_flame
   - sigil_of_doom
-  # Guide #9: Soul Cleave at 3+ souls before filler use
-  - soul_cleave,if=soul_fragments>=3
+  # Soul Cleave with 1+ souls (Guide #10)
+  - soul_cleave,if=soul_fragments>=1
+  # Fel Devastation at 50+ fury (Guide #11)
+  - fel_devastation,if=fury>=50&(!talent.fiery_demise|dot.fiery_brand.ticking)
+  # Soul Cleave Fury dump (Guide #12)
   - soul_cleave
+  # Fragment generation: Shear (Guide #13)
   - shear
+  # Felblade (Guide #14)
+  - felblade
+  # Throw Glaive filler (Guide #15)
   - throw_glaive
 
   fallback:

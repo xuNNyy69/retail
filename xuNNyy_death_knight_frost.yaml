@@ -141,14 +141,16 @@ lists:
   - raise_dead,if=var.pet_missing,use_off_gcd=1
   # Remorseless Winter: always in AoE; single-target only with gathering_storm
   - remorseless_winter,if=buff.remorseless_winter.down&(active_enemies>1|talent.gathering_storm)
-  # Deathbringer: Reaper's Mark just before Pillar (within 1 GCD approx 3 s)
-  - reapers_mark,if=var.has_deathbringer&cooldown.pillar_of_frost.remains<=3
-  # Pillar of Frost: pool 3+ runes first if Obliteration talented (guide); respect Deathbringer RM timing
-  - pillar_of_frost,if=(!var.has_deathbringer|cooldown.reapers_mark.remains>10)&(!talent.obliteration|rune>=3)
-  # Breath of Sindragosa: start inside pillar window
+  # ERW: fire at 2 full charges to avoid cap (Wowhead #1)
+  - empower_rune_weapon,use_off_gcd=1,if=cooldown.empower_rune_weapon.charges_fractional>=2
+  # Reaper's Mark on CD (Wowhead #2)
+  - reapers_mark,if=var.has_deathbringer
+  # Pillar of Frost (Wowhead #3) — pool 3+ runes for Obliteration
+  - pillar_of_frost,if=!talent.obliteration|rune>=3
+  # Breath of Sindragosa: start inside pillar window (Wowhead #4)
   - breath_of_sindragosa,use_off_gcd=1,if=talent.breath_of_sindragosa&!var.breath_up&var.pillar_up
-  # Frostwyrm's Fury: both chosen_of_frostbrood and apocalypse_now paths share pillar_up gate
-  - frostwyrms_fury,if=var.pillar_up
+  # Frostwyrm's Fury: only when no active RM or Exterminate (Wowhead #5)
+  - frostwyrms_fury,if=var.pillar_up&!var.exterminate_ready&cooldown.reapers_mark.remains>gcd
   # Empower Rune Weapon: off-GCD � fire at 2 full charges to avoid cap (guide #3)
   - empower_rune_weapon,use_off_gcd=1,if=cooldown.empower_rune_weapon.charges_fractional>=2
   # ERW: BoS just came off CD and RP is low � resource prep before window (guide #3)
@@ -193,26 +195,25 @@ lists:
   # runic_power.deficit<30 => runic_power>=75 (deficit notation unsupported; guide #10: 75+ RP or Pillar active)
   # -------------------------------------------------------------------------
   single_target:
-  # Double KM stack: always consume immediately before anything else
+  # (Wowhead #6) Double KM stack or Exterminate: always consume immediately
   - obliterate,if=var.km_stack2
+  - obliterate,if=var.exterminate_ready
   - chains_of_ice,if=var.cold_heart_ready&var.pillar_up
   # Keep Frost Fever up
   - howling_blast,if=var.ff_refresh
-  # Single KM with runes to spare
-  - obliterate,if=var.km_up&rune>=3
-  # Frostbound Will: Howling Blast over Frost Strike for synergy
+  # (Wowhead #7) Frostbound Will: Howling Blast priority for synergy
   - howling_blast,if=var.rime_up&talent.frostbound_will
   # Shattering Blade: spend on full Razorice stacks
   - frost_strike,if=var.razorice5&talent.shattering_blade&!var.rp_pooling
   # Rime: standard Howling Blast
   - howling_blast,if=var.rime_up
-  # Non-shattering-blade: spend at 75+ RP or during Pillar window (guide #10)
-  - frost_strike,if=!talent.shattering_blade&!var.rp_pooling&(runic_power>=75|var.pillar_up)
-  # KM without rune pooling constraint
+  # (Wowhead #8) Frost Strike to avoid RP waste
+  - frost_strike,if=runic_power>=80&!var.rp_pooling
+  # (Wowhead #9) KM without rune pooling constraint
   - obliterate,if=var.km_up&!var.rune_pooling
-  # Frost strike outside of BoS prep window
+  # (Wowhead #11) Frost Strike outside of BoS prep window
   - frost_strike,if=!var.rp_pooling
-  # Rune dump outside obliteration window (avoid wasting rune regen)
+  # (Wowhead #12) Rune dump outside obliteration window
   - obliterate,if=!var.rune_pooling&!var.obliteration_active
   # Obliteration window filler
   - howling_blast,if=!var.km_up&var.obliteration_active
@@ -225,8 +226,10 @@ lists:
   - return,if=!var.pillar_up
   - chains_of_ice,if=var.cold_heart_ready
   - obliterate,if=var.exterminate_ready
+  - obliterate,if=var.km_stack2
   - obliterate,if=var.km_up
   - howling_blast,if=var.rime_up
+  - frost_strike,if=runic_power>=80
   - obliterate,if=rune>=2
 
   # -------------------------------------------------------------------------
@@ -234,12 +237,17 @@ lists:
   # SimC: aoe list. Frostscythe priority threshold = 3 (frostscythe_priority var).
   # -------------------------------------------------------------------------
   aoe:
+  # Exterminate: consume immediately in AoE (9.3% overall damage per Archon)
+  - frostscythe,if=var.exterminate_ready&active_enemies>=3
+  - obliterate,if=var.exterminate_ready
   # Double KM -> Frostscythe at 3+ targets; always consume immediately
   - frostscythe,if=var.km_stack2&active_enemies>=3
   # Double KM without frostscythe target count -> Obliterate (always immediate)
   - obliterate,if=var.km_stack2
   # Keep Frost Fever up
   - howling_blast,if=var.ff_refresh
+  # Glacial Advance: high-priority AoE RP spender (9.6% total damage per Archon)
+  - glacial_advance,if=talent.glacial_advance&!var.rp_pooling&active_enemies>=3
   # Frostbane proc -> Frost Strike for RP generation synergy
   - frost_strike,if=var.razorice5&buff.frostbane.up
   # KM + spare runes -> Frostscythe
@@ -254,7 +262,7 @@ lists:
   - frostscythe,if=var.km_up&!var.rune_pooling&active_enemies>=3
   # KM without pooling -> Obliterate (fallback when frostscythe not available)
   - obliterate,if=var.km_up&!var.rune_pooling
-  # Glacial Advance: AoE RP spender
+  # Glacial Advance filler (lower target count)
   - glacial_advance,if=talent.glacial_advance&!var.rp_pooling
   # Rune dump -> Frostscythe outside obliteration window
   - frostscythe,if=!var.rune_pooling&!var.obliteration_active&active_enemies>=3

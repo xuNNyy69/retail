@@ -127,6 +127,7 @@ lists:
   - potion,if=config.use_potions&(var.drw_up|health.pct<=config.defensive_hp)
 
   cooldowns:
+  - reapers_mark,if=var.has_deathbringer
   - dancing_rune_weapon
   - raise_dead,if=!pet.exists|pet.dead
   - vampiric_blood,if=var.drw_up|active_enemies>=config.aoe_threshold
@@ -148,7 +149,6 @@ lists:
   maintenance:
   - outbreak,if=debuff.blood_plague.down
   - marrowrend,if=var.bone_critical
-  - marrowrend,if=var.exterminate_up
   - marrowrend,if=var.bone_low&var.rune_ok
   - heart_strike,if=rune>=4
   - vampiric_strike,if=rune>=4
@@ -175,13 +175,15 @@ lists:
   - vampiric_strike,ignore_queue=true
 
   deathbringer:
-  - reapers_mark,if=config.use_cooldowns
+  # Exterminate: Heart Strike transforms to Exterminate during buff — top DPS action
+  - heart_strike,if=var.exterminate_up
+  - vampiric_strike,if=var.exterminate_up
   - death_strike,if=var.drw_up&var.ds_deficit_drw_db
   - death_strike,if=var.ds_deficit_ok
+  - death_and_decay,if=!var.dnd_active|var.crimson_proc
   - bonestorm,if=talent.bonestorm&runic_power>=50
   - soul_reaper,if=talent.soul_reaper&target.health.pct<=35
-  - deaths_caress,if=debuff.blood_plague.down
-  - death_and_decay,if=!var.dnd_active
+  - blood_boil,if=var.bb_charges_high
   - heart_strike,if=buff.coagulopathy.stack<5
   - vampiric_strike,if=buff.coagulopathy.stack<5
   - heart_strike,if=var.rune_ok
@@ -202,6 +204,9 @@ lists:
 
   aoe:
   - death_and_decay,if=!var.dnd_active|var.crimson_proc
+  # Exterminate priority even in AoE (9.5% overall damage per Archon)
+  - heart_strike,if=var.exterminate_up
+  - vampiric_strike,if=var.exterminate_up
   - deaths_caress,if=debuff.blood_plague.down
   - blood_boil
   - heart_strike,if=var.dnd_active&var.rune_ok

@@ -54,15 +54,16 @@ variables:
   wounds_up: debuff.festering_wound.up
   wounds_low: debuff.festering_wound.stack<4
   vp_refresh: debuff.virulent_plague.down|debuff.virulent_plague.remains<4
-  # APL: spending_rp = rune<2 | buff.sudden_doom.react — spend DC when rune-starved or proc up
-  rp_spend: rune<2|buff.sudden_doom.up
+  # Wowhead: spend DC when Sudden Doom proc or RP >= 80
+  rp_spend: buff.sudden_doom.up|runic_power>=80
   dt_up: buff.dark_transformation.up
   gargoyle_window: buff.summon_gargoyle.up
   rp_gargoyle: runic_power>=60&var.gargoyle_window
   in_execute: target.health.pct<=35
   # APL uses active_enemies>=3 for epidemic threshold (not config-based)
   epidemic_mode: talent.epidemic&active_enemies>=3
-  sr_ready: var.in_execute|buff.reaping.up
+  # Wowhead: Soul Reaper on CD when talented (no execute gating in Midnight)
+  sr_ready: talent.soul_reaper
   gift_up: var.has_sanlayn&buff.gift_of_the_sanlayn.up
   sanguine_up: var.has_sanlayn&buff.sanguine_scent.up
   rider_active: var.has_rider&(buff.mograines_might.up|buff.nazgrims_march.up|buff.trollbanes_icy_fury.up|buff.whitemanes_famine.up)
@@ -101,32 +102,34 @@ lists:
   cooldowns:
   - raise_dead,if=var.pet_missing,use_off_gcd=1
   - outbreak,if=var.vp_refresh
-  # APL: invoke_external_buff,name=power_infusion on DT window
-  - power_infusion,if=var.dt_up,use_off_gcd=1
+  # Army and DT are top priority CDs (Wowhead #2, #3)
   - army_of_the_dead,use_off_gcd=1
   - dark_transformation,use_off_gcd=1
-  # TOKEN UNVALIDATED: putrefy not in action_tokens.txt — needs in-game test
+  # Putrefy at 2 charges (Wowhead #4)
   - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2
-  # APL: soul_reaper at execute or with Reaping talent post-DT
+  # Soul Reaper on CD (Wowhead #5)
   - soul_reaper,if=var.sr_ready
   - summon_gargoyle,if=talent.summon_gargoyle&runic_power>=60
-  - unholy_blight
-  - raise_abomination
+  - raise_abomination,if=talent.raise_abomination
+  - unholy_blight,if=talent.unholy_blight
   - reapers_mark,if=var.has_deathbringer
   - unholy_assault,if=talent.unholy_assault&var.wounds_low
-  - empower_rune_weapon,if=rune<2|runic_power<40
-  - abomination_limb
+  - empower_rune_weapon,if=rune<2&runic_power<40
+  - abomination_limb,if=talent.abomination_limb
 
   burst:
   - return,if=!var.dt_up&!var.gargoyle_window
-  - soul_reaper,if=var.sr_ready
   # Gift of the Sanlayn — highest-priority strike during Sanlayn hero tree
   - vampiric_strike,if=var.gift_up
   - scourge_strike,if=var.gift_up
-  # APL: refresh scythe buff before expiry, then strike to pop wounds
-  - festering_scythe,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
-  - festering_strike,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  # Putrefy 2 charges during burst (Wowhead FK #1)
+  - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2
+  # Scythe buff refresh (Wowhead FK #3)
+  - festering_scythe,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
+  - festering_strike,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
   - putrefy,if=talent.putrefy
+  # Wound management during burst
+  - festering_strike,if=var.wounds_low
   - scourge_strike,if=var.wounds_up
   - vampiric_strike,if=var.wounds_up
   # Gargoyle filler — dump RP while gargoyle is active
@@ -134,21 +137,20 @@ lists:
   - epidemic,if=var.gargoyle_window&var.rp_gargoyle&var.epidemic_mode
   # Rider of the Apocalypse buff dump
   - death_coil,if=var.rider_active&runic_power>=40
-  # APL: spend DC when rune-starved (rp_spend = rune<2 | sudden_doom)
+  # RP spend (Wowhead: Sudden Doom or 80+ RP)
   - death_coil,if=var.rp_spend&!var.epidemic_mode
   - epidemic,if=var.rp_spend&var.epidemic_mode
-  - festering_strike,if=var.wounds_low
   - scourge_strike
   - vampiric_strike
 
   st:
   - outbreak,if=var.vp_refresh
-  - soul_reaper,if=var.sr_ready
-  # APL single_target: scythe buff refresh is top priority when talented
-  - festering_scythe,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
-  - festering_strike,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  # Putrefy when DT is far away (Wowhead #6)
   - putrefy,if=talent.putrefy&cooldown.dark_transformation.remains>15
-  # APL: spend DC before wound building when rune-starved or sudden_doom proc
+  # Scythe buff refresh (Wowhead #7)
+  - festering_scythe,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
+  - festering_strike,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
+  # Death Coil on Sudden Doom or 80+ RP (Wowhead #8)
   - death_coil,if=var.rp_spend
   - festering_strike,if=var.wounds_low
   - scourge_strike,if=var.wounds_up
@@ -165,9 +167,8 @@ lists:
   # Scythe buff refresh on expiry during AoE
   - festering_scythe,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
   - festering_strike,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
-  - soul_reaper,if=var.sr_ready
   - putrefy,if=talent.putrefy&cooldown.dark_transformation.remains>15
-  # APL: epidemic when spending RP and >=3 enemies
+  # Epidemic: primary AoE RP spender (9.8% total damage per Archon)
   - epidemic,if=var.epidemic_mode&debuff.virulent_plague.up&var.rp_spend
   - scourge_strike,if=var.wounds_up
   - vampiric_strike,if=var.wounds_up
@@ -179,10 +180,9 @@ lists:
   funnel:
   - outbreak,if=var.vp_refresh
   - death_and_decay,if=talent.desecrate&cooldown.death_and_decay.ready
-  - soul_reaper,if=var.sr_ready
   # Scythe buff refresh for boss focus
-  - festering_scythe,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
-  - festering_strike,if=talent.festering_scythe&(buff.festering_scythe.up&buff.festering_scythe.remains<=3|!buff.festering_scythe.up)
+  - festering_scythe,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
+  - festering_strike,if=talent.festering_scythe&(!buff.festering_scythe.up|buff.festering_scythe.remains<=3)
   - putrefy,if=talent.putrefy&cooldown.dark_transformation.remains>15
   - scourge_strike,if=var.wounds_up
   - vampiric_strike,if=var.wounds_up
