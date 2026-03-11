@@ -108,14 +108,14 @@ lists:
   - rampage,if=var.reap_up&var.rage_for_rampage
   - rampage,if=var.need_enrage&var.rage_for_rampage
   - rampage,if=var.rage_for_rampage
+  - bloodbath
+  - bloodthirst,if=var.need_enrage
   - execute,if=var.can_execute
   - execute,if=var.marked_ready
   - onslaught,if=talent.onslaught&var.enraged
+  - bloodthirst
   - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
   - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
-  - bloodthirst,if=var.need_enrage
-  - bloodbath
-  - bloodthirst
   - rend,if=dot.rend.remains<5
   - crushing_blow
   - raging_blow
@@ -130,10 +130,10 @@ lists:
   - onslaught,if=talent.onslaught&var.enraged
   - rampage,if=var.rage_high
   - bloodthirst,if=var.enrage_soon
-  - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
-  - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
   - bloodbath
   - bloodthirst
+  - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
+  - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
   - crushing_blow,ignore_queue=true
   - raging_blow,ignore_queue=true
 
@@ -166,13 +166,14 @@ lists:
   - bloodthirst,if=var.furious_bt_up&var.enraged
   - bloodthirst,if=var.enrage_soon
   - bloodthirst,if=var.bloodcraze_up
+  - bloodbath
+  - bloodthirst
+  - wrecking_throw
   - rend,if=dot.rend.remains<5
   - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
   - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
   - crushing_blow
   - raging_blow
-  - bloodbath
-  - bloodthirst
   - rend
   - slam,if=talent.annihilator,ignore_queue=true
 
@@ -187,12 +188,13 @@ lists:
   - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury&var.meat_cleaver_up
   - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury&var.meat_cleaver_up
   - bloodthirst,if=var.enrage_soon
+  - bloodbath
+  - bloodthirst
   - rend,if=dot.rend.remains<5
   - crushing_blow,if=var.meat_cleaver_up
   - raging_blow,if=var.meat_cleaver_up
+  - thunder_clap,if=var.in_melee
   - whirlwind
-  - bloodbath
-  - bloodthirst
   - slam,if=talent.annihilator,ignore_queue=true
 
   cleave:
@@ -205,11 +207,11 @@ lists:
   - crushing_blow,if=talent.tenderize&debuff.tenderize.down
   - raging_blow,if=talent.tenderize&debuff.tenderize.down
   - bloodthirst,if=var.enrage_soon
+  - bloodbath
+  - bloodthirst
   - rend,if=dot.rend.remains<5
   - crushing_blow,if=var.meat_cleaver_up
   - raging_blow,if=var.meat_cleaver_up
-  - bloodbath
-  - bloodthirst
   - rend
   - slam,if=talent.annihilator,ignore_queue=true
 

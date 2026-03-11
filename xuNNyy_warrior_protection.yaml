@@ -62,9 +62,9 @@ lists:
   - shield_block,if=(var.shield_block_low|!buff.shield_block.up|cooldown.shield_block.charges>=2)&health.pct<=config.shield_block_hp
   - ignore_pain,if=rage>=75|buff.seeing_red.stack>=7,use_off_gcd=1
   - last_stand,if=health.pct<=config.defensive_hp
-  - die_by_the_sword,if=health.pct<=config.defensive_hp
+  - shield_wall,if=health.pct<=config.defensive_hp
   - rallying_cry,if=health.pct<=config.defensive_hp
-  - enraged_regeneration,if=health.pct<=config.defensive_hp
+  - impending_victory,if=health.pct<=config.defensive_hp&talent.impending_victory
   - spell_reflection,if=target.casting
 
   items:
@@ -86,8 +86,8 @@ lists:
   - thunder_clap,if=dot.rend.remains<=1
   - thunder_blast,if=talent.lightning_strikes&active_enemies>=2&var.in_avatar
   - execute,if=active_enemies<=3&!talent.demolish&(rage>=50|var.sudden_death_up)&talent.heavy_handed
-  - thunder_clap,if=active_enemies>=4&var.in_avatar&talent.lightning_strikes
-  - thunder_clap,if=active_enemies>6&var.in_avatar
+  - thunder_clap,if=active_enemies>=3&var.in_avatar
+  - revenge,if=var.revenge_buff
   - revenge,if=talent.demolish&rage>=50
   - revenge,if=rage>=70&active_enemies>=3
   - shield_slam,if=rage<=60|var.violent_outburst_up
@@ -103,11 +103,9 @@ lists:
   - demolish,if=talent.demolish&var.colossal_might_ok
   - revenge,if=talent.demolish&rage>=50
   - thunder_blast,if=talent.lightning_strikes
-  - thunder_blast,if=talent.lightning_strikes&dot.rend.remains<=2
   - thunder_clap,if=dot.rend.remains<=2
-  - thunder_blast,if=talent.lightning_strikes&(active_enemies>=1|cooldown.shield_slam.remains>0)
   - execute,if=(active_enemies<=3&!talent.demolish|active_enemies<=2&talent.demolish)&(rage>=70|rage>=40&cooldown.shield_slam.remains>0|var.sudden_death_up&talent.sudden_death)
-  - thunder_clap,if=(active_enemies>=1|cooldown.shield_slam.remains>0)&talent.lightning_strikes&rage<=80
+  - thunder_clap,if=cooldown.shield_slam.remains>0&rage<=80
   - revenge,if=rage>=80&!var.execute_phase|var.revenge_buff&var.execute_phase&rage<=18&cooldown.shield_slam.remains>0|var.revenge_buff&!var.execute_phase
   - execute,if=(active_enemies<=3&!talent.demolish|active_enemies<=2&talent.demolish)&talent.deep_wounds
   - revenge
@@ -138,7 +136,7 @@ lists:
   - return,if=!player.combat&config.auto_combat.has(0)
   # Interrupts
   - call_action_list,name=interrupts,if=config.use_interrupts
-  - taunt,if=config.auto_taunt,use_off_gcd=1
+  - taunt,if=config.auto_taunt&player.combat&target.exists&target.enemy&target.alive&target.threat<3,use_off_gcd=1
   # Defensives
   - call_action_list,name=defensives,if=config.use_defensives
   # Target check

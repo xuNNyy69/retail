@@ -75,8 +75,8 @@ lists:
   - sweeping_strikes,if=!buff.sweeping_strikes.up&cooldown.colossus_smash.remains>4
   - overpower,if=cooldown.overpower.charges=2
   - cleave
-  - mortal_strike
   - execute,if=buff.sudden_death.up
+  - mortal_strike
   - champions_spear,if=talent.champions_spear
   - overpower
   - wrecking_throw
@@ -89,11 +89,10 @@ lists:
   - sweeping_strikes,if=active_enemies>1
   - rend,if=dot.rend.remains<=gcd&!talent.bloodletting
   - champions_spear,if=talent.champions_spear
+  - mortal_strike,if=buff.executioners_precision.stack=2
   - execute,if=buff.sudden_death.up
-  - overpower,if=cooldown.overpower.charges=2&cooldown.mortal_strike.remains>0|rage<30
-  - mortal_strike,if=talent.battlelord|buff.executioners_precision.stack=2|!talent.executioners_precision
+  - overpower,if=rage<90
   - execute
-  - overpower
   - wrecking_throw
 
   colossus_st:
@@ -104,6 +103,7 @@ lists:
   - mortal_strike
   - execute,if=cooldown.demolish.remains>10
   - overpower
+  - cleave,if=var.execute_phase
   - wrecking_throw
   - rend,if=dot.rend.remains<=gcd*5
   - slam
@@ -149,6 +149,7 @@ lists:
   - overpower,if=cooldown.overpower.charges=2
   - mortal_strike
   - overpower
+  - cleave,if=var.execute_phase
   - wrecking_throw
   - slam
 
