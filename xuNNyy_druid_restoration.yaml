@@ -127,7 +127,7 @@ lists:
   - skull_bash,if=target.casting.interruptible,use_off_gcd=1
 
   dispel:
-  - remove_corruption,cycle_targets=1,if=cycle.dispelable
+  - nature_dispel,cycle_targets=1,if=cycle.dispelable
 
   defensives:
   - barkskin,if=health.pct<=55,use_off_gcd=1
@@ -135,8 +135,8 @@ lists:
   - healthstone,if=health.pct<=35
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
   - potion,if=config.use_potions&var.anyone_emergency
   - potion,if=config.use_potions&var.mana_low
 

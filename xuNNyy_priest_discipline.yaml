@@ -84,8 +84,8 @@ lists:
   - fade,if=health.pct<=60,use_off_gcd=1
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.evangelism_up|var.anyone_emergency)
   - potion,if=config.use_potions&var.evangelism_up,use_off_gcd=1
 
   # ===========================================================

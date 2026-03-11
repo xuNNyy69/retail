@@ -36,7 +36,7 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   in_melee: target.range<=8
-  ds_castable: (active_enemies>=3|(active_enemies>=2&talent.tempest_of_lightbringer&!talent.rush_of_light)|buff.empyrean_power.up|(!talent.final_verdict&talent.tempest))&!buff.empyrean_legacy.up&!(debuff.divine_arbiter.stack>24)
+  ds_castable: (active_enemies>=3|(active_enemies>=2&talent.tempest_of_lightbringer&!talent.rush_of_light)|buff.empyrean_power.up|(!talent.final_verdict&talent.tempest))&!buff.empyrean_legacy.up&!(buff.divine_arbiter.stack>24)
   hp5: holy_power>=5
   hp4: holy_power>=4
   hp3: holy_power>=3
@@ -65,8 +65,8 @@ lists:
 
   items:
   - return,if=!config.use_trinkets
-  - use_item,slot=trinket1,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
-  - use_item,slot=trinket2,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
+  - trinket1,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
+  - trinket2,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
 
   cooldowns:
   - return,if=!config.use_cooldowns|!state.cds

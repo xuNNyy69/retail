@@ -58,8 +58,8 @@ lists:
 
   # Trinkets fire during Avenging Wrath window
   trinkets:
-  - use_item,slot=trinket1,use_off_gcd=1,if=var.in_aw
-  - use_item,slot=trinket2,use_off_gcd=1,if=var.in_aw
+  - trinket1,use_off_gcd=1,if=var.in_aw
+  - trinket2,use_off_gcd=1,if=var.in_aw
 
   # Major cooldowns — Avenging Wrath synced to Divine Toll window,
   # Divine Toll held for AW or used as Righteous Protector filler

@@ -50,12 +50,11 @@ lists:
   - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_combustion
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_combustion
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_combustion
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_combustion
   - potion,if=config.use_potions&buff.combustion.up,ignore_movement=true
 
   cooldowns:
-  - invoke_power_infusion,if=buff.combustion.up,use_off_gcd=1,ignore_movement=true
   - combustion,if=usable.combustion&!buff.combustion.up,ignore_movement=true
   - mirror_image,if=usable.mirror_image,ignore_movement=true
 

@@ -41,8 +41,8 @@ lists:
   - astral_shift,if=health.pct<=35
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
 
   cooldowns:
   - return,if=!config.use_cooldowns

@@ -122,8 +122,8 @@ lists:
   - death_strike,if=var.ds_hp
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.drw_up|var.vb_up|active_enemies>=config.aoe_threshold)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.drw_up|var.vb_up|active_enemies>=config.aoe_threshold)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.drw_up|var.vb_up|active_enemies>=config.aoe_threshold)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.drw_up|var.vb_up|active_enemies>=config.aoe_threshold)
   - potion,if=config.use_potions&(var.drw_up|health.pct<=config.defensive_hp)
 
   cooldowns:

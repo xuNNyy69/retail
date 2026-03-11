@@ -76,8 +76,8 @@ lists:
   - ignore_pain,if=health.pct<=(config.defensive_hp+15)&rage>=40,use_off_gcd=1
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.recklessness.up|buff.avatar.up|target.boss)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.recklessness.up|buff.avatar.up|target.boss)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(buff.recklessness.up|buff.avatar.up|target.boss)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.recklessness.up|buff.avatar.up|target.boss)
   - potion,if=config.use_potions&(buff.recklessness.up&buff.avatar.up|target.boss&target.health.pct<=20)
 
   movement:

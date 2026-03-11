@@ -57,8 +57,8 @@ lists:
   - ancestral_call,use_off_gcd=1,if=buff.summon_darkglare.up
 
   items:
-  - use_item,slot=trinket1,if=config.use_trinkets&var.cds_active
-  - use_item,slot=trinket2,if=config.use_trinkets&var.cds_active
+  - trinket1,if=config.use_trinkets&var.cds_active
+  - trinket2,if=config.use_trinkets&var.cds_active
 
   soul_harvester:
   - haunt,if=cooldown.haunt.ready

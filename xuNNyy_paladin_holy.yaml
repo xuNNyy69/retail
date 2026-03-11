@@ -143,8 +143,8 @@ lists:
   - bag_of_tricks
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_burst|var.need_emergency|var.need_aoe_heal)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_burst|var.need_emergency|var.need_aoe_heal)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_burst|var.need_emergency|var.need_aoe_heal)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_burst|var.need_emergency|var.need_aoe_heal)
   - potion,if=config.use_potions&(var.need_emergency|var.in_burst&var.need_aoe_heal)
 
   burst_healing:

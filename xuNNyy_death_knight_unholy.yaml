@@ -57,7 +57,7 @@ variables:
   # APL: spending_rp = rune<2 | buff.sudden_doom.react — spend DC when rune-starved or proc up
   rp_spend: rune<2|buff.sudden_doom.up
   dt_up: buff.dark_transformation.up
-  gargoyle_window: buff.summon_gargoyle.up|pet.gargoyle.active
+  gargoyle_window: buff.summon_gargoyle.up
   rp_gargoyle: runic_power>=60&var.gargoyle_window
   in_execute: target.health.pct<=35
   # APL uses active_enemies>=3 for epidemic threshold (not config-based)
@@ -79,8 +79,8 @@ lists:
   - death_strike,if=health.pct<=config.death_strike_hp&runic_power>=35
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.dt_up|var.gargoyle_window|target.boss)
   - potion,if=config.use_potions&var.dt_up
 
   movement:

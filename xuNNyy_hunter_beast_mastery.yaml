@@ -55,8 +55,8 @@ lists:
   - potion,if=config.use_potions&var.in_bw
 
   trinkets:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_bw
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_bw
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_bw
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_bw
 
   st:
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd

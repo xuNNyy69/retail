@@ -50,8 +50,8 @@ lists:
   - bitter_immunity,if=health.pct<=25
 
   trinkets:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(debuff.colossus_smash.up|debuff.warbreaker.up|buff.avatar.up|target.boss)
 
   racials:
   - blood_fury,use_off_gcd=1,if=var.cs_active

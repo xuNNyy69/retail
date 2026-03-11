@@ -68,8 +68,8 @@ lists:
   - spell_reflection,if=target.casting
 
   items:
-  - use_item,slot=trinket1,if=config.use_trinkets&var.in_avatar
-  - use_item,slot=trinket2,if=config.use_trinkets&var.in_avatar
+  - trinket1,if=config.use_trinkets&var.in_avatar
+  - trinket2,if=config.use_trinkets&var.in_avatar
   - potion,if=config.use_potions&var.in_avatar
 
   cooldowns:

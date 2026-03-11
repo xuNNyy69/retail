@@ -194,8 +194,8 @@ lists:
   - mana_tea,if=var.mana_tea_ready&(!var.need_major_heal|var.mana_tea_threshold)
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
   - potion,if=config.use_potions&(var.need_emergency|var.invoke_up)
 
   racials:

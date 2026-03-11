@@ -82,8 +82,8 @@ lists:
   - fel_devastation,if=health.pct<=50
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
   - potion,if=config.use_potions&var.in_meta
 
   racials:
@@ -153,10 +153,12 @@ lists:
   # Continue shear during meta to cap fragments faster
   - shear,if=var.in_meta
   - sigil_of_flame,if=var.want_aoe
+  - sigil_of_doom,if=var.want_aoe
   - immolation_aura
   - shear
   - felblade
   - sigil_of_flame
+  - sigil_of_doom
   # Guide #10: Soul Cleave at 3+ souls before filler use
   - soul_cleave,if=soul_fragments>=3
   - soul_cleave

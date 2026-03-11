@@ -47,8 +47,8 @@ lists:
   - mortal_coil,if=health.pct<=50
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&buff.demonic_tyrant.up
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&buff.demonic_tyrant.up
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&buff.demonic_tyrant.up
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&buff.demonic_tyrant.up
 
   racials:
   - berserking,use_off_gcd=1,if=buff.demonic_tyrant.up

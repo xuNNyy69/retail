@@ -68,8 +68,8 @@ lists:
   - ice_block,if=health.pct<=(config.defensive_hp-20)
 
   items:
-  - trinket_1,if=config.use_trinkets&trinket_1.sync,use_off_gcd=1
-  - trinket_2,if=config.use_trinkets&trinket_2.sync,use_off_gcd=1
+  - trinket1,if=config.use_trinkets&trinket_1.sync,use_off_gcd=1
+  - trinket2,if=config.use_trinkets&trinket_2.sync,use_off_gcd=1
   - potion,if=config.use_potions&(var.burst_window|var.want_aoe&cooldown.frozen_orb.ready)
 
   racials:

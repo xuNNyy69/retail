@@ -106,8 +106,8 @@ lists:
   # SimC: use on pillar_of_frost
   # -------------------------------------------------------------------------
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.pillar_up|var.breath_up|target.boss)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.pillar_up|var.breath_up|target.boss)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.pillar_up|var.breath_up|target.boss)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.pillar_up|var.breath_up|target.boss)
   - potion,if=config.use_potions&var.pillar_up
 
   # -------------------------------------------------------------------------

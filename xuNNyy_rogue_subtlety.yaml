@@ -54,8 +54,8 @@ lists:
 
   # Trinkets sync to shadow_blades window.
   item:
-  - use_item,slot=trinket1,if=config.use_trinkets&buff.shadow_blades.up,use_off_gcd=1
-  - use_item,slot=trinket2,if=config.use_trinkets&buff.shadow_blades.up,use_off_gcd=1
+  - trinket1,if=config.use_trinkets&buff.shadow_blades.up,use_off_gcd=1
+  - trinket2,if=config.use_trinkets&buff.shadow_blades.up,use_off_gcd=1
 
   # shadowmeld not in action_tokens.txt; omitted.
   # shadow_dance before shadow_blades; Trickster: dance on sectech.ready; Deathstalker: dance freely; blades inside dance.

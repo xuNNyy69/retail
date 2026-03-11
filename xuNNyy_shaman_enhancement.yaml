@@ -87,8 +87,8 @@ lists:
 
   items:
   - potion,if=config.use_potions&var.in_burst
-  - use_item,slot=trinket1,use_off_gcd=1,if=var.in_burst
-  - use_item,slot=trinket2,use_off_gcd=1,if=var.in_burst
+  - trinket1,use_off_gcd=1,if=var.in_burst
+  - trinket2,use_off_gcd=1,if=var.in_burst
 
   cooldowns:
   - feral_spirit

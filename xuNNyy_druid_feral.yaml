@@ -37,7 +37,7 @@ variables:
 
   # Berserk covers both Berserk and Incarnation: King of the Jungle
   # NOTE: may need buff.berserk_cat.up for Feral spec — verify in-game
-  berserk_up: "buff.berserk.up|buff.incarnation_cat.up"
+  berserk_up: "buff.berserk.up|buff.incarnation_avatar_of_ashamane.up"
   tigers_fury_up: buff.tigers_fury.up
   # Energy threshold for Chomp (guide: deplete energy before Chomp off CD)
   energy_low: energy<=50
@@ -71,8 +71,8 @@ lists:
   - bag_of_tricks,if=!var.berserk_up
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
   - potion,if=config.use_potions&var.berserk_up,use_off_gcd=1
 
   # ===========================================================
@@ -88,8 +88,7 @@ lists:
   # TF first if energy is low (guide: be at low energy when TF comes up)
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
   - berserk,if=config.use_cooldowns&var.tigers_fury_up
-  # TOKEN: may need incarnation_avatar_of_ashamane — verify in-game
-  - incarnation_cat,if=config.use_cooldowns&talent.incarnation_cat&var.tigers_fury_up
+  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up
   # TF on CD even without Berserk pairing
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
 
@@ -134,8 +133,7 @@ lists:
   # Cooldowns: Berserk + TF together
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
   - berserk,if=config.use_cooldowns&var.tigers_fury_up
-  # TOKEN: may need incarnation_avatar_of_ashamane — verify in-game
-  - incarnation_cat,if=config.use_cooldowns&talent.incarnation_cat&var.tigers_fury_up
+  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
 
   # Primal Wrath: maintain Rip on all targets; upgrade snapshot if TF active

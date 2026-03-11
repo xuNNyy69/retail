@@ -57,8 +57,8 @@ lists:
   - cauterizing_flame,if=health.pct<=40,use_off_gcd=1
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.have_em
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.have_em
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.have_em
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.have_em
 
   buffs:
   - ebon_might,if=!var.have_em|var.ebon_might_low

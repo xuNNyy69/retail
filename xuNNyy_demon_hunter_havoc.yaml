@@ -56,8 +56,8 @@ lists:
   - darkness,if=health.pct<=25,use_off_gcd=1
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
   - potion,if=config.use_potions&var.in_meta
 
   racials:

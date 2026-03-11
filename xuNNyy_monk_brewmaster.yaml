@@ -99,8 +99,8 @@ lists:
   - purifying_brew,if=!var.boc_up&var.pb_overcap&stagger.pct>5
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=var.combat_gate&var.safety_gate
-  - use_item,slot=trinket2,use_off_gcd=1,if=var.combat_gate&var.safety_gate
+  - trinket1,use_off_gcd=1,if=var.combat_gate&var.safety_gate
+  - trinket2,use_off_gcd=1,if=var.combat_gate&var.safety_gate
   - potion,if=config.use_potions&var.combat_gate&var.safety_gate
 
   cooldowns:

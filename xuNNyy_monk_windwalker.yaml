@@ -89,8 +89,8 @@ lists:
   - fortifying_brew,if=health.pct<=(config.defensive_hp-10)
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=var.in_burst
-  - use_item,slot=trinket2,use_off_gcd=1,if=var.in_burst
+  - trinket1,use_off_gcd=1,if=var.in_burst
+  - trinket2,use_off_gcd=1,if=var.in_burst
 
   racials:
   - berserking,if=var.in_burst,use_off_gcd=1

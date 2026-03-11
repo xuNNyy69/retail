@@ -44,7 +44,7 @@ variables:
   trick_shots_up: buff.trick_shots.up
   precise_shots_up: buff.precise_shots.up
   withering_fire_up: buff.withering_fire.up
-  deathblow_up: buff.deathblow.react
+  deathblow_up: buff.deathblow.up
   lock_and_load: buff.lock_and_load.up
   in_execute: target.health.pct<=20
 
@@ -75,8 +75,8 @@ lists:
   - bag_of_tricks
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_trueshot
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_trueshot
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_trueshot
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_trueshot
   - potion,if=config.use_potions&var.in_trueshot,use_off_gcd=1
 
   # ===========================================================

@@ -51,8 +51,8 @@ lists:
   - cauterizing_flame,if=health.pct<=40,use_off_gcd=1
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_dr
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_dr
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.in_dr
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.in_dr
   - potion,if=config.use_potions&var.in_dr
 
   racials:

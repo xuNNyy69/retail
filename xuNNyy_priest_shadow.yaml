@@ -76,8 +76,8 @@ lists:
   - bag_of_tricks
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.voidform_up
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.voidform_up
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.voidform_up
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.voidform_up
   - potion,if=config.use_potions&var.voidform_up,use_off_gcd=1
 
   # ===========================================================

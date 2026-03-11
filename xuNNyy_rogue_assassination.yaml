@@ -50,8 +50,8 @@ lists:
   - vanish,if=var.single_target&talent.improved_garrote&(debuff.deathmark.up|dot.garrote.refreshable)
 
   items:
-  - use_item,slot=trinket1,if=debuff.deathmark.up|cooldown.deathmark.remains>60
-  - use_item,slot=trinket2,if=debuff.deathmark.up|cooldown.deathmark.remains>60
+  - trinket1,if=debuff.deathmark.up|cooldown.deathmark.remains>60
+  - trinket2,if=debuff.deathmark.up|cooldown.deathmark.remains>60
 
   misc_cds:
   - potion,if=config.use_potions&debuff.deathmark.up

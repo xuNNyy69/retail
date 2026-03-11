@@ -62,8 +62,8 @@ lists:
   - berserking,if=buff.adrenaline_rush.up,use_off_gcd=1
   - fireblood,if=buff.adrenaline_rush.up,use_off_gcd=1
   - ancestral_call,if=buff.adrenaline_rush.up,use_off_gcd=1
-  - use_item,slot=trinket1,if=config.use_trinkets&debuff.between_the_eyes.up,use_off_gcd=1
-  - use_item,slot=trinket2,if=config.use_trinkets&debuff.between_the_eyes.up,use_off_gcd=1
+  - trinket1,if=config.use_trinkets&debuff.between_the_eyes.up,use_off_gcd=1
+  - trinket2,if=config.use_trinkets&debuff.between_the_eyes.up,use_off_gcd=1
 
   # dispatch,if=!buff.slice_and_dice.up: depends on talent interaction (e.g. Swift Slasher)
   finish:

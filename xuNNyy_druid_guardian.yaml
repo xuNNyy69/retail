@@ -107,8 +107,8 @@ lists:
   - healthstone,if=health.pct<=35
 
   items:
-  - use_item,slot=trinket1,if=config.use_trinkets&trinket_1.sync,use_off_gcd=1
-  - use_item,slot=trinket2,if=config.use_trinkets&trinket_2.sync,use_off_gcd=1
+  - trinket1,if=config.use_trinkets&trinket_1.sync,use_off_gcd=1
+  - trinket2,if=config.use_trinkets&trinket_2.sync,use_off_gcd=1
   - potion,if=config.use_potions&health.pct<=config.defensive_hp
 
   cooldowns:

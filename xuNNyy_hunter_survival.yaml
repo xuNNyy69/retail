@@ -73,8 +73,8 @@ lists:
   - bag_of_tricks
 
   items:
-  - use_item,slot=trinket1,use_off_gcd=1,if=config.use_trinkets&var.takedown_active
-  - use_item,slot=trinket2,use_off_gcd=1,if=config.use_trinkets&var.takedown_active
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.takedown_active
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.takedown_active
   - potion,if=config.use_potions&var.takedown_active,use_off_gcd=1
 
   # ===========================================================

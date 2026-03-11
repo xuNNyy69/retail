@@ -34,7 +34,7 @@ config:
     default: 3
 
 variables:
-  infernal_active: pet.infernal.active
+  infernal_active: buff.summon_infernal.up
   in_ritual: buff.diabolic_ritual_mother_of_chaos.up|buff.diabolic_ritual_overlord.up|buff.diabolic_ritual_pit_lord.up
 
 lists:
@@ -58,8 +58,8 @@ lists:
   - ancestral_call,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
 
   items:
-  - use_item,slot=trinket1,if=config.use_trinkets
-  - use_item,slot=trinket2,if=config.use_trinkets
+  - trinket1,if=config.use_trinkets
+  - trinket2,if=config.use_trinkets
 
   default:
   - call_action_list,name=ogcd
