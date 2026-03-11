@@ -54,7 +54,6 @@ variables:
   has_charred: talent.charred_passions
   has_scalding: talent.scalding_brew
   has_rjw: talent.rushing_jade_wind
-  has_bma: talent.bring_me_another
   has_moh: talent.aspect_of_harmony
 
   boc_up: buff.blackout_combo.up
@@ -82,13 +81,12 @@ variables:
 
 lists:
   taunt:
-  - provoke,if=config.auto_taunt&player.combat&target.exists&target.enemy&target.alive&target.threat<100,use_off_gcd=1
+  - provoke,if=config.auto_taunt&player.combat&target.exists&target.enemy&target.alive&target.threat<3,use_off_gcd=1
 
   interrupts:
   - spear_hand_strike,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
-  - dampen_harm,if=health.pct<=(config.defensive_hp+20)
   - diffuse_magic,if=health.pct<=config.defensive_hp
   - fortifying_brew,if=health.pct<=config.defensive_hp
   - touch_of_karma,if=health.pct<=(config.defensive_hp+10)
@@ -124,7 +122,6 @@ lists:
   - chi_burst,if=!var.has_moh
   - chi_burst,if=var.has_moh&var.balanced_strat_ready
   - tiger_palm,if=var.boc_up&cooldown.keg_smash.remains>gcd
-  - empty_barrel,if=var.has_bma
   - breath_of_fire,if=var.has_charred&(!var.charred_up|var.charred_low)
   - breath_of_fire,if=!var.has_charred
   - exploding_keg,if=!var.has_rjw|var.rjw_up
@@ -141,7 +138,6 @@ lists:
   - tiger_palm,if=var.boc_up&cooldown.keg_smash.remains>gcd
   - keg_smash
   - chi_burst,if=!var.has_moh|var.balanced_strat_ready
-  - empty_barrel,if=var.has_bma
   - rushing_jade_wind,if=!var.rjw_up|var.rjw_low
   - spinning_crane_kick,if=var.has_charred&var.charred_up&var.charred_low&dot.breath_of_fire.remains<9
   - exploding_keg,if=!var.has_rjw|var.rjw_up

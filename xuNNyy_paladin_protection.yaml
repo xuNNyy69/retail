@@ -43,7 +43,7 @@ variables:
 
 lists:
   taunt:
-  - taunt,if=config.auto_taunt&player.combat&target.threat<100
+  - taunt,if=config.auto_taunt&player.combat&target.threat<3
 
   interrupts:
   - rebuke,if=target.casting.interruptible,use_off_gcd=1

@@ -92,7 +92,7 @@ variables:
 lists:
 
   taunt:
-  - growl,if=config.auto_taunt&player.combat&target.threat<100,use_off_gcd=1
+  - growl,if=config.auto_taunt&player.combat&target.threat<3,use_off_gcd=1
 
   interrupts:
   - skull_bash,if=target.casting.interruptible,use_off_gcd=1

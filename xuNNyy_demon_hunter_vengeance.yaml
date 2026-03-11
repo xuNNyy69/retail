@@ -67,7 +67,7 @@ lists:
   - disrupt,if=target.casting.interruptible,use_off_gcd=1
 
   taunt:
-  - torment,if=config.auto_taunt&target.exists&target.enemy&target.threat<100
+  - torment,if=config.auto_taunt&target.exists&target.enemy&target.threat<3
 
   defensives:
   # Demon Spikes: keep active at configured HP ceiling (off-GCD)
