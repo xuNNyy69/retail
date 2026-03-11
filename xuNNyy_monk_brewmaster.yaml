@@ -59,7 +59,7 @@ variables:
   has_scalding: talent.scalding_brew
   has_rjw: talent.rushing_jade_wind
   has_moh: talent.aspect_of_harmony
-  has_shado_pan: talent.flurry_strikes
+  has_bma: talent.bring_me_another
 
   boc_up: buff.blackout_combo.up
   charred_up: buff.charred_passions.up
@@ -76,10 +76,11 @@ variables:
 
   combat_gate: player.combat&(target.time_to_die>12|active_enemies>=3)
   safety_gate: cooldown.purifying_brew.charges_fractional>=0.5|cooldown.celestial_brew.charges_fractional>=1
+  cb_near_cap: cooldown.celestial_brew.charges_fractional>1.8
 
-  purify_no_niuzao: "!var.boc_up&!var.has_niuzao"
-  purify_niuzao_active: "!var.boc_up&var.has_niuzao&var.niuzao_up"
-  purify_niuzao_hold: "!var.boc_up&var.has_niuzao&!var.niuzao_up&cooldown.invoke_niuzao_the_black_ox.remains>10"
+  purify_no_niuzao: "!var.has_niuzao"
+  purify_niuzao_active: "var.has_niuzao&var.niuzao_up"
+  purify_niuzao_hold: "var.has_niuzao&!var.niuzao_up&cooldown.invoke_niuzao_the_black_ox.remains>10"
 
   energy_low: energy<40
   energy_filler: energy>40
@@ -92,42 +93,47 @@ lists:
   - spear_hand_strike,if=target.casting.interruptible,use_off_gcd=1
 
   defensives:
-  - diffuse_magic,if=health.pct<=config.defensive_hp
+  # Diffuse Magic is now a passive on Fortifying Brew in Midnight
   - fortifying_brew,if=health.pct<=config.defensive_hp
   - touch_of_karma,if=health.pct<=(config.defensive_hp+10)
-  - celestial_brew,if=var.has_moh&var.moh_vitality_ready&!var.moh_spending&!var.boc_up
-  - celestial_infusion,if=var.has_moh&var.moh_vitality_ready&!var.moh_spending&!var.boc_up
-  - celestial_brew,if=!var.has_moh&(stagger.pct>=65|(cooldown.purifying_brew.charges_fractional<0.6&stagger.pct>=40)|cooldown.celestial_brew.charges_fractional>1.8)
-  - celestial_infusion,if=!var.has_moh&(stagger.pct>=65|(cooldown.purifying_brew.charges_fractional<0.6&stagger.pct>=40)|cooldown.celestial_brew.charges_fractional>1.8)
+  # MoH: emergency CB when low HP
+  - celestial_brew,if=var.has_moh&health.pct<=60&!var.moh_spending
+  # Non-MoH: stagger-based CB
+  - celestial_brew,if=!var.has_moh&(stagger.pct>=65|(cooldown.purifying_brew.charges_fractional<0.6&stagger.pct>=40)|var.cb_near_cap)
 
   dispel:
   - detox,if=player.has_poison|player.has_disease
 
   purify:
-  - purifying_brew,if=!var.boc_up&stagger.pct>=65
-  - purifying_brew,if=!var.boc_up&stagger.pct>=35&(var.purify_no_niuzao|var.purify_niuzao_active|(config.hold_purify_niuzao&var.purify_niuzao_hold)|(!config.hold_purify_niuzao&var.has_niuzao&!var.niuzao_up))
-  - purifying_brew,if=!var.boc_up&var.pb_overcap&stagger.pct>5
+  - purifying_brew,if=stagger.pct>=65
+  - purifying_brew,if=stagger.pct>=35&(var.purify_no_niuzao|var.purify_niuzao_active|(config.hold_purify_niuzao&var.purify_niuzao_hold)|(!config.hold_purify_niuzao&var.has_niuzao&!var.niuzao_up))
+  - purifying_brew,if=var.pb_overcap&stagger.pct>5
 
   items:
-  - trinket1,use_off_gcd=1,if=var.combat_gate&var.safety_gate
-  - trinket2,use_off_gcd=1,if=var.combat_gate&var.safety_gate
-  - potion,if=config.use_potions&var.combat_gate&var.safety_gate
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.niuzao_up|!var.has_niuzao|target.time_to_die<20)&var.combat_gate&var.safety_gate
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.niuzao_up|!var.has_niuzao|target.time_to_die<20)&var.combat_gate&var.safety_gate
+  - potion,if=config.use_potions&(var.niuzao_up|!var.has_niuzao|target.time_to_die<20)&var.combat_gate
 
   cooldowns:
   - touch_of_death,if=target.health.pct<=15|target.time_to_die<=10
   - invoke_niuzao_the_black_ox,if=var.has_niuzao&var.combat_gate
-  - black_ox_brew,if=var.energy_low
+  # MoH: Celestial Brew triggers Aspect of Harmony spending phase (offensive use)
+  - celestial_brew,if=var.has_moh&var.moh_vitality_ready&!var.moh_spending
+  - celestial_brew,if=var.cb_near_cap
+  - black_ox_brew,if=var.energy_low&(!var.has_moh|cooldown.celestial_brew.charges_fractional<1)
 
   racials:
-  - berserking,use_off_gcd=1,if=var.combat_gate
-  - blood_fury,use_off_gcd=1,if=var.combat_gate
-  - fireblood,use_off_gcd=1,if=var.combat_gate
-  - ancestral_call,use_off_gcd=1,if=var.combat_gate
+  - berserking,use_off_gcd=1,if=(var.niuzao_up|!var.has_niuzao)&var.combat_gate
+  - blood_fury,use_off_gcd=1,if=(var.niuzao_up|!var.has_niuzao)&var.combat_gate
+  - fireblood,use_off_gcd=1,if=(var.niuzao_up|!var.has_niuzao)&var.combat_gate
+  - ancestral_call,use_off_gcd=1,if=(var.niuzao_up|!var.has_niuzao)&var.combat_gate
   - arcane_torrent,use_off_gcd=1,if=energy.deficit>=30
   - lights_judgment
   - bag_of_tricks
 
   st:
+  - empty_barrel,if=var.has_bma
+  - keg_smash
   - blackout_kick
   - chi_burst,if=!var.has_moh
   - chi_burst,if=var.has_moh&var.balanced_strat_ready
@@ -135,18 +141,18 @@ lists:
   - breath_of_fire,if=var.has_charred&(!var.charred_up|var.charred_low)
   - breath_of_fire,if=!var.has_charred
   - exploding_keg,if=!var.has_rjw|var.rjw_up
-  - keg_smash
   - spinning_crane_kick,if=var.has_scalding&var.has_charred&var.charred_up&var.charred_low&dot.breath_of_fire.remains<9&active_enemies>=2
   - rushing_jade_wind,if=!var.rjw_up|var.rjw_low
   - tiger_palm,if=var.energy_filler
   - spinning_crane_kick,if=active_enemies>=3&var.energy_filler
 
   aoe:
+  - empty_barrel,if=var.has_bma
+  - keg_smash
   - blackout_kick
   - breath_of_fire,if=var.has_charred&(!var.charred_up|var.charred_low)
   - breath_of_fire,if=!var.has_charred
   - tiger_palm,if=var.boc_up&cooldown.keg_smash.remains>gcd
-  - keg_smash
   - chi_burst,if=!var.has_moh|var.balanced_strat_ready
   - rushing_jade_wind,if=!var.rjw_up|var.rjw_low
   - spinning_crane_kick,if=var.has_charred&var.charred_up&var.charred_low&dot.breath_of_fire.remains<9
@@ -177,8 +183,8 @@ lists:
   - auto_attack
   - call_action_list,name=purify
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
   - call_action_list,name=fallback
