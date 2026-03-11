@@ -187,8 +187,10 @@ lists:
 
   damage:
   - return,if=config.damage_mode=0
-  - flame_shock,if=debuff.flame_shock.down,ignore_movement=true
+  - healing_rain,if=!var.healing_rain_up,ignore_movement=true
+  - flame_shock,if=!dot.flame_shock.ticking|dot.flame_shock.refreshable,ignore_movement=true
   - lava_burst,if=dot.flame_shock.up&buff.lava_surge.up,ignore_movement=true
+  - lava_burst,if=dot.flame_shock.up,ignore_movement=true
   - chain_lightning,if=var.want_aoe,ignore_movement=true
   - lightning_bolt,ignore_movement=true
 

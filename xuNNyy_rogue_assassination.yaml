@@ -72,7 +72,7 @@ lists:
   core_dot:
   - garrote,if=(buff.stealth.up|buff.vanish.up|buff.improved_garrote.up)&dot.garrote.refreshable
   - garrote,if=combo_points<5&dot.garrote.refreshable
-  - rupture,if=combo_points>=5&dot.rupture.refreshable
+  - rupture,if=combo_points>=5&dot.rupture.refreshable&!buff.darkest_night.up
 
   # CP generation: AoE CT spread → darkest_night shiv → stealth/blindside ambush → ST mutilate → AoE fan
   generate:

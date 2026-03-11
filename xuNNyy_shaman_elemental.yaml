@@ -61,22 +61,22 @@ lists:
 
   aoe:
   - tempest,if=buff.tempest.stack=2
-  - flame_shock,if=active_dot.flame_shock=0&active_enemies<=3&cooldown.ascendance.remains>10
-  - voltaic_blaze
+  - flame_shock,if=active_dot.flame_shock=0&active_enemies<=4
+  - voltaic_blaze,if=active_dot.flame_shock<active_enemies&active_enemies<=4
+  - chain_lightning,if=buff.stormkeeper.up
   - earthquake
-  - lava_burst,if=dot.flame_shock.remains>2&buff.purging_flames.up&(buff.ascendance.up&buff.ascendance.remains<3|buff.lava_surge.up)
-  - lightning_bolt,if=buff.stormkeeper.up&active_enemies=2
+  - lava_burst,if=dot.flame_shock.remains>2&(buff.lava_surge.up|buff.ascendance.up)
   - chain_lightning
   - frost_shock
 
   single_target:
   - tempest,if=buff.tempest.stack=2
-  - flame_shock,if=(!dot.flame_shock.ticking|dot.flame_shock.remains<6)&!buff.master_of_the_elements.up
-  - voltaic_blaze,if=!dot.flame_shock.ticking
+  - voltaic_blaze,if=(!dot.flame_shock.ticking|dot.flame_shock.refreshable)&!buff.master_of_the_elements.up
+  - lava_burst,if=dot.flame_shock.remains>=2&!buff.master_of_the_elements.up
+  - tempest,if=buff.tempest.stack>=1&buff.master_of_the_elements.up
+  - lightning_bolt,if=buff.stormkeeper.up&buff.master_of_the_elements.up
   - elemental_blast,if=maelstrom>85|buff.master_of_the_elements.up
   - earth_shock,if=maelstrom>85|buff.master_of_the_elements.up
-  - lightning_bolt,if=buff.power_of_the_maelstrom.stack=2
-  - lava_burst,if=dot.flame_shock.remains>=2&!buff.master_of_the_elements.up
   - lightning_bolt
   - frost_shock
 

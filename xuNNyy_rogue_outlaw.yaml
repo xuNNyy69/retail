@@ -80,6 +80,7 @@ lists:
   - coup_de_grace,if=talent.coup_de_grace&buff.disorienting_strikes.up
   - pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&!buff.audacity.up
   - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&buff.opportunity.stack>=6
+  - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&buff.opportunity.stack>=3&combo_points<=3
   - pistol_shot,if=!talent.fan_the_hammer&buff.opportunity.up&(combo_points<5|talent.quick_draw|talent.audacity&!buff.audacity.up)
   - ambush,if=talent.hidden_opportunity
   - sinister_strike

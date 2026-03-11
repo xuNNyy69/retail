@@ -92,9 +92,8 @@ lists:
 
   cooldowns:
   - feral_spirit
+  - doom_winds,if=talent.doom_winds,use_off_gcd=1
   - ascendance,if=talent.ascendance&(cooldown.feral_spirit.remains>30|var.feral_spirit_up)
-  - doom_winds,if=talent.doom_winds
-  - sundering,if=talent.sundering
 
   racials:
   - blood_fury,if=var.in_burst,use_off_gcd=1
@@ -108,56 +107,51 @@ lists:
   - surging_totem,if=cooldown.surging_totem.remains=0
 
   burst:
+  - lava_lash,if=var.hot_hand_up
+  - sundering,if=talent.sundering
   - crash_lightning
-  - stormstrike,if=var.doom_winds_up
-  - windstrike,if=var.doom_winds_up
   - tempest,if=var.tempest_ready&var.has_stormbringer
-  - elemental_blast,if=var.eb_ready
-  - lightning_bolt,if=var.maelstrom_10&!var.want_aoe
-  - chain_lightning,if=var.maelstrom_10&var.want_aoe
+  - primordial_storm,if=talent.primordial_storm&var.maelstrom_10
   - stormstrike
   - windstrike
-  - lava_lash,if=var.hot_hand_up
-  - voltaic_blaze,if=var.voltaic_blaze_up
-  - lava_burst,if=var.lava_surge_up
+  - lightning_bolt,if=var.maelstrom_10&!var.want_aoe
+  - chain_lightning,if=var.maelstrom_10&var.want_aoe
   - lava_lash
-  - lightning_bolt,if=var.maelstrom_8
+  - voltaic_blaze,if=var.voltaic_blaze_up
+  - lightning_bolt,if=var.maelstrom_5&!var.want_aoe
   - chain_lightning,if=var.maelstrom_5&var.want_aoe
 
   single:
   - voltaic_blaze,if=!var.fs_up
+  - lava_lash,if=var.hot_hand_up
+  - sundering,if=talent.sundering
   - crash_lightning
+  - tempest,if=var.tempest_ready&var.has_stormbringer
+  - primordial_storm,if=talent.primordial_storm&var.maelstrom_10
   - stormstrike,if=var.doom_winds_up
   - windstrike,if=var.doom_winds_up
-  - tempest,if=var.tempest_ready&var.has_stormbringer
-  - elemental_blast,if=var.eb_ready&var.maelstrom_10
-  - elemental_blast,if=var.eb_ready&var.maelstrom_8&var.ascendance_up
   - lightning_bolt,if=var.maelstrom_10
-  - lightning_bolt,if=var.maelstrom_8&var.ascendance_up
-  - lava_lash,if=var.hot_hand_up
+  - lava_lash
   - stormstrike
   - windstrike
-  - lava_lash
   - voltaic_blaze,if=var.voltaic_blaze_up
-  - lava_burst,if=var.lava_surge_up
-  - flame_shock,if=var.fs_low|!var.fs_up
-  - frost_shock,if=var.hailstorm_up
   - elemental_blast,if=var.eb_ready
   - lightning_bolt,if=var.maelstrom_5
-  - fire_nova,if=active_dot.flame_shock>=2
-  - flametongue_weapon,if=buff.flametongue_weapon.remains<5
+  - flame_shock,if=var.fs_low|!var.fs_up
+  - frost_shock,if=var.hailstorm_up
   - ice_strike,if=talent.ice_strike
-  - flame_shock
   - frost_shock
 
   aoe:
+  - sundering,if=talent.sundering
   - tempest,if=var.tempest_ready&var.has_stormbringer
-  - elemental_blast,if=var.eb_ready&var.maelstrom_10
-  - chain_lightning,if=var.maelstrom_10
+  - primordial_storm,if=talent.primordial_storm&var.maelstrom_10
   - crash_lightning
   - flame_shock,if=active_dot.flame_shock<active_enemies&active_enemies<=6
+  - voltaic_blaze,if=var.voltaic_blaze_up
   - lava_lash,if=var.hot_hand_up
   - fire_nova,if=active_dot.flame_shock>=3
+  - chain_lightning,if=var.maelstrom_10
   - stormstrike,if=var.doom_winds_up
   - windstrike,if=var.doom_winds_up
   - chain_lightning,if=var.maelstrom_5
@@ -166,7 +160,6 @@ lists:
   - windstrike
   - frost_shock,if=var.hailstorm_up
   - ice_strike,if=talent.ice_strike
-  - flametongue_weapon,if=buff.flametongue_weapon.remains<5
 
   fallback:
   - stormstrike,if=target.exists&target.enemy&target.alive,ignore_queue=true
