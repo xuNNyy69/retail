@@ -48,9 +48,14 @@ variables:
   beast_cleave_up: buff.beast_cleave.up
   focus_high: focus>=80
 
+  # Pet management
+  pet_hurt: pet.exists&pet.alive&pet.health.pct<75
+
 lists:
   interrupts:
   - counter_shot,if=target.casting.interruptible,use_off_gcd=1
+  - counter_shot.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - counter_shot.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - exhilaration,if=health.pct<=55
@@ -59,6 +64,15 @@ lists:
 
   dispel:
   - tranquilizing_shot,if=target.purgeable.enrage|target.purgeable.magic
+  - tranquilizing_shot.mouseover,if=mouseover.purgeable.enrage|mouseover.purgeable.magic
+
+  pet_care:
+  # Revive dead pet (10s anti-spam)
+  - revive_pet,range_check=none,if=pet.dead,delay=10000
+  # Call pet if dismissed (10s anti-spam)
+  - call_pet_1,range_check=none,if=!pet.exists&!pet.dead,delay=10000
+  # Mend pet when hurt
+  - mend_pet,range_check=none,if=var.pet_hurt
 
   cooldowns:
   - bloodshed,if=talent.bloodshed&var.in_bw
@@ -139,7 +153,8 @@ lists:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
-  - hunters_mark,if=target.exists&target.enemy&!debuff.hunters_mark.up&!player.combat
+  - call_action_list,name=pet_care
+  - hunters_mark,if=target.exists&target.enemy&!debuff.hunters_mark.up&!player.combat,delay=2000
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)
@@ -156,7 +171,7 @@ lists:
   - auto_attack
   - call_action_list,name=cooldowns,if=config.use_cooldowns
   - call_action_list,name=racials,if=config.use_cooldowns
-  - call_action_list,name=items,if=config.use_trinkets
+  - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=drst,if=var.is_dr&!var.want_aoe
   - call_action_list,name=drcleave,if=var.is_dr&var.want_aoe
   - call_action_list,name=plst,if=var.has_pack_leader&!var.want_aoe

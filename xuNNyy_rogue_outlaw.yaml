@@ -54,6 +54,7 @@ lists:
 
   dispel:
   - shiv,if=target.has_enrage
+  - shiv.mouseover,if=mouseover.has_enrage
 
   maintenance:
   - blade_flurry,if=active_enemies>=2&!buff.blade_flurry.up
@@ -104,6 +105,8 @@ lists:
   - return,if=!player.combat&config.auto_combat.has(0)
   # Interrupts
   - kick,if=config.use_interrupts&target.casting.interruptible,use_off_gcd=1
+  - kick.mouseover,if=config.use_interrupts&mouseover.casting.interruptible,use_off_gcd=1
+  - kick.focus,if=config.use_interrupts&focus.casting.interruptible,use_off_gcd=1
   # Defensives
   - call_action_list,name=defensives,if=config.use_defensives
   # Enrage removal

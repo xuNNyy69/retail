@@ -43,6 +43,8 @@ variables:
 lists:
   interrupts:
   - kick,if=target.casting.interruptible,use_off_gcd=1
+  - kick.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - kick.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - cloak_of_shadows,if=health.pct<=40
@@ -51,6 +53,7 @@ lists:
 
   dispel:
   - shiv,if=target.has_enrage
+  - shiv.mouseover,if=mouseover.has_enrage
 
   # Vanish → Improved Garrote: fire during Deathmark window or when Garrote is refreshable (guide: sync with Deathmark when possible)
   vanish:

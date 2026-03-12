@@ -51,11 +51,13 @@ variables:
   in_lunar: buff.eclipse_lunar.up
   in_solar: buff.eclipse_solar.up
   eclipse_any: "buff.eclipse_lunar.up|buff.eclipse_solar.up"
-  # AP thresholds (astral_power.deficit not supported -> approximate)
+  # Eclipse entry direction: lunar for EC and AoE (3+), solar otherwise
+  enter_lunar: "talent.lunar_calling|active_enemies>=3"
+  # AP thresholds
   ap_ready: astral_power>=40
-  ap_overcap: astral_power>=90
-  # CD fire condition
-  cd_condition: "var.ca_active|cooldown.celestial_alignment.remains>30"
+  ap_overcap: astral_power.deficit<10
+  # CD pooling: hold AP when CA/Incarn is about to come off CD
+  pool_for_cd: "astral_power<30&cooldown.celestial_alignment.remains<gcd*4"
   # AoE routing threshold
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
 
@@ -63,6 +65,8 @@ lists:
   interrupts:
   - solar_beam,if=target.casting.interruptible&var.in_lunar
   - skull_bash,if=target.casting.interruptible
+  - skull_bash.mouseover,if=mouseover.casting.interruptible
+  - skull_bash.focus,if=focus.casting.interruptible
 
   defensives:
   - barkskin,if=health.pct<=40&buff.barkskin.down
@@ -70,6 +74,7 @@ lists:
 
   dispel:
   - soothe,if=target.purgeable.enrage
+  - soothe.mouseover,if=mouseover.purgeable.enrage
   - remove_corruption,if=player.has_curse|player.has_poison
 
   racials:
@@ -81,38 +86,40 @@ lists:
   - bag_of_tricks
 
   items:
-  - trinket1,if=config.use_trinkets&var.ca_active,use_off_gcd=1
-  - trinket2,if=config.use_trinkets&var.ca_active,use_off_gcd=1
-  - potion,if=config.use_potions&var.ca_active,use_off_gcd=1
+  - trinket1,if=config.use_trinkets&(var.ca_active|target.time_to_die<20),use_off_gcd=1
+  - trinket2,if=config.use_trinkets&(var.ca_active|target.time_to_die<20),use_off_gcd=1
+  - potion,if=config.use_potions&(var.ca_active|target.time_to_die<20),use_off_gcd=1
 
   # ============================================================
   # Single Target -- Keeper of the Grove (talent.force_of_nature)
   # ============================================================
   single_target_kotg:
   - return,if=!var.is_kotg
+  # Eclipse entry: enter correct eclipse before doing anything else
+  - wrath,if=var.eclipse_down&!var.enter_lunar
+  - starfire,if=var.eclipse_down&var.enter_lunar
   # Warrior of Elune: off-GCD instant-starfire setup when in lunar
   - warrior_of_elune,if=talent.warrior_of_elune&buff.warrior_of_elune.down&var.in_lunar,use_off_gcd=1
   # DoT refresh -- hard remains threshold before eclipse entry
   - moonfire,if=dot.moonfire.remains<4
   - sunfire,if=dot.sunfire.remains<4
-  # Fury of Elune: fill AP when low (matches SimC kotg_st order pre-eclipse)
-  # 5+passive_asp < astral_power.deficit -> approximated: astral_power<80
-  - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power<80
-  # CA / Incarn: align with solar eclipse + sufficient AP for burst spend
-  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.in_solar&var.ap_ready
-  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.in_solar&var.ap_ready
+  # Fury of Elune: fill AP when low
+  - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power.deficit>20
+  # CA / Incarn: align with eclipse + sufficient AP for burst spend
+  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready&(target.time_to_die>15|target.boss)
+  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.in_solar&var.ap_ready&(target.time_to_die>15|target.boss)
   # Force of Nature: pair with CA or Eclipse window (guide: never fire outside burst)
-  - force_of_nature,if=talent.force_of_nature&(var.ca_active|var.eclipse_any)
+  - force_of_nature,if=talent.force_of_nature&(var.ca_active|var.eclipse_any)&target.time_to_die>6
   # Starsurge: ascendant_stars proc -- highest priority spend
   - starsurge,if=buff.ascendant_stars.up&var.ap_ready
   - starsurge,if=talent.balance_of_all_things&(buff.balance_of_all_things_arcane.stack>0|buff.balance_of_all_things_nature.stack>0)&var.ap_ready
   # Starsurge: build starlord to 3 during eclipse
-  - starsurge,if=buff.starlord.stack<3&var.eclipse_any&var.ap_ready
+  - starsurge,if=buff.starlord.stack<3&var.eclipse_any&var.ap_ready&!var.pool_for_cd
   # DoT refresh -- pandemic window
   - sunfire,if=dot.sunfire.refreshable&target.time_to_die>4
   - moonfire,if=dot.moonfire.refreshable&target.time_to_die>4
   # Convoke: use inside CA window for maximum value
-  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&var.ca_active
+  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&var.ca_active&target.time_to_die>4
   # Wrath: burns ascendant_fires proc immediately
   - wrath,if=buff.ascendant_fires.up
   # Moon spells: use on cooldown
@@ -123,7 +130,7 @@ lists:
   - starfall,if=buff.starweavers_warp.up|buff.touch_the_cosmos.up
   - starsurge,if=buff.starweavers_weft.up
   # Stellar Flare: single-target DoT
-  - stellar_flare,if=talent.stellar_flare&dot.stellar_flare.refreshable
+  - stellar_flare,if=talent.stellar_flare&dot.stellar_flare.refreshable&target.time_to_die>8
   # General starsurge: prevent AP overcap (guide: spend to prevent capping)
   - starsurge,if=var.eclipse_any&var.ap_overcap
   # Wild mushroom: refresh before fungal growth expires
@@ -137,6 +144,12 @@ lists:
   # ============================================================
   single_target_ec:
   - return,if=!var.is_ec
+  # Incarn: fire OUTSIDE eclipse when Fury of Elune is ready -- EC burst trigger
+  # Must be above eclipse entry so it fires before we re-enter eclipse
+  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_down&(cooldown.fury_of_elune.ready|!talent.fury_of_elune)&(target.time_to_die>15|target.boss)
+  # Eclipse entry: EC wants lunar for lunar_calling benefit
+  - wrath,if=var.eclipse_down&!var.enter_lunar
+  - starfire,if=var.eclipse_down&var.enter_lunar
   # Warrior of Elune: off-GCD setup
   - warrior_of_elune,if=talent.warrior_of_elune&buff.warrior_of_elune.down&var.in_lunar,use_off_gcd=1
   # DoT refresh -- hard threshold
@@ -144,21 +157,19 @@ lists:
   - sunfire,if=dot.sunfire.remains<4
   # Fury of Elune: use on CD in eclipse to maintain Lunation CDR loop (no AP gate per guide)
   - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any
-  # Incarn: fire outside eclipse when Fury of Elune is ready � guide EC burst trigger
-  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_down&(cooldown.fury_of_elune.remains=0|!talent.fury_of_elune)
 
   # CA: mid-eclipse if Incarn not talented
-  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.in_lunar&var.ap_ready
+  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.in_lunar&var.ap_ready&(target.time_to_die>15|target.boss)
   # Starsurge: ascendant_stars proc priority
   - starsurge,if=buff.ascendant_stars.up&var.ap_ready
   - starsurge,if=talent.balance_of_all_things&(buff.balance_of_all_things_arcane.stack>0|buff.balance_of_all_things_nature.stack>0)&var.ap_ready
   # Starsurge: build starlord
-  - starsurge,if=buff.starlord.stack<3&var.eclipse_any&var.ap_ready
+  - starsurge,if=buff.starlord.stack<3&var.eclipse_any&var.ap_ready&!var.pool_for_cd
   # DoT refresh -- pandemic
   - sunfire,if=dot.sunfire.refreshable&target.time_to_die>4
   - moonfire,if=dot.moonfire.refreshable&target.time_to_die>4
   # Convoke inside CA
-  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&var.ca_active
+  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&var.ca_active&target.time_to_die>4
   # Starfire: burns ascendant_fires proc (EC filler is starfire, not wrath)
   - starfire,if=buff.ascendant_fires.up
   # Moon spells
@@ -169,7 +180,7 @@ lists:
   - starfall,if=buff.starweavers_warp.up|buff.touch_the_cosmos.up
   - starsurge,if=buff.starweavers_weft.up
   # Stellar Flare
-  - stellar_flare,if=talent.stellar_flare&dot.stellar_flare.refreshable
+  - stellar_flare,if=talent.stellar_flare&dot.stellar_flare.refreshable&target.time_to_die>8
   # General starsurge: prevent AP overcap at 1 target (guide)
   - starsurge,if=var.eclipse_any&var.ap_overcap
   # Wild mushroom
@@ -182,27 +193,30 @@ lists:
   # Single Target -- Default (no hero-tree talent specialisation)
   # ============================================================
   single_target:
+  # Eclipse entry: enter correct eclipse before doing anything else
+  - wrath,if=var.eclipse_down&!var.enter_lunar
+  - starfire,if=var.eclipse_down&var.enter_lunar
   # Warrior of Elune off-GCD
   - warrior_of_elune,if=talent.warrior_of_elune&buff.warrior_of_elune.down&var.in_lunar,use_off_gcd=1
   # DoT refresh -- hard threshold
   - moonfire,if=dot.moonfire.remains<4
   - sunfire,if=dot.sunfire.remains<4
   # Fury of Elune
-  - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power<80
+  - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power.deficit>20
   # CA / Incarn during eclipse
-  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready
-  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready
+  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready&(target.time_to_die>15|target.boss)
+  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready&(target.time_to_die>15|target.boss)
   # Force of Nature on CD
-  - force_of_nature,if=talent.force_of_nature&(var.ca_active|cooldown.celestial_alignment.remains>30)
+  - force_of_nature,if=talent.force_of_nature&(var.ca_active|cooldown.celestial_alignment.remains>30)&target.time_to_die>6
   # Starsurge priority procs
   - starsurge,if=buff.ascendant_stars.up&var.ap_ready
   - starsurge,if=talent.balance_of_all_things&(buff.balance_of_all_things_arcane.stack>0|buff.balance_of_all_things_nature.stack>0)&var.ap_ready
-  - starsurge,if=buff.starlord.stack<3&var.eclipse_any&var.ap_ready
+  - starsurge,if=buff.starlord.stack<3&var.eclipse_any&var.ap_ready&!var.pool_for_cd
   # DoT refresh -- pandemic
   - sunfire,if=dot.sunfire.refreshable&target.time_to_die>4
   - moonfire,if=dot.moonfire.refreshable&target.time_to_die>4
   # Convoke
-  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&var.ca_active
+  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&var.ca_active&target.time_to_die>4
   # Ascendant fires proc
   - wrath,if=buff.ascendant_fires.up
   # Moon spells
@@ -213,7 +227,7 @@ lists:
   - starfall,if=buff.starweavers_warp.up|buff.touch_the_cosmos.up
   - starsurge,if=buff.starweavers_weft.up
   # Stellar Flare
-  - stellar_flare,if=talent.stellar_flare&dot.stellar_flare.refreshable
+  - stellar_flare,if=talent.stellar_flare&dot.stellar_flare.refreshable&target.time_to_die>8
   # General starsurge: prevent AP overcap
   - starsurge,if=var.eclipse_any&var.ap_overcap
   # Wild mushroom
@@ -226,8 +240,11 @@ lists:
   # AoE (active_enemies > 1)
   # ============================================================
   aoe:
-  # Starfall at AP overcap -- prevent waste before DoTs applied
+  # Starfall at AP overcap -- prevent waste before eclipse entry
   - starfall,if=astral_power>=90
+  # Eclipse entry: enter correct eclipse before anything else (AoE prefers lunar)
+  - wrath,if=var.eclipse_down&!var.enter_lunar
+  - starfire,if=var.eclipse_down&var.enter_lunar
   # DoT refresh -- hard threshold first
   - moonfire,if=dot.moonfire.remains<4
   - sunfire,if=dot.sunfire.remains<4
@@ -235,12 +252,12 @@ lists:
   - moonfire,if=dot.moonfire.refreshable&target.time_to_die>4
   - sunfire,if=dot.sunfire.refreshable&target.time_to_die>4
   # Fury of Elune: AP generation when low
-  - fury_of_elune,if=talent.fury_of_elune&astral_power<80
+  - fury_of_elune,if=talent.fury_of_elune&var.eclipse_any&astral_power.deficit>20
   # Force of Nature: KOTG -- use in CA or eclipse window
-  - force_of_nature,if=talent.force_of_nature&var.is_kotg&(var.ca_active|var.eclipse_any)
+  - force_of_nature,if=talent.force_of_nature&var.is_kotg&(var.ca_active|var.eclipse_any)&target.time_to_die>6
   # CA / Incarn: burst window during eclipse
-  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready
-  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready
+  - incarnation_chosen_of_elune,if=config.use_cooldowns&talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready&(target.time_to_die>15|target.boss)
+  - celestial_alignment,if=config.use_cooldowns&talent.celestial_alignment&!talent.incarnation_chosen_of_elune&var.eclipse_any&var.ap_ready&(target.time_to_die>15|target.boss)
   # Starfire: ascendant_fires proc in lunar AoE (multi-target bonus)
   - starfire,if=buff.ascendant_fires.up&active_enemies>2&var.in_lunar
   # Starweaver procs
@@ -249,7 +266,7 @@ lists:
   # Starfall: primary AoE spender
   - starfall,if=var.ap_ready
   # Convoke
-  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits
+  - convoke_the_spirits,if=config.use_cooldowns&talent.convoke_the_spirits&target.time_to_die>4
   # Moon spells
   - new_moon,if=talent.new_moon
   - half_moon,if=talent.half_moon
@@ -257,7 +274,7 @@ lists:
   # Wild mushroom
   - wild_mushroom,if=talent.wild_mushroom
   # Force of Nature: non-KOTG builds use on CD
-  - force_of_nature,if=talent.force_of_nature&!var.is_kotg
+  - force_of_nature,if=talent.force_of_nature&!var.is_kotg&target.time_to_die>6
   # Filler: starfire for EC / 4+ targets / lunar; wrath otherwise
   - starfire,if=talent.lunar_calling|active_enemies>3|var.in_lunar
   - wrath
@@ -282,10 +299,10 @@ lists:
   # Target check
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)
-  - stop_casting,if=(player.casting|player.channeling)&(buff.warrior_of_elune.up|buff.eclipse_solar.remains<1|buff.eclipse_lunar.remains<1)
+  - stop_casting,if=(player.casting|player.channeling)&(buff.warrior_of_elune.up|buff.owlkin_frenzy.up|buff.eclipse_solar.remains<1|buff.eclipse_lunar.remains<1)
   - return,if=player.casting|player.channeling
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   # Hero-tree routing: EC -> KOTG -> default ST -> AoE
   - call_action_list,name=single_target_ec,if=var.is_ec&!var.want_aoe
   - call_action_list,name=single_target_kotg,if=var.is_kotg&!var.is_ec&!var.want_aoe

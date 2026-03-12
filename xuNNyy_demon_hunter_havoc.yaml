@@ -40,20 +40,22 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   in_meta: buff.metamorphosis.up
-  is_ar: talent.reaver_glaive
+  is_ar: talent.reavers_glaive
   fury_ok: fury>=40
   fury_high: fury>=70
   fury_low: fury<30
-  ar_proc: buff.reaver_glaive.up
   demonsurge_up: buff.demonsurge.up
   eb_window: debuff.essence_break.up
   use_blade_dance: talent.first_blood|active_enemies>=3
-  demonsurge_ready: buff.metamorphosis.up&buff.demonsurge.up
   rending_flurry: buff.rending_strike.up&buff.glaive_flurry.up
+  in_melee: target.range<=8
+  pooling: (cooldown.eye_beam.remains<=gcd*2|cooldown.metamorphosis.remains<=gcd*2)&fury<80
 
 lists:
   interrupts:
   - disrupt,if=target.casting.interruptible,use_off_gcd=1
+  - disrupt.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - disrupt.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - blur,if=health.pct<=40,use_off_gcd=1
@@ -61,11 +63,12 @@ lists:
 
   dispel:
   - consume_magic,if=target.purgeable.magic,use_off_gcd=1
+  - consume_magic.mouseover,if=mouseover.purgeable.magic,use_off_gcd=1
 
   items:
-  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
-  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window)
-  - potion,if=config.use_potions&var.in_meta
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window|target.time_to_die<20)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|var.eb_window|target.time_to_die<20)
+  - potion,if=config.use_potions&(var.in_meta|target.time_to_die<20)
 
   racials:
   - berserking,use_off_gcd=1,if=var.in_meta|buff.eye_beam.up
@@ -77,9 +80,8 @@ lists:
   - bag_of_tricks,if=var.in_meta|buff.eye_beam.up
 
   cooldowns:
-  - the_hunt,if=talent.the_hunt
-  - metamorphosis,if=!var.in_meta&(cooldown.eye_beam.remains>gcd|!talent.chaotic_transformation)
-  - glaive_tempest,if=talent.glaive_tempest&(var.want_aoe|var.eb_window)
+  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss)
+  - metamorphosis,if=!var.in_meta&(cooldown.eye_beam.remains>gcd|!talent.chaotic_transformation)&(target.time_to_die>10|target.boss)
 
   # Called only when var.in_meta. Handles in-meta priorities for both AR and FS.
   # Morph pairs: blade_dance/death_sweep, chaos_strike/annihilation (base then morph, identical conditions).
@@ -92,9 +94,9 @@ lists:
   # P2: FS — empowered Immolation Aura during Demonsurge
   - immolation_aura,if=var.demonsurge_up
   # P3: Eye Beam on cooldown — core Demonsurge generator (FS) and strong AoE
-  - eye_beam,if=!var.eb_window
+  - eye_beam,if=!var.eb_window&target.time_to_die>3
   # P4: Essence Break setup — Blade Dance nearly ready, sufficient fury
-  - essence_break,if=talent.essence_break&fury>=35&cooldown.blade_dance.remains<gcd*2
+  - essence_break,if=talent.essence_break&fury>=35&cooldown.blade_dance.remains<gcd*2&target.time_to_die>4
   # P5: AR glaive cycle in meta
   - reaver_glaive,if=var.is_ar&buff.rending_strike.down&buff.glaive_flurry.down
   - chaos_strike,if=var.is_ar&var.rending_flurry
@@ -105,13 +107,13 @@ lists:
   - blade_dance,if=var.use_blade_dance
   - death_sweep,if=var.use_blade_dance
   # P7: Fury spend
-  - chaos_strike,if=var.fury_ok
-  - annihilation,if=var.fury_ok
+  - chaos_strike,if=var.fury_ok&!var.pooling
+  - annihilation,if=var.fury_ok&!var.pooling
   # P8: Fury generation / filler
   - immolation_aura,if=fury<80
   - felblade,if=fury<60
   - throw_glaive
-  - fel_rush
+  - demons_bite
 
   # Aldrachi Reaver — out-of-meta rotation. Focus on glaive cycle and Eye Beam.
   hero_tree_ar:
@@ -123,26 +125,24 @@ lists:
   - blade_dance,if=buff.glaive_flurry.up&buff.rending_strike.down
   - death_sweep,if=buff.glaive_flurry.up&buff.rending_strike.down
   # Eye Beam on cooldown
-  - eye_beam
-  - sigil_of_flame,if=talent.sigil_of_flame
+  - eye_beam,if=target.time_to_die>3
   # Essence Break setup
-  - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2
+  - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2&target.time_to_die>4
   # EB window and Blade Dance priority
   - blade_dance,if=var.eb_window|var.use_blade_dance
   - death_sweep,if=var.eb_window|var.use_blade_dance
-  - chaos_strike,if=var.eb_window|var.fury_high
-  - annihilation,if=var.eb_window|var.fury_high
+  - chaos_strike,if=var.eb_window|(var.fury_high&!var.pooling)
+  - annihilation,if=var.eb_window|(var.fury_high&!var.pooling)
   # Blade Dance on CD
   - blade_dance
   - death_sweep
   # General fury spend
-  - chaos_strike,if=var.fury_ok
-  - annihilation,if=var.fury_ok
+  - chaos_strike,if=var.fury_ok&!var.pooling
+  - annihilation,if=var.fury_ok&!var.pooling
   # Fury generation / filler
   - immolation_aura,if=fury<80
   - felblade,if=fury<60
   - throw_glaive
-  - fel_rush
   - demons_bite
 
   # Fel-Scarred — out-of-meta rotation. Eye Beam on CD is the primary goal.
@@ -153,10 +153,9 @@ lists:
   - chaos_strike,if=var.demonsurge_up
   - annihilation,if=var.demonsurge_up
   # Eye Beam on cooldown (core Demonsurge generator)
-  - eye_beam
-  - sigil_of_flame,if=talent.sigil_of_flame
+  - eye_beam,if=target.time_to_die>3
   # Essence Break setup
-  - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2
+  - essence_break,if=talent.essence_break&fury>=35&!var.eb_window&cooldown.blade_dance.remains<gcd*2&target.time_to_die>4
   # EB window spending
   - blade_dance,if=var.eb_window
   - death_sweep,if=var.eb_window
@@ -166,26 +165,22 @@ lists:
   - blade_dance,if=var.use_blade_dance
   - death_sweep,if=var.use_blade_dance
   # General fury spend
-  - chaos_strike,if=var.fury_ok
-  - annihilation,if=var.fury_ok
+  - chaos_strike,if=var.fury_ok&!var.pooling
+  - annihilation,if=var.fury_ok&!var.pooling
   # Fury generation / filler
   - immolation_aura,if=fury<80
   - felblade,if=fury<60
   - throw_glaive
-  - fel_rush
   - demons_bite
 
   aoe:
   - eye_beam
-  - glaive_tempest,if=talent.glaive_tempest
   - blade_dance
   - death_sweep
-  - sigil_of_flame,if=talent.sigil_of_flame
   - immolation_aura
   - essence_break,if=talent.essence_break&fury>=35
-  - chaos_strike,if=var.fury_ok
-  - annihilation,if=var.fury_ok
-  - fel_barrage,if=talent.fel_barrage
+  - chaos_strike,if=var.fury_ok&!var.pooling
+  - annihilation,if=var.fury_ok&!var.pooling
   - chaos_nova,if=active_enemies>=4
   - felblade,if=fury<60
   - throw_glaive
@@ -195,10 +190,18 @@ lists:
   - throw_glaive
   - demons_bite,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
+  movement:
+  - fel_rush,if=!var.in_melee
+
+  precombat:
+  - immolation_aura
+
   main:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
+  # Pre-combat
+  - call_action_list,name=precombat,if=!player.combat
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)
@@ -212,11 +215,12 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
+  - call_action_list,name=movement
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
-  - immolation_aura,if=buff.immolation_aura.down
   - call_action_list,name=meta,if=var.in_meta
+  - immolation_aura,if=buff.immolation_aura.down&!var.pooling
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=hero_tree_ar,if=var.is_ar
   - call_action_list,name=hero_tree_fs,if=!var.is_ar

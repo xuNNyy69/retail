@@ -51,6 +51,8 @@ lists:
 
   interrupts:
   - rebuke,if=target.casting.interruptible,use_off_gcd=1
+  - rebuke.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - rebuke.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   # Tank defensives: emergency cooldowns + active mitigation heal
   defensives:

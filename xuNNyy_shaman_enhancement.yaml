@@ -75,9 +75,12 @@ variables:
 lists:
   interrupts:
   - wind_shear,if=target.casting.interruptible,use_off_gcd=1
+  - wind_shear.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - wind_shear.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   dispel:
   - purge,if=target.purgeable,use_off_gcd=1
+  - purge.mouseover,if=mouseover.purgeable,use_off_gcd=1
   - cleanse_spirit,if=player.has_curse
 
   defensives:

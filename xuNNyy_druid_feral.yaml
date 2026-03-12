@@ -38,31 +38,39 @@ config:
     default: true
 
 variables:
+  # Hero-tree routing helpers
+  is_dotc: talent.ravage
+  is_ws: talent.wildstalkers_power
 
   # Berserk covers both Berserk and Incarnation: King of the Jungle
-  # NOTE: may need buff.berserk_cat.up for Feral spec — verify in-game
   berserk_up: "buff.berserk.up|buff.incarnation_avatar_of_ashamane.up"
   tigers_fury_up: buff.tigers_fury.up
-  # Energy threshold for Chomp (guide: deplete energy before Chomp off CD)
+  # Energy thresholds
   energy_low: energy<=50
+  # Energy pooling for Ferocious Bite bonus damage (consumes up to 25 extra)
+  energy_fb: energy>=50
   # Combo point thresholds
   cp_high: combo_points>=5
   cp_low: combo_points<=2
   # DoT refresh windows
-  # Rip pandemic = .refreshable (engine pandemic window)
   rip_pandemic: dot.rip.refreshable
   rake_refreshable: dot.rake.refreshable
-  rip_up: dot.rip.up
   # Apex Predator proc (free instant Ferocious Bite)
   apex_predator_up: buff.apex_predators_craving.up
+  # Sudden Ambush proc (stealthed Rake from combat)
+  sudden_ambush_up: buff.sudden_ambush.up
+  # Sabertooth: FB extends Rip — less manual Rip refresh needed
+  has_sabertooth: talent.sabertooth
+  # Combat gate for items/CDs
+  combat_gate: "player.combat&(target.time_to_die>12|active_enemies>=3)"
   # AoE routing
-  want_aoe: active_enemies>=config.aoe_threshold
+  want_aoe: "state.aoe&active_enemies>=config.aoe_threshold"
 
 lists:
   interrupts:
   - skull_bash,if=target.casting.interruptible
-  - skull_bash.mouseover,if=interrupt.mouseover.check
-  - skull_bash.focus,if=interrupt.focus.check
+  - skull_bash.mouseover,if=mouseover.casting.interruptible
+  - skull_bash.focus,if=focus.casting.interruptible
 
   defensives:
   - barkskin,if=health.pct<=40,use_off_gcd=1
@@ -70,6 +78,7 @@ lists:
 
   dispel:
   - soothe,if=target.purgeable.enrage
+  - soothe.mouseover,if=mouseover.purgeable.enrage
   - remove_corruption,if=player.has_curse|player.has_poison
 
   racials:
@@ -81,24 +90,27 @@ lists:
   - bag_of_tricks,if=!var.berserk_up
 
   items:
-  - trinket1,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
-  - trinket2,use_off_gcd=1,if=config.use_trinkets&var.berserk_up
-  - potion,if=config.use_potions&var.berserk_up,use_off_gcd=1
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.berserk_up|target.time_to_die<20)&var.combat_gate
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.berserk_up|target.time_to_die<20)&var.combat_gate
+  - potion,if=config.use_potions&(var.berserk_up|target.time_to_die<20)&var.combat_gate,use_off_gcd=1
 
   # ===========================================================
   # Single-target priority
   # Guide: Berserk + TF together; maintain Rake/Rip; spend at 5 CPs
-  # New in Midnight: Panther's Guile procs bonus CPs from Shred
+  # Panther's Guile procs bonus CPs from Shred
   # ===========================================================
   st:
   # Stealth opener - exploit Prowl bonus Rake
   - rake,if=buff.prowl.up
 
+  # Sudden Ambush: stealthed Rake is huge damage — use immediately
+  - rake,if=var.sudden_ambush_up
+
   # Cooldowns: Berserk pairs with TF; fire both together
   # TF first if energy is low (guide: be at low energy when TF comes up)
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
-  - berserk,if=config.use_cooldowns&var.tigers_fury_up
-  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up
+  - berserk,if=config.use_cooldowns&var.tigers_fury_up&(target.time_to_die>15|target.boss)
+  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up&(target.time_to_die>15|target.boss)
   # TF on CD even without Berserk pairing
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
 
@@ -107,31 +119,35 @@ lists:
   - rake,if=var.rake_refreshable
 
   # Rip: 5 CPs; ideal with TF active for snapshot
-  # If previous Rip was TF-snapshotted and TF is down, wait for pandemic expiry
-  - rip,if=var.cp_high&var.tigers_fury_up&(var.rip_pandemic|dot.rip.down)
-  - rip,if=var.cp_high&var.rip_pandemic
+  # With Sabertooth: FB maintains Rip — only manual Rip if falling off or down
+  - rip,if=var.cp_high&var.tigers_fury_up&(var.rip_pandemic|dot.rip.down)&!var.has_sabertooth&target.time_to_die>8
+  - rip,if=var.cp_high&var.rip_pandemic&!var.has_sabertooth&target.time_to_die>8
+  # Sabertooth fallback: only Rip when dangerously low or down
+  - rip,if=var.cp_high&var.has_sabertooth&(dot.rip.remains<4|dot.rip.down)&target.time_to_die>8
 
   # Chomp on CD; guide says deplete energy first for the 2s grace window
   - chomp,if=talent.chomp&var.energy_low
 
-  # Feral Frenzy / Frantic Frenzy: on CD at low CPs (no need to hold for TF)
+  # Feral Frenzy / Frantic Frenzy: on CD at low CPs
   - feral_frenzy,if=talent.feral_frenzy&config.use_cooldowns&var.cp_low
   - frantic_frenzy,if=talent.frantic_frenzy&config.use_cooldowns&var.cp_low
 
   # Convoke: inside Berserk+TF window for maximum value
-  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up
+  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&target.time_to_die>4
 
-  # Ferocious Bite: 5 CPs; don't refresh Rip if we'd downgrade the snapshot
-  - ferocious_bite,if=var.cp_high&!var.rip_pandemic
-  # Apex Predator proc (free instant Ferocious Bite)
+  # Ferocious Bite: 5 CPs; pool energy for bonus damage
+  # With Sabertooth: FB extends Rip, so always safe to bite; without: don't bite if Rip is refreshable
+  - ferocious_bite,if=var.cp_high&(var.has_sabertooth|!var.rip_pandemic)&var.energy_fb
+  - ravage,if=var.cp_high&(var.has_sabertooth|!var.rip_pandemic)&var.energy_fb
+  # Apex Predator proc (free instant Ferocious Bite — no energy needed)
   - ferocious_bite,if=var.apex_predator_up
+  - ravage,if=var.apex_predator_up
 
   # Moonfire: maintain if Lunar Inspiration talented
   - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
 
-  # Shred: primary CP builder; proc Panther's Guile (never queue 2 blindly)
+  # Shred: primary CP builder; proc Panther's Guile
   - shred
-  - ravage
 
   # ===========================================================
   # AoE priority (3+ targets)
@@ -141,10 +157,13 @@ lists:
   # Stealth opener bonus Rake on pull
   - rake,if=buff.prowl.up
 
+  # Sudden Ambush: stealthed Rake — high damage, use immediately
+  - rake,if=var.sudden_ambush_up
+
   # Cooldowns: Berserk + TF together
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
-  - berserk,if=config.use_cooldowns&var.tigers_fury_up
-  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up
+  - berserk,if=config.use_cooldowns&var.tigers_fury_up&(target.time_to_die>15|target.boss)
+  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up&(target.time_to_die>15|target.boss)
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
 
   # Primal Wrath: maintain Rip on all targets; upgrade snapshot if TF active
@@ -152,40 +171,38 @@ lists:
   - primal_wrath,if=var.cp_high&dot.rip.remains<5
 
   # Convoke: confirm Rip will outlast the full 3s channel
-  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&dot.rip.remains>4
+  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&dot.rip.remains>4&target.time_to_die>4
 
   # Frenzy at low CPs
   - feral_frenzy,if=talent.feral_frenzy&config.use_cooldowns&var.cp_low
   - frantic_frenzy,if=talent.frantic_frenzy&config.use_cooldowns&var.cp_low
 
-  # Ferocious Bite: 5 CPs if Rip healthy (5+ seconds safe)
-  - ferocious_bite,if=var.cp_high&dot.rip.remains>5&energy>=50
-  # Apex Predator proc
+  # Ferocious Bite: 5 CPs if Rip healthy (5+ seconds safe); pool energy for bonus damage
+  - ferocious_bite,if=var.cp_high&dot.rip.remains>5&var.energy_fb
+  - ravage,if=var.cp_high&dot.rip.remains>5&var.energy_fb
+  # Apex Predator proc (free — no energy needed)
   - ferocious_bite,if=var.apex_predator_up
+  - ravage,if=var.apex_predator_up
 
   # Chomp at low energy
   - chomp,if=talent.chomp&var.energy_low
 
-  # Rake: spread with Double-Clawed Rake; only rake if no Swipe alt available
+  # Rake: spread with Double-Clawed Rake
   - rake,cycle_targets=1,if=talent.double_clawed_rake&dot.rake.refreshable
   # Rake at low target count without DCR (guide: up to ~4 targets)
   - rake,if=!talent.double_clawed_rake&active_enemies<=4&dot.rake.refreshable
 
-  # Ravage: high priority when proc available
-  - ravage
   # Swipe: primary AoE CP builder
   - swipe
 
   # Shred: low CPs with Panther's Guile on priority target
   - shred,if=talent.panthers_guile&var.cp_low
-  - ravage,if=talent.panthers_guile&var.cp_low
 
   # Moonfire on priority targets
   - moonfire,cycle_targets=1,if=talent.lunar_inspiration&dot.moonfire.refreshable
 
   fallback:
   - shred,if=target.exists&target.enemy&target.alive,ignore_queue=true
-  - ravage,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue
@@ -206,7 +223,7 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st

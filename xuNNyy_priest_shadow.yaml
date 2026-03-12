@@ -65,6 +65,8 @@ variables:
 lists:
   interrupts:
   - silence,if=target.casting.interruptible,use_off_gcd=1
+  - silence.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - silence.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - dispersion,if=health.pct<=20
@@ -73,6 +75,7 @@ lists:
 
   dispel:
   - dispel_magic,if=target.purgeable.magic
+  - dispel_magic.mouseover,if=mouseover.purgeable.magic
   - purify_disease,if=player.has_disease
 
   racials:

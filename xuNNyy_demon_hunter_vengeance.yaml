@@ -30,12 +30,6 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: false
-  aoe_threshold:
-    label: "AoE Threshold"
-    type: slider
-    min: 2
-    max: 8
-    default: 3
   demon_spikes_hp:
     label: "Demon Spikes below HP%"
     type: slider
@@ -54,8 +48,6 @@ config:
     default: true
 
 variables:
-  want_aoe: active_enemies>=config.aoe_threshold
-  single_target: active_enemies=1
   in_meta: buff.metamorphosis.up
   is_ar: talent.art_of_the_glaive
   ar_proc: buff.reaver_glaive.up
@@ -64,11 +56,14 @@ variables:
   demon_spikes_up: buff.demon_spikes.up
   demon_spikes_low: buff.demon_spikes.remains<=gcd*2
   fury_low: fury<40
-  fury_high: fury>=80
+  in_melee: target.range<=8
+  combat_gate: player.combat&(target.time_to_die>12|active_enemies>=3)
 
 lists:
   interrupts:
   - disrupt,if=target.casting.interruptible,use_off_gcd=1
+  - disrupt.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - disrupt.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   taunt:
   - torment,if=config.auto_taunt&target.exists&target.enemy&target.threat<3
@@ -82,16 +77,17 @@ lists:
   - metamorphosis,if=health.pct<=config.defensive_hp&!var.in_meta,use_off_gcd=1
   # Fiery brand emergency (reduces damage taken)
   - fiery_brand,if=health.pct<=config.defensive_hp&dot.fiery_brand.down
-  # Fel devastation self-heal emergency
-  - fel_devastation,if=health.pct<=50
+  # Fel devastation self-heal emergency (melee range only)
+  - fel_devastation,if=health.pct<=50&var.in_melee
 
   dispel:
   - consume_magic,if=target.purgeable.magic,use_off_gcd=1
+  - consume_magic.mouseover,if=mouseover.purgeable.magic,use_off_gcd=1
 
   items:
-  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
-  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.in_meta|cooldown.metamorphosis.remains<10)
-  - potion,if=config.use_potions&var.in_meta
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&((var.in_meta|cooldown.metamorphosis.remains<10)&var.combat_gate|target.time_to_die<20)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&((var.in_meta|cooldown.metamorphosis.remains<10)&var.combat_gate|target.time_to_die<20)
+  - potion,if=config.use_potions&(var.in_meta&var.combat_gate|target.time_to_die<20)
 
   racials:
   - berserking,use_off_gcd=1,if=var.in_meta
@@ -103,7 +99,7 @@ lists:
   - bag_of_tricks,if=var.in_meta
 
   # ============================================================
-  # Aldrachi Reaver path  (talent.reavers_glaive = true)
+  # Aldrachi Reaver path  (talent.art_of_the_glaive = true)
   # ============================================================
   ar:
   - return,if=!var.is_ar
@@ -113,7 +109,7 @@ lists:
   - call_action_list,name=ar_fillers
 
   # Aldrachi Reaver glaive consumption cycle.
-  # reavers_glaive is not confirmed in action_tokens; talent guard applied (matches Havoc pattern).
+  # reaver_glaive confirmed in action_tokens; talent guard via var.is_ar.
   # Fragment thresholds: 3 with fiery_demise_active, 4 in meta, 6 baseline.
   ar_glaive_cycle:
   # Activate glaive when proc is up and neither empowered buff is running
@@ -143,8 +139,8 @@ lists:
   - fel_devastation,if=buff.rending_strike.down&buff.glaive_flurry.down&dot.fiery_brand.ticking&dot.fiery_brand.remains>=2
   # IA refresh in fiery demise window when charred_flesh is not talented
   - immolation_aura,if=var.fiery_demise_active
-  # The Hunt: movement + heal; use when available
-  - the_hunt,if=talent.the_hunt
+  # The Hunt: movement + heal
+  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss)
 
   ar_fillers:
   # Spirit Bomb at stepped thresholds (fiery_demise=3, meta=4, baseline=6)
@@ -162,15 +158,15 @@ lists:
   - fel_devastation,if=fury>=50&buff.rending_strike.down&buff.glaive_flurry.down&(!talent.fiery_demise|dot.fiery_brand.ticking)
   # Soul Cleave Fury dump (Guide #12)
   - soul_cleave
-  # Fragment generation: Shear (Guide #13)
-  - shear
+  # Fragment generation: Shear — guard against overcap (MAX=6)
+  - shear,if=soul_fragments<5
   # Felblade (Guide #14)
-  - felblade
+  - felblade,if=fury.deficit>=30
   # Throw Glaive filler (Guide #15)
   - throw_glaive
 
   # ============================================================
-  # Annihilator / Felscarred path  (!talent.reavers_glaive)
+  # Annihilator / Felscarred path  (!talent.art_of_the_glaive)
   # ============================================================
   anni:
   - return,if=var.is_ar
@@ -184,8 +180,8 @@ lists:
   # Guide #1: Fiery Brand highest priority
   - fiery_brand,if=dot.fiery_brand.down&(cooldown.fiery_brand.charges>=2|!talent.fiery_demise)
   - fiery_brand,if=talent.fiery_demise&dot.fiery_brand.down&(cooldown.soul_carver.remains<8|cooldown.sigil_of_spite.remains<8)
-  # Guide #2: Metamorphosis after Fiery Brand (hold if Spirit Bomb nearly ready)
-  - metamorphosis,if=!var.in_meta&cooldown.spirit_bomb.remains>10
+  # Guide #2: Metamorphosis after Fiery Brand
+  - metamorphosis,if=!var.in_meta&(target.time_to_die>10|target.boss)
   # Fragment guard before sigil_of_spite to prevent overcap
   - sigil_of_spite,if=talent.sigil_of_spite&soul_fragments<=3
   # Guide #7: Soul Carver � Fiery Brand on target with 3s+ remaining
@@ -193,7 +189,7 @@ lists:
   # Guide #10: Fel Devastation � Fiery Brand on target with 2s+ remaining
   - fel_devastation,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=2
   # The Hunt: movement + heal
-  - the_hunt,if=talent.the_hunt
+  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss)
 
   anni_meta:
   # Fiery demise window: amplified Spirit Bomb at threshold 3
@@ -228,12 +224,17 @@ lists:
   - fel_devastation,if=fury>=50&(!talent.fiery_demise|dot.fiery_brand.ticking)
   # Soul Cleave Fury dump (Guide #12)
   - soul_cleave
-  # Fragment generation: Shear (Guide #13)
-  - shear
+  # Fragment generation: Shear — guard against overcap (MAX=6)
+  - shear,if=soul_fragments<5
   # Felblade (Guide #14)
-  - felblade
+  - felblade,if=fury.deficit>=30
   # Throw Glaive filler (Guide #15)
   - throw_glaive
+
+  precombat:
+  - immolation_aura
+  - sigil_of_flame
+  - sigil_of_doom
 
   fallback:
   - shear,if=target.exists&target.enemy&target.alive,ignore_queue=true
@@ -257,8 +258,9 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
+  - call_action_list,name=precombat,if=!player.combat
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
   - call_action_list,name=ar,if=var.is_ar
   - call_action_list,name=anni,if=!var.is_ar
   - call_action_list,name=fallback

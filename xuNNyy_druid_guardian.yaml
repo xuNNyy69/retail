@@ -109,6 +109,7 @@ lists:
 
   dispel:
   - soothe,if=target.purgeable.enrage
+  - soothe.mouseover,if=mouseover.purgeable.enrage
   - remove_corruption,if=player.has_curse|player.has_poison
 
   self_healing:

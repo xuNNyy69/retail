@@ -97,6 +97,8 @@ lists:
 
   interrupts:
   - rebuke,if=target.casting.interruptible,use_off_gcd=1
+  - rebuke.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - rebuke.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   dispel:
   - cleanse,cycle=members,if=config.use_dispel&cycle.dispelable

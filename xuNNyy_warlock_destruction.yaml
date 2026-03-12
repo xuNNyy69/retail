@@ -40,6 +40,8 @@ variables:
 lists:
   interrupts:
   - spell_lock,if=target.casting.interruptible
+  - spell_lock.mouseover,if=mouseover.casting.interruptible
+  - spell_lock.focus,if=focus.casting.interruptible
 
   defensives:
   - dark_pact,if=health.pct<=35&buff.dark_pact.down

@@ -44,6 +44,8 @@ variables:
 lists:
   interrupts:
   - counterspell,if=target.casting.interruptible&var.in_ranged,use_off_gcd=1,ignore_movement=true
+  - counterspell.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - counterspell.focus,if=focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
@@ -51,6 +53,7 @@ lists:
 
   dispel:
   - spellsteal,if=target.has_stealable
+  - spellsteal.mouseover,if=mouseover.has_stealable
   - remove_curse,if=player.has_curse
 
   items:

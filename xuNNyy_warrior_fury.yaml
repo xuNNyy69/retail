@@ -67,6 +67,8 @@ variables:
 lists:
   interrupts:
   - pummel,if=target.casting.interruptible,use_off_gcd=1
+  - pummel.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - pummel.focus,if=focus.casting.interruptible,use_off_gcd=1
   - spell_reflection,if=target.casting.important,use_off_gcd=1
   - storm_bolt,if=target.casting.interruptible&cooldown.pummel.remains,use_off_gcd=1
 

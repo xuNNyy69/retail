@@ -93,9 +93,12 @@ variables:
 lists:
   interrupts:
   - silence,if=target.casting.interruptible,use_off_gcd=1
+  - silence.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - silence.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   dispel:
   - dispel_magic,cycle_targets=1,if=config.use_dispel&cycle.dispelable
+  - dispel_magic.mouseover,if=config.use_dispel&mouseover.purgeable.magic
   - mass_dispel,if=config.use_dispel&group.count(cycle.dispelable.magic)>=3
 
   defensives:

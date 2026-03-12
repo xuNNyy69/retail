@@ -64,15 +64,16 @@ variables:
 
 lists:
   interrupts:
-  - counterspell.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
-  - counterspell.focus,if=focus.casting.interruptible,use_off_gcd=1
-  - counterspell,if=target.casting.interruptible,use_off_gcd=1
+  - counterspell,if=target.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - counterspell.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - counterspell.focus,if=focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - ice_block,if=health.pct<=(config.defensive_hp-20)
 
   dispel:
   - spellsteal,if=target.has_stealable
+  - spellsteal.mouseover,if=mouseover.has_stealable
   - remove_curse,if=player.has_curse
 
   items:

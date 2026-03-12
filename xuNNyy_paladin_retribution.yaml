@@ -61,6 +61,8 @@ lists:
   interrupts:
   - return,if=!config.use_interrupts
   - rebuke,if=target.casting.interruptible&var.in_melee,use_off_gcd=1,ignore_movement=true
+  - rebuke.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - rebuke.focus,if=focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - return,if=!config.use_defensives

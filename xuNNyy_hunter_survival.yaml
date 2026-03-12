@@ -59,9 +59,14 @@ variables:
 
   want_aoe: active_enemies>=config.aoe_threshold
 
+  # Pet management
+  pet_hurt: pet.exists&pet.alive&pet.health.pct<75
+
 lists:
   interrupts:
   - muzzle,if=target.casting.interruptible,use_off_gcd=1
+  - muzzle.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - muzzle.focus,if=focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - exhilaration,if=health.pct<=55
@@ -70,6 +75,15 @@ lists:
 
   dispel:
   - tranquilizing_shot,if=target.purgeable.enrage|target.purgeable.magic
+  - tranquilizing_shot.mouseover,if=mouseover.purgeable.enrage|mouseover.purgeable.magic
+
+  pet_care:
+  # Revive dead pet (10s anti-spam)
+  - revive_pet,range_check=none,if=pet.dead,delay=10000
+  # Call pet if dismissed (10s anti-spam)
+  - call_pet_1,range_check=none,if=!pet.exists&!pet.dead,delay=10000
+  # Mend pet when hurt
+  - mend_pet,range_check=none,if=var.pet_hurt
 
   racials:
   - berserking,use_off_gcd=1,if=var.takedown_active
@@ -168,7 +182,8 @@ lists:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
-  - hunters_mark,if=target.exists&target.enemy&!debuff.hunters_mark.up&!player.combat
+  - call_action_list,name=pet_care
+  - hunters_mark,if=target.exists&target.enemy&!debuff.hunters_mark.up&!player.combat,delay=2000
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)

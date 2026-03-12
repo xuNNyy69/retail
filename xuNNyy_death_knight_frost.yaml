@@ -82,6 +82,8 @@ lists:
   # -------------------------------------------------------------------------
   interrupts:
   - mind_freeze,if=target.casting.interruptible,use_off_gcd=1
+  - mind_freeze.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
+  - mind_freeze.focus,if=focus.casting.interruptible,use_off_gcd=1
   - blinding_sleet,if=target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
 
   # -------------------------------------------------------------------------
