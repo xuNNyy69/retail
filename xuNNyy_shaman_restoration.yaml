@@ -30,6 +30,19 @@ config:
     label: "Use Purge"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -106,6 +119,7 @@ variables:
   healing_rain_up: ground_effect.healing_rain.up
   hst_refresh: totem.healing_stream_totem.down|totem.healing_stream_totem.remains<5
   surging_totem_refresh: totem.surging_totem.down|totem.surging_totem.remains<2
+  cbt_ready: talent.cloudburst_totem&cooldown.cloudburst_totem.ready
 
 lists:
 
@@ -129,6 +143,7 @@ lists:
   - potion,if=config.use_potions&(var.heavy_group_damage|var.mana_low)
 
   cooldowns:
+  - cloudburst_totem,if=var.cbt_ready&(var.heavy_group_damage|var.need_aoe_heal)
   - healing_tide_totem,if=cooldown.healing_tide_totem.ready&(var.heavy_group_damage|var.need_aoe_heal)
   - spirit_link_totem,if=cooldown.spirit_link_totem.ready&(var.heavy_group_damage|var.tank_emergency)
   - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&(var.need_aoe_heal|var.need_major_heal),use_off_gcd=1
@@ -182,6 +197,7 @@ lists:
   - healing_wave,target=lowest,if=var.need_light_heal,ignore_movement=true
 
   moving_healing:
+  - spiritwalkers_grace,if=talent.spiritwalkers_grace&(var.need_aoe_heal|var.need_major_heal|var.need_emergency|var.tank_emergency)
   - riptide,target=lowest,if=var.need_emergency|var.tank_emergency,ignore_movement=true
   - riptide,cycle=members,if=cycle.health.pct<config.major_heal_hp&cycle.buff.riptide.down,ignore_movement=true
   - healing_surge,target=lowest,if=var.need_emergency,ignore_movement=true
@@ -191,7 +207,6 @@ lists:
 
   damage:
   - return,if=config.damage_mode=0
-  - healing_rain,if=!var.healing_rain_up,ignore_movement=true
   - flame_shock,if=!dot.flame_shock.ticking|dot.flame_shock.refreshable,ignore_movement=true
   - lava_burst,if=dot.flame_shock.up&buff.lava_surge.up,ignore_movement=true
   - lava_burst,if=dot.flame_shock.up,ignore_movement=true
@@ -223,7 +238,7 @@ lists:
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)
   - riptide,cycle=members,range_check=none,if=cycle.health.pct<config.major_heal_hp&cycle.buff.riptide.down
-  - stop_casting,if=(player.casting|player.channeling)&((var.need_emergency|var.tank_emergency)&(cooldown.spirit_link_totem.ready|cooldown.riptide.charges>=1|talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready))
+  - stop_casting,if=(player.casting|player.channeling)&((var.need_emergency|var.tank_emergency)&(cooldown.spirit_link_totem.ready|talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready|group.lowest.health.pct<(config.emergency_hp-8)))
   - return,if=player.casting|player.channeling
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=emergency,if=var.need_emergency|var.tank_emergency

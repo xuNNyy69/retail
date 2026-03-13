@@ -148,10 +148,10 @@ lists:
   - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
   - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.incarnation_up|var.multi_injured|var.anyone_emergency)
   - potion,if=config.use_potions&var.anyone_emergency
-  - potion,if=config.use_potions&var.mana_low
+  - mana_potion,if=config.use_potions&var.mana_low
 
   cooldowns:
-  - natures_swiftness,use_off_gcd=1,if=var.natures_swiftness_ready&var.convoke_ready&var.abundance_high
+  - natures_swiftness,use_off_gcd=1,if=var.natures_swiftness_ready&var.convoke_ready&var.abundance_high&(var.anyone_emergency|var.multi_injured)
   - convoke_the_spirits,if=var.convoke_ready&var.anyone_emergency
   - convoke_the_spirits,if=var.convoke_ready&(var.incarnation_up|var.abundance_high)&var.multi_injured&(fight_remains>3|target.boss)
   - incarnation_tree_of_life,if=talent.incarnation_tree_of_life&cooldown.incarnation_tree_of_life.ready&var.multi_injured&(fight_remains>20|target.boss)
@@ -185,7 +185,7 @@ lists:
   ramp_healing:
   - rejuvenation,cycle_targets=1,if=cycle.health.pct<95&cycle.buff.rejuvenation.down
   - swiftmend,target=lowest,if=var.swiftmend_ready&var.multi_injured
-  - wild_growth,if=var.wild_growth_ready&(var.sotf_up|var.multi_injured)
+  - wild_growth,if=var.wild_growth_ready&(var.sotf_up|var.multi_injured|var.ramp_window)
   - flourish,if=var.flourish_ready&buff.wild_growth.up
   - regrowth,target=lowest,if=var.clearcasting_up
   - regrowth,target=lowest,if=var.sotf_up
@@ -237,11 +237,11 @@ lists:
   - call_action_list,name=racials,if=config.use_cooldowns
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=tank_maintenance
-  - call_action_list,name=ramp_healing,if=var.multi_injured
+  - call_action_list,name=ramp_healing,if=var.multi_injured|var.ramp_window
   - call_action_list,name=group_maintenance
   - regrowth,target=lowest,if=var.natures_swiftness_up
   - moonfire,if=!config.heal_only&var.safe_to_dps&target.exists&target.enemy&dot.moonfire.refreshable&target.time_to_die>4
   - sunfire,if=!config.heal_only&var.safe_to_dps&target.exists&target.enemy&dot.sunfire.refreshable&target.time_to_die>4
   - call_action_list,name=catweave,if=!config.heal_only&var.safe_to_dps&target.range<=8
   - starsurge,if=!config.heal_only&var.safe_to_dps&talent.starsurge&target.exists&target.enemy
-  - call_action_list,name=fallback
+  - call_action_list,name=fallback,if=!config.heal_only
