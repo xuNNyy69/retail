@@ -59,7 +59,7 @@ variables:
   sentinels_mark_up: debuff.sentinels_mark.up
 
   # AoE routing
-  want_aoe: active_enemies>=config.aoe_threshold
+  want_aoe: state.aoe&spell_targets.multishot>=config.aoe_threshold
 
   # Pet management (skip if Lone Wolf)
   has_pet: !talent.lone_wolf
@@ -154,6 +154,8 @@ lists:
   - aimed_shot,if=var.trick_shots_up
   # Rapid Fire: with Trick Shots
   - rapid_fire,if=var.trick_shots_up
+  # Rapid Fire: still preferable to falling straight to Steady Shot
+  - rapid_fire
   # Multi-Shot: refresh Trick Shots
   - multishot
   # Steady Shot: filler
@@ -208,6 +210,8 @@ lists:
   - aimed_shot,if=var.trick_shots_up
   # Rapid Fire: with Trick Shots
   - rapid_fire,if=var.trick_shots_up
+  # Rapid Fire: still preferable to falling straight to Steady Shot
+  - rapid_fire
   # Multi-Shot: refresh
   - multishot
   # Steady Shot: filler
