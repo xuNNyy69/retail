@@ -30,6 +30,19 @@ config:
     label: "Use Dispel"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   heal_only:
     label: "Heal Only (No DPS)"
     type: checkbox
@@ -205,12 +218,14 @@ lists:
   - cat_form,if=!buff.cat_form.up
   - tigers_fury,use_off_gcd=1,if=energy<=35
   - rake,if=dot.rake.refreshable&target.time_to_die>6
-  - swipe,if=active_enemies>=config.aoe_threshold
+  - swipe,if=state.aoe&active_enemies>=config.aoe_threshold
   - rip,if=combo_points>=4&dot.rip.refreshable&target.time_to_die>8
   - ferocious_bite,if=combo_points>=4&dot.rip.remains>4
   - shred
 
   fallback:
+  - moonfire,if=target.exists&target.enemy&target.alive&!buff.cat_form.up&dot.moonfire.refreshable&target.time_to_die>4,ignore_queue=true
+  - sunfire,if=target.exists&target.enemy&target.alive&!buff.cat_form.up&dot.sunfire.refreshable&target.time_to_die>4,ignore_queue=true
   - shred,if=buff.cat_form.up&target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

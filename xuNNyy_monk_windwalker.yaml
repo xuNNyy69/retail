@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -112,8 +125,8 @@ lists:
   cooldowns:
   - potion,if=config.use_potions&var.in_burst
   - touch_of_death,if=target.health.pct<=15|target.time_to_die<=10
-  - invoke_xuen_the_white_tiger,if=var.has_cotc&config.burst_mode
-  - zenith,if=config.burst_mode
+  - invoke_xuen_the_white_tiger,if=var.has_cotc&config.burst_mode,delay=500,global_delay=300
+  - zenith,if=config.burst_mode,delay=500,global_delay=300
 
   # CotC opener: TP -> Invoke Xuen -> Slicing Winds -> Zenith -> FoF -> RSK -> FoF(Battlegear reset) -> SotW -> WDP
   cotc_opener:
@@ -153,7 +166,8 @@ lists:
   cotc_st:
   - strike_of_the_windlord,if=var.has_sotw
   - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
-  - celestial_conduit,if=var.has_cotc
+  - celestial_conduit,if=var.has_cotc,delay=300,global_delay=250
+  - chi_burst,if=talent.chi_burst&chi<=3
   - tiger_palm,if=chi<4&var.energy_cap
   - fists_of_fury,if=var.chi_for_fof
   - rushing_wind_kick,if=var.has_rwk
@@ -169,7 +183,8 @@ lists:
   cotc_aoe:
   - strike_of_the_windlord,if=var.has_sotw
   - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
-  - celestial_conduit,if=var.has_cotc
+  - celestial_conduit,if=var.has_cotc,delay=300,global_delay=250
+  - chi_burst,if=talent.chi_burst&chi<=3
   - fists_of_fury,if=var.chi_for_fof
   - rushing_wind_kick,if=var.has_rwk
   - tiger_palm,if=chi<4&var.energy_cap
@@ -184,6 +199,7 @@ lists:
   shado_st:
   - strike_of_the_windlord,if=var.has_sotw
   - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+  - chi_burst,if=talent.chi_burst&chi<=3
   - tiger_palm,if=chi<4&var.energy_cap
   - fists_of_fury,if=var.chi_for_fof
   - rushing_wind_kick,if=var.has_rwk
@@ -199,6 +215,7 @@ lists:
   shado_aoe:
   - strike_of_the_windlord,if=var.has_sotw
   - whirling_dragon_punch,if=var.has_wdp&var.wdp_ready
+  - chi_burst,if=talent.chi_burst&chi<=3
   - fists_of_fury,if=var.chi_for_fof
   - rushing_wind_kick,if=var.has_rwk
   - rising_sun_kick,if=var.chi_for_rsk
@@ -211,7 +228,9 @@ lists:
   - blackout_kick,if=var.chi_for_bok
 
   fallback:
-  - tiger_palm,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - rising_sun_kick,if=target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
+  - blackout_kick,if=target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
+  - tiger_palm,if=target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue
@@ -236,8 +255,10 @@ lists:
   - call_action_list,name=cooldowns,if=config.use_cooldowns
   - call_action_list,name=racials,if=config.use_cooldowns
   - call_action_list,name=hotjs,if=var.has_cotc&var.hotjs_up
+  - call_action_list,name=cotc_aoe,if=var.has_cotc&var.want_cleave
   - call_action_list,name=cotc_aoe,if=var.has_cotc&var.want_aoe
   - call_action_list,name=cotc_st,if=var.has_cotc
+  - call_action_list,name=shado_aoe,if=var.has_shado_pan&var.want_cleave
   - call_action_list,name=shado_aoe,if=var.has_shado_pan&var.want_aoe
   - call_action_list,name=shado_st,if=var.has_shado_pan
   - call_action_list,name=fallback

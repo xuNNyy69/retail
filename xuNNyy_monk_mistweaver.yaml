@@ -30,6 +30,19 @@ config:
     label: "Use Dispel (Detox)"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   heal_only:
     label: "Heal Only (No DPS)"
     type: checkbox
@@ -132,6 +145,7 @@ variables:
   chiji_up: buff.invoke_chi_ji_the_red_crane.up
   yulon_up: buff.invoke_yulon_the_jade_serpent.up
   invoke_up: var.chiji_up|var.yulon_up
+  major_window: var.need_major_heal|var.multi_emergency|var.need_revival
   dance_up: buff.dance_of_chiji.up
   teachings_stack: buff.teachings_of_the_monastery.stack
   sheilun_ready: buff.sheiluns_gift.stack>=config.sheiluns_min_stacks
@@ -171,6 +185,7 @@ lists:
   cancel_casts:
   - stop_casting,casting_check=soothing_mist,if=player.channeling&(var.need_emergency|cooldown.life_cocoon.ready&group.lowest.health.pct<config.life_cocoon_hp)
   - stop_casting,casting_check=soothing_mist,if=player.channeling&var.rmist_overcap
+  - stop_casting,casting_check=soothing_mist,if=player.channeling&group.lowest.health.pct>=100
   - stop_casting,casting_check=soothing_mist,if=player.channeling&!var.need_major_heal&var.safe_to_fistweave
 
   sm_healing:
@@ -186,19 +201,21 @@ lists:
   - life_cocoon,target=lowest,if=group.lowest.health.pct<config.life_cocoon_hp
   - revival,if=var.multi_emergency|var.need_revival
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
+  - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
+  - renewing_mist,target=lowest,if=var.rmist_overcap
   - vivify,target=lowest
   - renewing_mist,target=lowest,if=cooldown.renewing_mist.charges>=1
 
   cooldowns:
-  - thunder_focus_tea,use_off_gcd=1,if=!var.tft_up
-  - invoke_chi_ji_the_red_crane,if=var.has_chi_ji&(var.need_emergency|var.need_major_heal|active_enemies>=config.aoe_threshold)
-  - invoke_yulon_the_jade_serpent,if=var.has_yulon&!var.has_chi_ji&(var.need_major_heal|var.need_revival|active_enemies>=config.aoe_threshold)
-  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready&!var.need_emergency
+  - thunder_focus_tea,use_off_gcd=1,if=!var.tft_up&(var.rmist_overcap|var.need_major_heal|var.safe_to_fistweave&cooldown.rising_sun_kick.remains<gcd)
+  - invoke_chi_ji_the_red_crane,if=var.has_chi_ji&(var.need_emergency|var.major_window|var.want_aoe),delay=500,global_delay=300
+  - invoke_yulon_the_jade_serpent,if=var.has_yulon&!var.has_chi_ji&(var.major_window|var.want_aoe),delay=500,global_delay=300
+  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready&!var.need_emergency&(var.invoke_up|var.safe_to_fistweave),delay=300,global_delay=250
   - mana_tea,if=var.mana_tea_ready&(!var.need_major_heal|var.mana_tea_threshold)
 
   items:
-  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
-  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|active_enemies>=config.aoe_threshold)
+  - trinket1,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|var.want_aoe)
+  - trinket2,use_off_gcd=1,if=config.use_trinkets&(var.invoke_up|var.need_emergency|var.want_aoe)
   - potion,if=config.use_potions&(var.need_emergency|var.invoke_up)
 
   racials:
@@ -215,7 +232,7 @@ lists:
   - renewing_mist,target=lowest,if=var.rmist_overcap
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
   - life_cocoon,target=lowest,if=group.lowest.health.pct<config.life_cocoon_hp
-  - soothing_mist,target=lowest,if=config.use_soothing_mist&var.need_major_heal&!player.moving&!player.casting&!player.channeling
+  - soothing_mist,target=lowest,if=config.use_soothing_mist&var.need_major_heal&!var.need_emergency&!var.safe_to_fistweave&!player.moving&!player.casting&!player.channeling
   - enveloping_mist,target=lowest,if=var.need_major_heal
   - vivify,target=lowest,if=var.need_major_heal
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
@@ -250,7 +267,7 @@ lists:
   - jadefire_stomp,if=var.has_jadefire
   - chi_burst,if=var.has_chi_burst
   - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
-  - spinning_crane_kick,if=active_enemies>=config.aoe_threshold
+  - spinning_crane_kick,if=var.want_aoe
   - blackout_kick,if=var.has_teachings&var.teachings_stack>=1&cooldown.rising_sun_kick.remains>gcd
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
   - tiger_palm
@@ -258,8 +275,10 @@ lists:
   fallback:
   - renewing_mist,target=lowest,if=var.rmist_needed
   - vivify,target=lowest,if=var.need_major_heal
-  - rising_sun_kick,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
-  - tiger_palm,if=!config.heal_only&target.exists&target.enemy&target.alive,ignore_queue=true
+  - chi_burst,if=!config.heal_only&var.has_chi_burst&target.exists&target.enemy&target.alive,ignore_queue=true
+  - rising_sun_kick,if=!config.heal_only&target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
+  - blackout_kick,if=!config.heal_only&target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
+  - tiger_palm,if=!config.heal_only&target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
 
   out_of_combat:
   - renewing_mist,target=lowest,if=var.rmist_needed

@@ -26,6 +26,19 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -218,6 +231,8 @@ lists:
   - steady_shot
 
   fallback:
+  - kill_shot,if=target.exists&target.enemy&target.alive&(var.deathblow_up|var.in_execute),ignore_queue=true
+  - multishot,if=target.exists&target.enemy&target.alive&var.want_aoe,ignore_queue=true
   - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

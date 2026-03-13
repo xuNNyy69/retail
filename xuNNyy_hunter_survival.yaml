@@ -192,6 +192,8 @@ lists:
   - wildfire_bomb
 
   fallback:
+  - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - wildfire_bomb,if=target.exists&target.enemy&target.alive&cooldown.wildfire_bomb.charges>=1,ignore_queue=true
   - raptor_swipe,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - raptor_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

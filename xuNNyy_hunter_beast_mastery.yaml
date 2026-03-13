@@ -168,6 +168,8 @@ lists:
   - cobra_shot
 
   fallback:
+  - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - barbed_shot,if=target.exists&target.enemy&target.alive&cooldown.barbed_shot.charges_fractional>=1.5,ignore_queue=true
   - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

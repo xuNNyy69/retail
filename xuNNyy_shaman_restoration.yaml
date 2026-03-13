@@ -144,12 +144,12 @@ lists:
 
   cooldowns:
   - cloudburst_totem,if=var.cbt_ready&(var.heavy_group_damage|var.need_aoe_heal)
-  - healing_tide_totem,if=cooldown.healing_tide_totem.ready&(var.heavy_group_damage|var.need_aoe_heal)
-  - spirit_link_totem,if=cooldown.spirit_link_totem.ready&(var.heavy_group_damage|var.tank_emergency)
+  - healing_tide_totem,if=cooldown.healing_tide_totem.ready&(var.heavy_group_damage|var.need_aoe_heal),delay=500,global_delay=300
+  - spirit_link_totem,if=cooldown.spirit_link_totem.ready&(var.heavy_group_damage|var.tank_emergency),delay=500,global_delay=300
   - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&(var.need_aoe_heal|var.need_major_heal),use_off_gcd=1
   - mana_tide_totem,if=var.mana_low
   - unleash_life,target=lowest,if=talent.unleash_life&!buff.unleash_life.up&cooldown.ascendance.remains<=gcd
-  - ascendance,if=talent.ascendance&cooldown.ascendance.ready&(var.heavy_group_damage|var.need_aoe_heal)
+  - ascendance,if=talent.ascendance&cooldown.ascendance.ready&(var.heavy_group_damage|var.need_aoe_heal),delay=500,global_delay=300
   - ancestral_guidance,if=talent.ancestral_guidance&cooldown.ancestral_guidance.ready&(var.need_aoe_heal|var.tank_emergency|var.heavy_group_damage)
 
   tank_maintenance:
@@ -214,6 +214,9 @@ lists:
   - lightning_bolt,ignore_movement=true
 
   fallback:
+  - riptide,target=lowest,if=player.combat&group.lowest.health.pct<config.major_heal_hp&dot.riptide.down,ignore_queue=true,ignore_movement=true
+  - healing_stream_totem,if=player.combat&var.hst_refresh,ignore_queue=true
+  - healing_surge,target=lowest,if=player.combat&var.need_emergency,ignore_queue=true,ignore_movement=true
   - healing_wave,target=lowest,if=player.combat&var.need_light_heal,ignore_queue=true,ignore_movement=true
 
   main:

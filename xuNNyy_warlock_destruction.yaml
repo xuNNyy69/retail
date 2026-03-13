@@ -26,6 +26,19 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
+  auto_combat:
+    label: Auto Combat
+    type: multi_select
+    options:
+      - label: Off
+        value: 0
+      - label: Quest
+        value: 1
+      - label: Combat
+        value: 2
+      - label: Defensive
+        value: 3
+    default: [0]
   aoe_threshold:
     label: AoE Threshold
     type: slider
@@ -60,16 +73,16 @@ lists:
   - ancestral_call,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
 
   items:
-  - trinket1,if=config.use_trinkets
-  - trinket2,if=config.use_trinkets
+  - trinket1,if=config.use_trinkets&(var.infernal_active|var.in_ritual)
+  - trinket2,if=config.use_trinkets&(var.infernal_active|var.in_ritual)
 
   default:
   - call_action_list,name=ogcd
   - call_action_list,name=items,if=config.use_trinkets
   - wither,if=talent.wither&(!dot.wither.ticking|dot.wither.refreshable)
   - immolate,if=!talent.wither&(dot.immolate.down|dot.immolate.refreshable)&(!talent.soul_fire|cooldown.soul_fire.remains>gcd)
-  - summon_infernal,if=talent.summon_infernal&config.use_cooldowns
-  - malevolence,if=talent.malevolence&config.use_cooldowns
+  - summon_infernal,if=talent.summon_infernal&config.use_cooldowns,delay=500,global_delay=300
+  - malevolence,if=talent.malevolence&config.use_cooldowns,delay=300
   - havoc,if=talent.havoc&active_enemies>=2
   - cataclysm,if=talent.cataclysm&active_enemies>=config.aoe_threshold
   - rain_of_fire,if=active_enemies>=config.aoe_threshold&soul_shards>=3
@@ -90,6 +103,8 @@ lists:
   - incinerate
 
   fallback:
+  - conflagrate,if=target.exists&target.enemy&target.alive&cooldown.conflagrate.charges>=1,ignore_queue=true
+  - chaos_bolt,if=target.exists&target.enemy&target.alive&soul_shards>=4,ignore_queue=true
   - incinerate,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
