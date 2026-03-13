@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -79,6 +83,8 @@ config:
     default: 40
 
 variables:
+  auto_cds: target.boss|var.need_emergency|var.need_major_heal|var.need_aoe_heal
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # Holy Power thresholds
   hp_max: holy_power>=5
@@ -228,8 +234,8 @@ lists:
   - auto_attack
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=emergency,if=var.need_emergency
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=beacon_maintenance
   - call_action_list,name=burst_healing,if=var.in_burst

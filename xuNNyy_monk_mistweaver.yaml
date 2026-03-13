@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -126,6 +130,8 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|var.need_major_heal|var.multi_emergency|var.need_revival
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # Talent / hero tree detection
   has_cotc: talent.conduit_of_the_celestials
@@ -303,9 +309,9 @@ lists:
   - call_action_list,name=defensives,if=config.use_defensives
   - return,if=player.casting|player.channeling
   - call_action_list,name=emergency,if=var.need_emergency
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=healing,if=var.need_emergency|!var.safe_to_fistweave
   - return,if=config.heal_only
   # Target check

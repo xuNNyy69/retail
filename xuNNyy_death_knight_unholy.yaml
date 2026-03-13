@@ -14,6 +14,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_potions:
     label: "Use Potions"
     type: checkbox
@@ -57,6 +61,8 @@ config:
     default: 60
 
 variables:
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   want_funnel: config.funnel_mode&active_enemies>=config.aoe_threshold&target.boss
   opener_done: combat.time>8|!player.combat
@@ -109,7 +115,7 @@ lists:
   - outbreak,if=var.vp_refresh
   - festering_strike,if=var.wounds_low
   - dark_transformation
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
 
   cooldowns:
   - raise_dead,if=var.pet_missing,use_off_gcd=1
@@ -263,8 +269,8 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=opener,if=!var.opener_done
   - call_action_list,name=movement
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=burst,if=(var.dt_up|var.gargoyle_window)
   - call_action_list,name=funnel,if=var.want_funnel
   - call_action_list,name=aoe,if=var.want_aoe

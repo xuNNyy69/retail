@@ -15,6 +15,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -54,6 +58,8 @@ config:
 variables:
   in_dr: buff.dragonrage.up
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   is_sc: talent.mass_disintegrate
   eb_burst: buff.essence_burst.up
   fb_refresh: dot.fire_breath_damage.remains<3
@@ -134,7 +140,7 @@ lists:
 
   fallback:
   - disintegrate,if=target.exists&target.enemy&target.alive&var.eb_burst,ignore_queue=true
-  - deep_breath,if=target.exists&target.enemy&target.alive&config.use_cooldowns&cooldown.deep_breath.ready,ignore_queue=true
+  - deep_breath,if=target.exists&target.enemy&target.alive&var.use_cds&cooldown.deep_breath.ready,ignore_queue=true
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
@@ -155,8 +161,8 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - call_action_list,name=items
-  - call_action_list,name=racials,if=config.use_cooldowns
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=aoe_sc,if=var.want_aoe&var.is_sc
   - call_action_list,name=aoe_fs,if=var.want_aoe
   - call_action_list,name=st_sc,if=var.is_sc

@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -81,6 +85,8 @@ config:
     default: 40
 
 variables:
+  auto_cds: target.boss|var.anyone_emergency|var.multi_injured
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # Hero-tree routing
   # Oracle: default; stronger PoM-based play
@@ -127,7 +133,7 @@ lists:
   # Emergency healing -- critical HP
   # ===========================================================
   emergency:
-  - guardian_spirit,target=tanks.lowest,if=config.use_cooldowns&cooldown.guardian_spirit.ready&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
+  - guardian_spirit,target=tanks.lowest,if=var.use_cds&cooldown.guardian_spirit.ready&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
   - holy_word_serenity,target=lowest,if=var.serenity_ready&var.anyone_emergency
   - flash_heal,target=lowest,if=var.anyone_emergency
   - prayer_of_mending,target=lowest,if=cooldown.prayer_of_mending.ready&var.anyone_emergency
@@ -202,7 +208,7 @@ lists:
   # ===========================================================
   archon_heal:
   - return,if=!var.is_archon
-  - halo,if=config.use_cooldowns&cooldown.halo.ready&var.multi_injured,delay=300
+  - halo,if=var.use_cds&cooldown.halo.ready&var.multi_injured,delay=300
 
   # ===========================================================
   # DPS filler when group is healthy
@@ -241,9 +247,9 @@ lists:
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=emergency,if=var.anyone_emergency
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
-  - call_action_list,name=archon_heal,if=var.is_archon&config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
+  - call_action_list,name=archon_heal,if=var.is_archon&var.use_cds
   - call_action_list,name=healing
   - call_action_list,name=dps
   - call_action_list,name=fallback

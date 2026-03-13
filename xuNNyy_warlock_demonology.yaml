@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   auto_combat:
     label: "Auto Combat"
     type: multi_select
@@ -49,6 +53,8 @@ config:
 variables:
   in_tyrant: buff.demonic_tyrant.up
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|var.want_aoe
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -78,17 +84,17 @@ lists:
 
   default:
   - potion,if=config.use_potions&var.in_tyrant
-  - call_action_list,name=racials,if=config.use_cooldowns&var.in_tyrant,use_off_gcd=1
+  - call_action_list,name=racials,if=var.use_cds&var.in_tyrant,use_off_gcd=1
   - call_action_list,name=items,use_off_gcd=1
   - power_siphon,if=talent.power_siphon&buff.demonic_core.stack<=2&buff.wild_imps.stack>=4
   - call_dreadstalkers
   - hand_of_guldan,if=soul_shards>=5
   - hand_of_guldan,if=soul_shards>=3
   - ruination,if=talent.ruination
-  - grimoire_imp_lord,if=config.use_cooldowns&talent.grimoire_imp_lord
-  - grimoire_fel_ravager,if=config.use_cooldowns&talent.grimoire_fel_ravager
-  - summon_demonic_tyrant,if=config.use_cooldowns&buff.dreadstalkers.up&(buff.wild_imps.stack>=3|soul_shards<=2),delay=500,global_delay=300
-  - summon_doomguard,if=config.use_cooldowns&talent.summon_doomguard
+  - grimoire_imp_lord,if=var.use_cds&talent.grimoire_imp_lord
+  - grimoire_fel_ravager,if=var.use_cds&talent.grimoire_fel_ravager
+  - summon_demonic_tyrant,if=var.use_cds&buff.dreadstalkers.up&(buff.wild_imps.stack>=3|soul_shards<=2),delay=500,global_delay=300
+  - summon_doomguard,if=var.use_cds&talent.summon_doomguard
   - implosion,if=buff.wild_imps.stack>=6&(var.in_tyrant|var.want_aoe)
   - demonbolt,if=debuff.doom.down&soul_shards<4&buff.demonic_core.up&talent.doom
   - demonbolt,if=soul_shards<4&buff.demonic_core.stack>=2

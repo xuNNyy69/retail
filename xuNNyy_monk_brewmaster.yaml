@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -66,6 +70,8 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|health.pct<=85|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   has_niuzao: talent.invoke_niuzao_the_black_ox
   has_charred: talent.charred_passions
@@ -203,8 +209,8 @@ lists:
   - auto_attack
   - call_action_list,name=purify
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
-  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
   - call_action_list,name=fallback

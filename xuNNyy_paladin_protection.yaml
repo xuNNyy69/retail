@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -55,6 +59,8 @@ config:
     default: true
 
 variables:
+  auto_cds: target.boss|health.pct<=85|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   in_aw: buff.avenging_wrath.up
   shake_up: buff.shake_the_heavens.up
 
@@ -176,7 +182,7 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=trinkets,if=config.use_trinkets
   - call_action_list,name=lightsmith,if=talent.lightsmith
   - call_action_list,name=templar,if=talent.templar

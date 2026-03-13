@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_dispel:
     label: "Use Purge/Dispel"
     type: checkbox
@@ -74,6 +78,8 @@ variables:
 
   # AoE routing
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -118,13 +124,13 @@ lists:
   - vampiric_touch,if=var.vt_refreshable
 
   # Halo: Archon's signature; high priority, uses Insanity
-  - halo,if=config.use_cooldowns,delay=300,global_delay=400
+  - halo,if=var.use_cds,delay=300,global_delay=400
 
   # Void Eruption: major DPS cooldown (enters Voidform)
-  - void_eruption,if=config.use_cooldowns,delay=300,global_delay=400
+  - void_eruption,if=var.use_cds,delay=300,global_delay=400
 
   # Power Infusion: align with Voidform
-  - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
+  - power_infusion,if=var.use_cds&var.voidform_up,use_off_gcd=1
 
   # Void Volley: strong Insanity generator in Voidform window
   - void_volley,if=talent.void_volley
@@ -159,10 +165,10 @@ lists:
   - vampiric_touch,if=var.vt_refreshable
 
   # Void Eruption: main cooldown (enters Voidform)
-  - void_eruption,if=config.use_cooldowns,delay=300,global_delay=400
+  - void_eruption,if=var.use_cds,delay=300,global_delay=400
 
   # Power Infusion: align with Voidform
-  - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
+  - power_infusion,if=var.use_cds&var.voidform_up,use_off_gcd=1
 
   # Void Torrent: high-damage channel, use on CD
   - void_torrent,delay=300
@@ -222,7 +228,7 @@ lists:
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   # AoE DoT spread in multi-target situations
   - call_action_list,name=aoe_dots,if=var.want_aoe

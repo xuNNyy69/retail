@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -52,6 +56,8 @@ config:
 
 variables:
   single_target: active_enemies=1
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -126,7 +132,7 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=cds,if=config.use_cooldowns
+  - call_action_list,name=cds,if=var.use_cds
   - call_action_list,name=core_dot
   - call_action_list,name=generate,if=combo_points<5
   - call_action_list,name=spend,if=combo_points>=5

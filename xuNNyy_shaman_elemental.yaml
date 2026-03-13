@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_dispel:
     label: "Use Purge/Dispel"
     type: checkbox
@@ -49,6 +53,8 @@ variables:
   # Variables section only supports static values — using base value (constraint-driven).
   # Inline conditions use maelstrom>85 (mael_cap-15 = 85).
   mael_cap: 100
+  auto_cds: target.boss|active_enemies>=2
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -69,14 +75,14 @@ lists:
   - trinket2,use_off_gcd=1,if=config.use_trinkets&(buff.ascendance.up|cooldown.ascendance.remains>=90|target.time_to_die<20)
 
   cooldowns:
-  - return,if=!config.use_cooldowns
+  - return,if=!var.use_cds
   - stormkeeper,if=talent.stormkeeper&cooldown.stormkeeper.ready,delay=300
   - ascendance,if=talent.ascendance&cooldown.ascendance.ready,delay=500,global_delay=300
   - natures_swiftness,if=talent.natures_swiftness&cooldown.natures_swiftness.ready
   - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready
 
   racials:
-  - return,if=!config.use_cooldowns|!state.cds
+  - return,if=!var.use_cds
   - blood_fury,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
   - berserking,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
   - fireblood,if=buff.ascendance.up|cooldown.ascendance.remains>=fight_remains,use_off_gcd=1
@@ -131,7 +137,7 @@ lists:
   - spiritwalkers_grace,if=player.moving,use_off_gcd=1
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
   - potion,if=config.use_potions
   - call_action_list,name=aoe,if=active_enemies>=2
   - call_action_list,name=single_target

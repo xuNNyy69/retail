@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -69,6 +73,9 @@ config:
     default: 5
 
 variables:
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&config.use_cooldowns
+  use_auto_cds: state.cds&config.auto_cooldowns&var.auto_cds
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
 
   # Runic Power
@@ -152,6 +159,15 @@ lists:
   - abomination_limb,if=talent.abomination_limb,delay=300
   - consumption,if=talent.consumption
   - mark_of_blood,if=talent.mark_of_blood&!debuff.mark_of_blood.up
+  - blood_tap,if=var.has_blood_tap&var.rune_low&var.bone_ok
+
+  offensive_cooldowns:
+  - reapers_mark,if=var.has_deathbringer,delay=300,global_delay=400
+  - dancing_rune_weapon,delay=500,global_delay=300
+  - raise_dead,if=!pet.exists|pet.dead
+  - empower_rune_weapon,if=var.rune_low&runic_power<40
+  - abomination_limb,if=talent.abomination_limb,delay=300
+  - consumption,if=talent.consumption
   - blood_tap,if=var.has_blood_tap&var.rune_low&var.bone_ok
 
   racials:
@@ -260,8 +276,9 @@ lists:
   - return,if=player.casting|player.channeling
   - auto_attack
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=offensive_cooldowns,if=!var.use_cds&var.use_auto_cds
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds|var.use_auto_cds
   - call_action_list,name=maintenance
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=sanlayn,if=var.has_sanlayn

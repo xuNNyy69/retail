@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -53,6 +57,8 @@ config:
 variables:
   in_bw: buff.bestial_wrath.up
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   is_dr: talent.black_arrow
   has_pack_leader: talent.howl_of_the_pack_leader
   howl_active: "buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up|buff.natures_ally.up"
@@ -89,8 +95,8 @@ lists:
   - mend_pet,range_check=none,if=var.pet_hurt
 
   cooldowns:
-  - call_of_the_wild,if=config.use_cooldowns,delay=500,global_delay=300
-  - bestial_wrath,if=config.use_cooldowns,delay=300
+  - call_of_the_wild,if=var.use_cds,delay=500,global_delay=300
+  - bestial_wrath,if=var.use_cds,delay=300
   - bloodshed,if=talent.bloodshed&var.in_bw,delay=300
   - stampede,if=talent.stampede&var.in_bw,delay=500,global_delay=300
 
@@ -194,8 +200,8 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=drst,if=var.is_dr&!var.want_aoe
   - call_action_list,name=drcleave,if=var.is_dr&var.want_aoe

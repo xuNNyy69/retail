@@ -20,6 +20,10 @@ config:
     type: checkbox
     default: true
     show_override: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -62,6 +66,8 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   is_frostfire: talent.frostfire_bolt
   is_spellslinger: "!talent.frostfire_bolt"
   brain_freeze: buff.brain_freeze.up
@@ -212,8 +218,8 @@ lists:
   - stop_casting,if=player.channeling&buff.brain_freeze.up&!var.thermal_void&debuff.winters_chill.down
   - return,if=player.casting|player.channeling
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=movement,if=player.moving
   - call_action_list,name=ff_aoe,if=var.is_frostfire&var.want_aoe
   - call_action_list,name=ff_st_boltspam,if=var.is_frostfire&talent.deaths_chill&talent.cold_front&talent.slick_ice&talent.deep_shatter

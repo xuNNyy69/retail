@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   auto_combat:
     label: "Auto Combat"
     type: multi_select
@@ -49,6 +53,8 @@ config:
 variables:
   execute_phase: target.health.pct<20|talent.massacre&target.health.pct<35
   cs_active: debuff.colossus_smash.up|debuff.warbreaker.up
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -77,7 +83,7 @@ lists:
   - lights_judgment,if=!var.cs_active&cooldown.mortal_strike.remains>0
 
   cooldowns:
-  - return,if=!config.use_cooldowns
+  - return,if=!var.use_cds
   - avatar,delay=300,global_delay=400
   - colossus_smash,delay=300,global_delay=400
   - ravager,delay=300
@@ -193,8 +199,8 @@ lists:
   - charge,if=combat.time<1
   - call_action_list,name=trinkets,if=config.use_trinkets
   - potion,if=config.use_potions&var.cs_active
-  - call_action_list,name=racials,if=config.use_cooldowns
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=colossus_aoe,if=talent.demolish&active_enemies>2
   - call_action_list,name=colossus_execute,if=talent.demolish&var.execute_phase
   - call_action_list,name=colossus_st,if=talent.demolish

@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   auto_combat:
     label: "Auto Combat"
     type: multi_select
@@ -65,6 +69,8 @@ variables:
   revenge_buff: buff.revenge.up
   colossal_might_ok: buff.colossal_might.stack>=3
   shield_block_low: buff.shield_block.remains<=gcd*2
+  auto_cds: target.boss|health.pct<=config.defensive_hp|active_enemies>=3
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -127,7 +133,7 @@ lists:
   - devastate
 
   racials:
-  - return,if=!state.cds
+  - return,if=!var.use_cds
   - berserking,if=buff.avatar.up,use_off_gcd=1
   - blood_fury,if=buff.avatar.up,use_off_gcd=1
   - fireblood,if=buff.avatar.up,use_off_gcd=1
@@ -160,8 +166,8 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=items,if=config.use_trinkets
   - thunder_blast,if=talent.lightning_strikes&active_enemies>=2&buff.thunder_blast.stack>=2
   - call_action_list,name=aoe,if=active_enemies>=3

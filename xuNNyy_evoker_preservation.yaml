@@ -19,6 +19,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -111,6 +115,8 @@ variables:
   multi_injured: group.count(cycle.health.pct<config.emerald_blossom_hp)>=config.aoe_threshold
   anyone_injured: group.lowest.health.pct<config.reversion_hp
   safe_to_dps: group.lowest.health.pct>=config.safe_dps_hp
+  auto_cds: target.boss|var.multi_injured|var.anyone_emergency
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # Cooldown readiness
   dream_breath_ready: cooldown.dream_breath.ready
@@ -144,7 +150,7 @@ lists:
   emergency:
   - verdant_embrace,target=lowest,if=var.anyone_emergency
   - emerald_blossom,if=var.multi_injured&var.anyone_emergency
-  - rewind,if=config.use_cooldowns&var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2
+  - rewind,if=var.use_cds&var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2
   - verdant_embrace,target=tanks.lowest,if=var.tank_low
 
   # ===========================================================
@@ -248,8 +254,8 @@ lists:
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=emergency,if=var.anyone_emergency
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=hot_maintenance
   - call_action_list,name=echo_healing,if=var.anyone_injured
   # Target check

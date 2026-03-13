@@ -14,6 +14,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -61,6 +65,8 @@ config:
     default: true
 
 variables:
+  auto_cds: target.boss|active_enemies>=3
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   in_meta: buff.metamorphosis.up
   is_ar: talent.art_of_the_glaive
   ar_proc: buff.reaver_glaive.up
@@ -118,7 +124,7 @@ lists:
   - return,if=!var.is_ar
   # Guide: Meta not in AR offensive priority � defensive use only (handled in defensives:)
   - call_action_list,name=ar_glaive_cycle
-  - call_action_list,name=ar_cooldowns,if=config.use_cooldowns
+  - call_action_list,name=ar_cooldowns,if=var.use_cds
   - call_action_list,name=ar_fillers
 
   # Aldrachi Reaver glaive consumption cycle.
@@ -184,7 +190,7 @@ lists:
   anni:
   - return,if=var.is_ar
   # Guide: Fiery Brand (#1) then Meta (#2) � both routed through anni_cooldowns
-  - call_action_list,name=anni_cooldowns,if=config.use_cooldowns
+  - call_action_list,name=anni_cooldowns,if=var.use_cds
   # In-meta priority list: tighter thresholds and charred flesh rotation
   - call_action_list,name=anni_meta,if=var.in_meta
   - call_action_list,name=anni_fillers
@@ -274,7 +280,7 @@ lists:
   - auto_attack
   - call_action_list,name=precombat,if=!player.combat
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=ar,if=var.is_ar
   - call_action_list,name=anni,if=!var.is_ar
   - call_action_list,name=fallback

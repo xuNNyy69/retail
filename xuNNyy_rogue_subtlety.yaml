@@ -14,6 +14,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -52,6 +56,8 @@ config:
 
 variables:
   in_dance: buff.shadow_dance.up|buff.stealth.up|buff.vanish.up
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -143,9 +149,9 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=race,if=config.use_cooldowns
+  - call_action_list,name=race,if=var.use_cds
   - call_action_list,name=item
-  - call_action_list,name=cds,if=config.use_cooldowns
+  - call_action_list,name=cds,if=var.use_cds
   - shadowstrike,if=(buff.darkest_night.up|talent.unseen_blade)&buff.shadow_techniques.stack>=5&!buff.ancient_arts.up&active_enemies<=3
   - call_action_list,name=finish,if=combo_points>=6
   - call_action_list,name=build

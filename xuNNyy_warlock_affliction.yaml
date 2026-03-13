@@ -26,6 +26,10 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: Smart Cooldowns
+    type: checkbox
+    default: true
   auto_combat:
     label: Auto Combat
     type: multi_select
@@ -48,6 +52,8 @@ config:
 
 variables:
   cds_active: cooldown.summon_darkglare.remains>20|buff.summon_darkglare.up
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -80,7 +86,7 @@ lists:
   - agony,if=dot.agony.refreshable&active_dot.agony<active_enemies
   - corruption,if=dot.corruption.refreshable&active_dot.corruption<active_enemies
   - dark_harvest,if=talent.dark_harvest&dot.agony.remains>3&dot.corruption.remains>3
-  - summon_darkglare,if=config.use_cooldowns,delay=500,global_delay=300
+  - summon_darkglare,if=var.use_cds,delay=500,global_delay=300
   - seed_of_corruption,if=active_enemies>=config.aoe_threshold&soul_shards>=3
   - unstable_affliction,if=(buff.summon_darkglare.up|soul_shards>=3|buff.shard_instability.up)&active_enemies<config.aoe_threshold
   - malefic_grasp,if=buff.summon_darkglare.up&buff.summon_darkglare.remains<gcd
@@ -90,8 +96,8 @@ lists:
   - agony,if=dot.agony.refreshable&active_dot.agony<active_enemies
   - wither,if=!dot.wither.ticking|dot.wither.refreshable
   - dark_harvest,if=talent.dark_harvest&dot.agony.remains>3&dot.wither.remains>3
-  - summon_darkglare,if=config.use_cooldowns,delay=500,global_delay=300
-  - malevolence,if=config.use_cooldowns,delay=300
+  - summon_darkglare,if=var.use_cds,delay=500,global_delay=300
+  - malevolence,if=var.use_cds,delay=300
   - seed_of_corruption,if=active_enemies>=config.aoe_threshold&soul_shards>=3
   - unstable_affliction,if=(buff.summon_darkglare.up|buff.malevolence.up|soul_shards>=3|buff.shard_instability.up)&active_enemies<config.aoe_threshold
   - malefic_grasp,if=buff.summon_darkglare.up&buff.summon_darkglare.remains<gcd

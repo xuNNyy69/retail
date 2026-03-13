@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   auto_combat:
     label: "Auto Combat"
     type: multi_select
@@ -76,6 +80,8 @@ variables:
   rage_high: rage>=90
   in_melee: target.range<=8
   thunder_blast_ready: talent.gathering_clouds&buff.thunder_blast.up
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -105,7 +111,7 @@ lists:
   - bloodbath,if=var.need_enrage
   - recklessness,if=usable.recklessness,delay=300,global_delay=400
   - avatar,if=usable.avatar,delay=300,global_delay=400
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
 
   cooldowns:
   - recklessness,if=buff.avatar.up|cooldown.avatar.remains>40|!talent.avatar,delay=300,global_delay=400
@@ -259,8 +265,8 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=opener,if=!var.opener_done
   - call_action_list,name=movement
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=burst,if=var.in_cd_window
   - call_action_list,name=execute_aoe,if=var.want_aoe&var.can_execute&var.in_melee
   - call_action_list,name=execute_st,if=!var.want_aoe&var.can_execute

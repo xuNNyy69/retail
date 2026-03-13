@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -63,6 +67,8 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   want_cleave: state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # hero-tree routing
   has_cotc: talent.celestial_conduit
@@ -252,8 +258,8 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=cotc_opener,if=var.has_cotc&combat.time<=10
   - call_action_list,name=shado_opener,if=var.has_shado_pan&combat.time<=10
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=hotjs,if=var.has_cotc&var.hotjs_up
   - call_action_list,name=cotc_aoe,if=var.has_cotc&var.want_cleave
   - call_action_list,name=cotc_aoe,if=var.has_cotc&var.want_aoe

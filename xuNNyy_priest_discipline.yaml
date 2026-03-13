@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -63,6 +67,8 @@ config:
     default: 80
 
 variables:
+  auto_cds: target.boss|var.anyone_emergency|var.multi_injured
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # Hero-tree routing
   # Oracle: dominant hero talent; stronger Penance + Piety overheal protection
@@ -109,8 +115,8 @@ lists:
   # Guide: Disc is squishy; don't hesitate to use Pain Suppression selfishly
   # ===========================================================
   emergency:
-  - pain_suppression,target=tanks.lowest,if=config.use_cooldowns&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
-  - pain_suppression,target=lowest,if=config.use_cooldowns&var.anyone_emergency,use_off_gcd=1
+  - pain_suppression,target=tanks.lowest,if=var.use_cds&group.tanks.lowest.health.pct<config.emergency_hp,use_off_gcd=1
+  - pain_suppression,target=lowest,if=var.use_cds&var.anyone_emergency,use_off_gcd=1
   - penance,target=lowest,if=var.anyone_emergency
   - power_word_shield,cycle_targets=1,if=var.anyone_emergency&cycle.health.pct<config.emergency_hp
   - flash_heal,target=lowest,if=var.anyone_emergency
@@ -163,7 +169,7 @@ lists:
   - power_word_radiance,if=cooldown.power_word_radiance.charges>=1
   - power_word_radiance,if=cooldown.power_word_radiance.charges>=2
   # Ultimate Penitence: cast; Mind Blast at end of channel while falling
-  - ultimate_penitence,if=config.use_cooldowns,delay=300,global_delay=400
+  - ultimate_penitence,if=var.use_cds,delay=300,global_delay=400
   - mind_blast
   - penance
   - power_word_shield
@@ -224,13 +230,13 @@ lists:
   - return,if=player.casting|player.channeling
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - power_infusion,if=config.use_cooldowns&cooldown.power_infusion.ready,use_off_gcd=1,delay=300
+  - power_infusion,if=var.use_cds&cooldown.power_infusion.ready,use_off_gcd=1,delay=300
   # Emergency direct heals bypass all rotation logic
   - call_action_list,name=emergency,if=var.anyone_emergency
   # Ultimate Penitence ramp (higher value CD fires first)
-  - call_action_list,name=up_ramp,if=config.use_cooldowns&var.up_ready&var.multi_injured
+  - call_action_list,name=up_ramp,if=var.use_cds&var.up_ready&var.multi_injured
   # Evangelism ramp on CD when group is taking damage
-  - call_action_list,name=evangelism_ramp,if=config.use_cooldowns&var.multi_injured
+  - call_action_list,name=evangelism_ramp,if=var.use_cds&var.multi_injured
   # Mini-ramp to maintain Atonement coverage
   - call_action_list,name=mini_ramp,if=var.multi_injured
   # Main Atonement-based damage/healing loop

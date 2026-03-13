@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -51,6 +55,8 @@ config:
     default: true
 
 variables:
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   in_meta: buff.metamorphosis.up
   is_ar: talent.reavers_glaive
@@ -232,8 +238,8 @@ lists:
   - auto_attack
   - call_action_list,name=movement
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
-  - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
+  - call_action_list,name=racials,if=var.use_cds
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=meta,if=var.in_meta
   - immolation_aura,if=buff.immolation_aura.down&!var.pooling
   - call_action_list,name=aoe,if=var.want_aoe

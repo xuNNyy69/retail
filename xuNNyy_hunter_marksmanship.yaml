@@ -26,6 +26,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   auto_combat:
     label: "Auto Combat"
     type: multi_select
@@ -54,7 +58,7 @@ variables:
 
   # Hero-tree routing
   is_dr: talent.black_arrow
-  is_sentinel: talent.sentinel
+  is_sentinel: talent.sentinel|talent.moonlight_chakram
 
   # Key buff / debuff states
   in_trueshot: buff.trueshot.up
@@ -66,13 +70,17 @@ variables:
   in_execute: target.health.pct<=20
 
   # Focus management
-  focus_dump: focus>=60
+  focus_dump: focus>=35
+
+  # Cooldown gate
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
   # Sentinel's Mark is a target debuff
   sentinels_mark_up: debuff.sentinels_mark.up
 
   # AoE routing
-  want_aoe: state.aoe&spell_targets.multishot>=config.aoe_threshold
+  want_aoe: spell_targets.multishot>=config.aoe_threshold|active_enemies>=config.aoe_threshold
 
   # Pet management (skip if Lone Wolf)
   has_pet: !talent.lone_wolf
@@ -81,8 +89,8 @@ variables:
 lists:
   interrupts:
   - counter_shot,if=target.casting.interruptible,use_off_gcd=1
-  - counter_shot.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
-  - counter_shot.focus,if=focus.casting.interruptible,use_off_gcd=1
+  - counter_shot.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
+  - counter_shot.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - exhilaration,if=health.pct<=55
@@ -90,8 +98,8 @@ lists:
   - aspect_of_the_turtle,if=health.pct<=20
 
   dispel:
-  - tranquilizing_shot,if=target.purgeable.enrage|target.purgeable.magic
-  - tranquilizing_shot.mouseover,if=mouseover.purgeable.enrage|mouseover.purgeable.magic
+  - tranquilizing_shot,if=target.exists&target.enemy&target.alive&active_enemies<config.aoe_threshold&(target.purgeable.enrage|target.purgeable.magic)
+  - tranquilizing_shot.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&active_enemies<config.aoe_threshold&(mouseover.purgeable.enrage|mouseover.purgeable.magic)
 
   pet_care:
   # Revive dead pet (10s anti-spam)
@@ -119,30 +127,30 @@ lists:
   # ===========================================================
   dr_st:
   - return,if=!var.is_dr
+  - multishot,if=active_enemies>=config.aoe_threshold&(var.precise_shots_up|!var.trick_shots_up)
   # Black Arrow: Deathblow / execute / high-health (replaces Kill Shot for DR)
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
   # Rapid Fire: Withering Fire window
   - rapid_fire,if=var.withering_fire_up
+  - arcane_shot,if=var.precise_shots_up
+  - rapid_fire,if=!buff.bulletstorm.up|buff.bulletstorm.remains<2
   # Trueshot: use on CD — triggers Withering Fire, Deathblow, Double Tap
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
+  - trueshot,if=var.use_cds,delay=500,global_delay=300
   # Wailing Arrow: consume proc
   - wailing_arrow,if=buff.wailing_arrow.up
   # Lock and Load: instant free Aimed Shot — high priority when proc is up
   - aimed_shot,if=var.lock_and_load
   # Aimed Shot: overcap prevention (Double Tap benefits first Aimed after Trueshot)
   - aimed_shot,if=cooldown.aimed_shot.charges>=2
-  # Arcane Shot: consume Precise Shots
-  - arcane_shot,if=var.precise_shots_up
-  # Volley: maintains Trick Shots passively
-  - volley,if=talent.volley
   # Rapid Fire: Bulletstorm buff for next Aimed Shot
   - rapid_fire
   # Aimed Shot: normal priority (Bulletstorm-buffed)
   - aimed_shot
   # Arcane Shot: focus dump to prevent capping
   - arcane_shot,if=var.focus_dump
+  - arcane_shot,if=focus>=20
   # Steady Shot: filler
-  - steady_shot
+  - steady_shot,ignore_movement=true
 
   # ===========================================================
   # Dark Ranger -- AoE / Cleave
@@ -152,11 +160,11 @@ lists:
   # Black Arrow: Deathblow / execute (replaces Kill Shot for DR)
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
   # Multi-Shot: maintain Trick Shots or consume Precise Shots
-  - multishot,if=var.precise_shots_up|!var.trick_shots_up
+  - multishot,if=var.precise_shots_up|!var.trick_shots_up|buff.trick_shots.remains<2
   # Rapid Fire: keep Bulletstorm / Withering Fire rolling before burst spenders
   - rapid_fire,if=var.withering_fire_up|!buff.bulletstorm.up|buff.bulletstorm.remains<2
   # Trueshot: use on CD
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
+  - trueshot,if=var.use_cds,delay=500,global_delay=300
   # Wailing Arrow: AoE burst
   - wailing_arrow,if=buff.wailing_arrow.up
   # Volley: if talented
@@ -169,38 +177,36 @@ lists:
   - rapid_fire,if=var.trick_shots_up
   # Rapid Fire: still preferable to falling straight to Steady Shot
   - rapid_fire
+  - arcane_shot,if=var.focus_dump
+  - arcane_shot,if=focus>=20
   # Multi-Shot: refresh Trick Shots
   - multishot
   # Steady Shot: filler
-  - steady_shot
+  - steady_shot,ignore_movement=true
 
   # ===========================================================
   # Sentinel -- Single Target
   # ===========================================================
   sentinel_st:
   - return,if=!var.is_sentinel
-  # Trueshot: main cooldown
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
-  # Kill Shot: Deathblow proc or execute range
-  - kill_shot,if=var.deathblow_up|var.in_execute
-  # Moonlight Chakram: if talented
-  - moonlight_chakram,if=talent.moonlight_chakram
-  # Lock and Load: instant free Aimed Shot
-  - aimed_shot,if=var.lock_and_load
-  # Aimed Shot: overcap prevention
-  - aimed_shot,if=cooldown.aimed_shot.charges>=2
-  # Arcane Shot: always consume Precise Shots (drives Sentinel's Mark spread)
+  # Sentinel ST setup
+  - multishot,if=active_enemies>=config.aoe_threshold&(var.precise_shots_up|!var.trick_shots_up)
   - arcane_shot,if=var.precise_shots_up
-  # Volley: if talented
-  - volley,if=talent.volley
+  - rapid_fire,if=!buff.bulletstorm.up|buff.bulletstorm.remains<2
+  - trueshot,if=var.use_cds,delay=500,global_delay=300
+  - moonlight_chakram,if=talent.moonlight_chakram&cooldown.aimed_shot.charges<=1
+  - kill_shot,if=var.deathblow_up|var.in_execute
+  - aimed_shot,if=var.lock_and_load
+  - aimed_shot,if=cooldown.aimed_shot.charges>=2
   # Rapid Fire: Bulletstorm buff for next Aimed Shot
   - rapid_fire
   # Aimed Shot: normal priority (Bulletstorm-buffed)
   - aimed_shot
   # Arcane Shot: focus dump to prevent capping
   - arcane_shot,if=var.focus_dump
+  - arcane_shot,if=focus>=20
   # Steady Shot: filler
-  - steady_shot
+  - steady_shot,ignore_movement=true
 
   # ===========================================================
   # Sentinel -- AoE / Cleave
@@ -208,13 +214,13 @@ lists:
   sentinel_aoe:
   - return,if=!var.is_sentinel
   # Trueshot: main cooldown
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
+  - trueshot,if=var.use_cds,delay=500,global_delay=300
+  # Moonlight Chakram: Trueshot follow-up for Sentinel
+  - moonlight_chakram,if=talent.moonlight_chakram&cooldown.aimed_shot.charges<=1
   # Kill Shot: Deathblow proc or execute range
   - kill_shot,if=var.deathblow_up|var.in_execute
   # Multi-Shot: maintain Trick Shots or consume Precise Shots
-  - multishot,if=var.precise_shots_up|!var.trick_shots_up
-  # Moonlight Chakram: if talented
-  - moonlight_chakram,if=talent.moonlight_chakram
+  - multishot,if=var.precise_shots_up|!var.trick_shots_up|buff.trick_shots.remains<2
   # Volley: if talented
   - volley,if=talent.volley
   # Lock and Load: instant free Aimed Shot with Trick Shots
@@ -225,22 +231,23 @@ lists:
   - rapid_fire,if=var.trick_shots_up
   # Rapid Fire: still preferable to falling straight to Steady Shot
   - rapid_fire
+  - arcane_shot,if=var.focus_dump
+  - arcane_shot,if=focus>=20
   # Multi-Shot: refresh
   - multishot
   # Steady Shot: filler
-  - steady_shot
+  - steady_shot,ignore_movement=true
 
   fallback:
   - kill_shot,if=target.exists&target.enemy&target.alive&(var.deathblow_up|var.in_execute),ignore_queue=true
   - multishot,if=target.exists&target.enemy&target.alive&var.want_aoe,ignore_queue=true
-  - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - steady_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true,ignore_movement=true
 
   main:
   - call_action_list,name=spell_queue
   - call_action_list,name=sanity_checks
   - call_action_list,name=auto_target
   - call_action_list,name=pet_care,if=var.has_pet
-  - hunters_mark,if=target.exists&target.enemy&!debuff.hunters_mark.up&!player.combat,delay=2000
   # Combat check
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)
@@ -255,7 +262,8 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - hunters_mark,if=target.exists&target.enemy&target.alive&!target.dead&!debuff.hunters_mark.up&!player.combat,delay=2000
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   # Dark Ranger routing
   - call_action_list,name=dr_aoe,if=var.is_dr&var.want_aoe
@@ -264,7 +272,8 @@ lists:
   - call_action_list,name=sentinel_aoe,if=var.is_sentinel&var.want_aoe
   - call_action_list,name=sentinel_st,if=var.is_sentinel
   # Generic fallback (no specific hero talent detected)
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
+  - trueshot,if=var.use_cds,delay=500,global_delay=300
+  - moonlight_chakram,if=talent.moonlight_chakram&cooldown.aimed_shot.charges<=1
   - kill_shot,if=var.deathblow_up|var.in_execute
   - aimed_shot,if=var.lock_and_load
   - aimed_shot,if=cooldown.aimed_shot.charges>=2
@@ -272,5 +281,6 @@ lists:
   - rapid_fire
   - aimed_shot
   - arcane_shot,if=var.focus_dump
+  - arcane_shot,if=focus>=20
   - call_action_list,name=fallback
-  - steady_shot
+  - steady_shot,ignore_movement=true

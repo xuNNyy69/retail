@@ -14,6 +14,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -52,6 +56,8 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   in_melee: target.range<=8
   ds_castable: (active_enemies>=3|(active_enemies>=2&talent.tempest_of_lightbringer&!talent.rush_of_light)|buff.empyrean_power.up|(!talent.final_verdict&talent.tempest))&!buff.empyrean_legacy.up&!(buff.divine_arbiter.stack>24)
   hp5: holy_power>=5
@@ -91,7 +97,7 @@ lists:
   - trinket2,use_off_gcd=1,if=buff.crusade.stack>=10|var.in_avenging_wrath
 
   cooldowns:
-  - return,if=!config.use_cooldowns|!state.cds
+  - return,if=!var.use_cds
   - potion,if=config.use_potions&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up)
   - power_infusion,if=usable.power_infusion&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up),use_off_gcd=1,ignore_movement=true
   - lights_judgment,if=usable.lights_judgment&(active_enemies>=2|!player.combat|combat.time>=75),ignore_movement=true
@@ -135,7 +141,7 @@ lists:
   - arcane_torrent,if=usable.arcane_torrent&holy_power<=4,use_off_gcd=1,ignore_movement=true
 
   racials:
-  - return,if=!config.use_cooldowns|!state.cds
+  - return,if=!var.use_cds
   - blood_fury,if=usable.blood_fury&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true
   - berserking,if=usable.berserking&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true
   - ancestral_call,if=usable.ancestral_call&(var.in_avenging_wrath|var.in_crusade),use_off_gcd=1,ignore_movement=true

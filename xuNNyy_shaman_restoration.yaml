@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -120,6 +124,8 @@ variables:
   hst_refresh: totem.healing_stream_totem.down|totem.healing_stream_totem.remains<5
   surging_totem_refresh: totem.surging_totem.down|totem.surging_totem.remains<2
   cbt_ready: talent.cloudburst_totem&cooldown.cloudburst_totem.ready
+  auto_cds: target.boss|var.heavy_group_damage|var.tank_emergency|var.need_aoe_heal
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
 
@@ -245,7 +251,7 @@ lists:
   - return,if=player.casting|player.channeling
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=emergency,if=var.need_emergency|var.tank_emergency
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=tank_maintenance
   - call_action_list,name=maintenance
   - call_action_list,name=aoe_healing,if=var.need_aoe_heal

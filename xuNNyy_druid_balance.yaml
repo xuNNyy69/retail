@@ -26,6 +26,10 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: Smart Cooldowns
+    type: checkbox
+    default: true
   auto_combat:
     label: Auto Combat
     type: multi_select
@@ -76,8 +80,9 @@ variables:
   pool_for_cd: "astral_power<30&cooldown.celestial_alignment.remains<gcd*4"
   cd_condition: "!var.pool_for_cd|var.ca_active"
   boat_stacks: "buff.balance_of_all_things_arcane.stack+buff.balance_of_all_things_nature.stack"
+  auto_cds: "target.boss|spell_targets.starfire>=config.aoe_threshold"
   # Cooldown state: built-in CDs toggle plus per-rotation checkbox
-  use_cds: "state.cds&config.use_cooldowns"
+  use_cds: "state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)"
   # TTD can be unknown early on; allow CDs when target is a boss or no estimate exists yet
   major_cd_target_ok: "target.boss|target.time_to_die>15|target.time_to_die=0"
   minor_cd_target_ok: "target.boss|target.time_to_die>4|target.time_to_die=0"

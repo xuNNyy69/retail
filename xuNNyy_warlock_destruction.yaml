@@ -26,6 +26,10 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: Smart Cooldowns
+    type: checkbox
+    default: true
   auto_combat:
     label: Auto Combat
     type: multi_select
@@ -49,6 +53,8 @@ config:
 variables:
   infernal_active: buff.summon_infernal.up
   in_ritual: buff.diabolic_ritual_mother_of_chaos.up|buff.diabolic_ritual_overlord.up|buff.diabolic_ritual_pit_lord.up
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
 
 lists:
   interrupts:
@@ -67,10 +73,10 @@ lists:
 
   ogcd:
   - potion,use_off_gcd=1,if=config.use_potions&(var.infernal_active|!talent.summon_infernal)
-  - berserking,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
-  - blood_fury,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
-  - fireblood,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
-  - ancestral_call,use_off_gcd=1,if=config.use_cooldowns&var.infernal_active
+  - berserking,use_off_gcd=1,if=var.use_cds&var.infernal_active
+  - blood_fury,use_off_gcd=1,if=var.use_cds&var.infernal_active
+  - fireblood,use_off_gcd=1,if=var.use_cds&var.infernal_active
+  - ancestral_call,use_off_gcd=1,if=var.use_cds&var.infernal_active
 
   items:
   - trinket1,if=config.use_trinkets&(var.infernal_active|var.in_ritual)
@@ -81,8 +87,8 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets
   - wither,if=talent.wither&(!dot.wither.ticking|dot.wither.refreshable)
   - immolate,if=!talent.wither&(dot.immolate.down|dot.immolate.refreshable)&(!talent.soul_fire|cooldown.soul_fire.remains>gcd)
-  - summon_infernal,if=talent.summon_infernal&config.use_cooldowns,delay=500,global_delay=300
-  - malevolence,if=talent.malevolence&config.use_cooldowns,delay=300
+  - summon_infernal,if=talent.summon_infernal&var.use_cds,delay=500,global_delay=300
+  - malevolence,if=talent.malevolence&var.use_cds,delay=300
   - havoc,if=talent.havoc&active_enemies>=2
   - cataclysm,if=talent.cataclysm&active_enemies>=config.aoe_threshold
   - rain_of_fire,if=active_enemies>=config.aoe_threshold&soul_shards>=3

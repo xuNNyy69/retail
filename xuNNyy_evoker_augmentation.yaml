@@ -15,6 +15,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -53,6 +57,8 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   have_em: buff.ebon_might_self.up
   ebon_might_low: buff.ebon_might_self.remains<4
   breath_ready: cooldown.breath_of_eons.ready
@@ -100,7 +106,7 @@ lists:
 
   st:
   - call_action_list,name=buffs
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=fb,if=cooldown.fire_breath.ready&!var.pool_for_boe
   - upheaval,empower_to=1,if=var.have_em&!var.pool_for_boe
   - eruption,if=var.essence_burst
@@ -113,7 +119,7 @@ lists:
 
   aoe:
   - call_action_list,name=buffs
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
+  - call_action_list,name=cooldowns,if=var.use_cds
   - call_action_list,name=fb,if=cooldown.fire_breath.ready&!var.pool_for_boe
   - upheaval,empower_to=1,if=var.have_em&!var.pool_for_boe
   - eruption,if=var.essence_burst
@@ -155,7 +161,7 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - call_action_list,name=items,if=config.use_trinkets
-  - call_action_list,name=racials,if=config.use_cooldowns
+  - call_action_list,name=racials,if=var.use_cds
   - potion,if=config.use_potions&var.have_em
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st

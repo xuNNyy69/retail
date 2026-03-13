@@ -14,6 +14,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -52,6 +56,8 @@ config:
 
 variables:
   in_ar: buff.adrenaline_rush.up
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   # talent.improved_ambush token uncertain; combo_points<2 used as safe floor
   ambush_condition: (talent.hidden_opportunity|combo_points<2)&energy>=50
   finish_condition: combo_points>=5
@@ -132,7 +138,7 @@ lists:
   - return,if=player.casting|player.channeling
   - auto_attack
   - call_action_list,name=maintenance
-  - call_action_list,name=cds,if=config.use_cooldowns
+  - call_action_list,name=cds,if=var.use_cds
   - call_action_list,name=finish,if=var.finish_condition
   - call_action_list,name=build
   - arcane_torrent,if=energy<85+energy.regen,use_off_gcd=1

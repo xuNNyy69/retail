@@ -18,6 +18,10 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_cooldowns:
+    label: "Smart Cooldowns"
+    type: checkbox
+    default: true
   use_defensives:
     label: "Use Defensives"
     type: checkbox
@@ -52,6 +56,8 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  auto_cds: target.boss|active_enemies>=config.aoe_threshold
+  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
   in_melee: target.range<=8
   in_ranged: target.range<=40
   in_combustion: buff.combustion.up
@@ -176,8 +182,8 @@ lists:
   - stop_casting,if=(player.casting|player.channeling)&(buff.hot_streak.up|buff.hyperthermia.up)
   - return,if=player.casting|player.channeling
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - call_action_list,name=cooldowns,if=config.use_cooldowns
-  - call_action_list,name=racials,if=config.use_cooldowns&state.cds
+  - call_action_list,name=cooldowns,if=var.use_cds
+  - call_action_list,name=racials,if=var.use_cds
   - call_action_list,name=ff_combustion,if=var.is_frostfire&var.in_combustion
   - call_action_list,name=ff_filler,if=var.is_frostfire&!var.in_combustion
   - call_action_list,name=sf_combustion,if=!var.is_frostfire&var.in_combustion
