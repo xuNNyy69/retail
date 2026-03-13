@@ -66,7 +66,7 @@ config:
 
 variables:
   auto_cds: target.boss|active_enemies>=3
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   in_meta: buff.metamorphosis.up
   is_ar: talent.art_of_the_glaive
   ar_proc: buff.reaver_glaive.up

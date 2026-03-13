@@ -86,7 +86,7 @@ config:
 
 variables:
   auto_cds: target.boss|var.anyone_emergency|var.multi_injured
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
   # Hero-tree routing
   # Oracle: default; stronger PoM-based play

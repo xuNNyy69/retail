@@ -78,7 +78,7 @@ config:
 
 variables:
   auto_cds: target.boss|health.pct<=85|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   major_window: target.boss|health.pct<=85|var.want_aoe
 

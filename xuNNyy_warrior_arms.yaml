@@ -54,7 +54,7 @@ variables:
   execute_phase: target.health.pct<20|talent.massacre&target.health.pct<35
   cs_active: debuff.colossus_smash.up|debuff.warbreaker.up
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
   interrupts:

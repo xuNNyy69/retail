@@ -54,7 +54,7 @@ variables:
   infernal_active: buff.summon_infernal.up
   in_ritual: buff.diabolic_ritual_mother_of_chaos.up|buff.diabolic_ritual_overlord.up|buff.diabolic_ritual_pit_lord.up
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
   interrupts:

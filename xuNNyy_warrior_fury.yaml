@@ -81,7 +81,7 @@ variables:
   in_melee: target.range<=8
   thunder_blast_ready: talent.gathering_clouds&buff.thunder_blast.up
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
   interrupts:

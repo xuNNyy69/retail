@@ -68,7 +68,7 @@ variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   want_cleave: state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
   # hero-tree routing
   has_cotc: talent.celestial_conduit

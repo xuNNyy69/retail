@@ -54,7 +54,7 @@ variables:
   # Inline conditions use maelstrom>85 (mael_cap-15 = 85).
   mael_cap: 100
   auto_cds: target.boss|active_enemies>=2
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
   interrupts:

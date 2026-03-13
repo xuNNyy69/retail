@@ -67,7 +67,7 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   is_frostfire: talent.frostfire_bolt
   is_spellslinger: "!talent.frostfire_bolt"
   brain_freeze: buff.brain_freeze.up

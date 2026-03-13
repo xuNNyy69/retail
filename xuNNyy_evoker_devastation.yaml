@@ -59,7 +59,7 @@ variables:
   in_dr: buff.dragonrage.up
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   is_sc: talent.mass_disintegrate
   eb_burst: buff.essence_burst.up
   fb_refresh: dot.fire_breath_damage.remains<3

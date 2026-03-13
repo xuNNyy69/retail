@@ -84,7 +84,7 @@ variables:
   in_burst: buff.doom_winds.up
   lava_surge_up: buff.lava_surge.up
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
   interrupts:

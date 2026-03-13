@@ -116,7 +116,7 @@ variables:
   anyone_injured: group.lowest.health.pct<config.reversion_hp
   safe_to_dps: group.lowest.health.pct>=config.safe_dps_hp
   auto_cds: target.boss|var.multi_injured|var.anyone_emergency
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
   # Cooldown readiness
   dream_breath_ready: cooldown.dream_breath.ready

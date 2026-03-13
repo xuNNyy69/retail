@@ -57,7 +57,7 @@ config:
 variables:
   in_ar: buff.adrenaline_rush.up
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   # talent.improved_ambush token uncertain; combo_points<2 used as safe floor
   ambush_condition: (talent.hidden_opportunity|combo_points<2)&energy>=50
   finish_condition: combo_points>=5

@@ -53,7 +53,7 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   in_ranged: target.range<=40
   in_cd_window: buff.arcane_surge.up|debuff.touch_of_the_magi.up
   is_spellslinger: "!talent.spellfire_spheres"

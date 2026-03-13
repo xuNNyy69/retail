@@ -74,7 +74,7 @@ variables:
 
   # Cooldown gate
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
   # Sentinel's Mark is a target debuff
   sentinels_mark_up: debuff.sentinels_mark.up

@@ -125,7 +125,7 @@ variables:
   surging_totem_refresh: totem.surging_totem.down|totem.surging_totem.remains<2
   cbt_ready: talent.cloudburst_totem&cooldown.cloudburst_totem.ready
   auto_cds: target.boss|var.heavy_group_damage|var.tank_emergency|var.need_aoe_heal
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
 

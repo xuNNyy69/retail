@@ -58,7 +58,7 @@ variables:
   in_bw: buff.bestial_wrath.up
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   is_dr: talent.black_arrow
   has_pack_leader: talent.howl_of_the_pack_leader
   howl_active: "buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up|buff.natures_ally.up"

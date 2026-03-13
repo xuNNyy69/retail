@@ -70,7 +70,7 @@ variables:
   colossal_might_ok: buff.colossal_might.stack>=3
   shield_block_low: buff.shield_block.remains<=gcd*2
   auto_cds: target.boss|health.pct<=config.defensive_hp|active_enemies>=3
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
 lists:
   interrupts:

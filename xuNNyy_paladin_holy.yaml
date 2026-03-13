@@ -84,7 +84,7 @@ config:
 
 variables:
   auto_cds: target.boss|var.need_emergency|var.need_major_heal|var.need_aoe_heal
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
 
   # Holy Power thresholds
   hp_max: holy_power>=5

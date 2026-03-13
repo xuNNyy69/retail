@@ -58,7 +58,7 @@ config:
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
   auto_cds: target.boss|active_enemies>=config.aoe_threshold
-  use_cds: state.cds&(config.use_cooldowns|config.auto_cooldowns&var.auto_cds)
+  use_cds: config.use_cooldowns|config.auto_cooldowns&var.auto_cds
   have_em: buff.ebon_might_self.up
   ebon_might_low: buff.ebon_might_self.remains<4
   breath_ready: cooldown.breath_of_eons.ready
