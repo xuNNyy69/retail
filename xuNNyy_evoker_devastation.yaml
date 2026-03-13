@@ -87,7 +87,7 @@ lists:
 
   cooldowns:
   - dragonrage,if=!var.in_dr,delay=500,global_delay=300
-  - deep_breath,if=var.is_sc,delay=500,global_delay=300
+  - deep_breath,if=target.time_to_die>3,delay=500,global_delay=300
   - tip_the_scales,use_off_gcd=1,delay=300
 
   st_fs:
@@ -134,6 +134,7 @@ lists:
 
   fallback:
   - disintegrate,if=target.exists&target.enemy&target.alive&var.eb_burst,ignore_queue=true
+  - deep_breath,if=target.exists&target.enemy&target.alive&config.use_cooldowns&cooldown.deep_breath.ready,ignore_queue=true
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

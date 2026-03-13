@@ -194,7 +194,6 @@ lists:
   - bestow_faith,target=lowest,if=talent.bestow_faith&var.need_major_heal
   - holy_light,target=lowest,if=var.need_major_heal&var.mana_ok
   - flash_of_light,target=lowest,if=var.need_major_heal
-  - judgment,if=!var.hp_max
 
   damage:
   - return,if=config.heal_only

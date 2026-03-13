@@ -117,14 +117,14 @@ lists:
   - cobra_shot
 
   cleave:
-  - multishot,if=!var.beast_cleave_up|buff.beast_cleave.remains<2
+  - wild_thrash,if=!var.beast_cleave_up|buff.beast_cleave.remains<2
   - kill_shot,if=target.health.pct<=20
   - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
   - kill_command
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
   - kill_shot,if=var.in_bw
-  - multishot,if=var.focus_high&buff.beast_cleave.remains<gcd*2
+  - wild_thrash,if=buff.beast_cleave.remains<gcd*2
   - cobra_shot
 
   drst:
@@ -142,7 +142,7 @@ lists:
   - cobra_shot
 
   drcleave:
-  - multishot,if=!var.beast_cleave_up|buff.beast_cleave.remains<2
+  - wild_thrash,if=!var.beast_cleave_up|buff.beast_cleave.remains<2
   - kill_shot,if=target.health.pct<=20
   - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
@@ -152,6 +152,7 @@ lists:
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
   - wailing_arrow
   - black_arrow
+  - wild_thrash,if=buff.beast_cleave.remains<gcd*2
   - kill_shot,if=var.in_bw
   - cobra_shot
 
@@ -168,7 +169,7 @@ lists:
   - cobra_shot
 
   fallback:
-  - multishot,if=target.exists&target.enemy&target.alive&var.want_aoe&(!var.beast_cleave_up|buff.beast_cleave.remains<2),ignore_queue=true
+  - wild_thrash,if=target.exists&target.enemy&target.alive&var.want_aoe&(!var.beast_cleave_up|buff.beast_cleave.remains<2),ignore_queue=true
   - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - barbed_shot,if=target.exists&target.enemy&target.alive&cooldown.barbed_shot.charges_fractional>=1.5,ignore_queue=true
   - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true

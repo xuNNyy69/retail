@@ -64,10 +64,6 @@ lists:
   - evasion,if=health.pct<=50
   - crimson_vial,if=health.pct<=60
 
-  dispel:
-  - shiv,if=target.has_enrage
-  - shiv.mouseover,if=mouseover.has_enrage
-
   # Vanish → Improved Garrote: fire during Deathmark window or when Garrote is refreshable (guide: sync with Deathmark when possible)
   vanish:
   - vanish,if=var.single_target&talent.improved_garrote&(debuff.deathmark.up|dot.garrote.refreshable)
@@ -85,7 +81,6 @@ lists:
 
   cds:
   - deathmark,if=dot.garrote.up&dot.rupture.up&(cooldown.kingsbane.remains<=gcd|!talent.kingsbane),delay=300,global_delay=400
-  - shiv,if=talent.shiv&(debuff.deathmark.up|cooldown.deathmark.remains<=5)&debuff.shiv.down
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=misc_cds
   - kingsbane,if=(dot.garrote.up&dot.rupture.up&debuff.deathmark.up)|(cooldown.deathmark.remains>52),delay=300,global_delay=400
@@ -100,7 +95,6 @@ lists:
   # CP generation: AoE CT spread → darkest_night shiv → stealth/blindside ambush → ST mutilate → AoE fan
   generate:
   - crimson_tempest,if=active_enemies>=2&combo_points>=4&active_dot.crimson_tempest<active_enemies
-  - shiv,if=buff.darkest_night.up&combo_points=4&debuff.shiv.down
   - ambush,if=buff.stealth.up|buff.vanish.up|buff.blindside.up
   - mutilate,if=active_enemies<=1
   - fan_of_knives,if=active_enemies>=2
@@ -127,8 +121,6 @@ lists:
   - call_action_list,name=interrupts,if=config.use_interrupts
   # Defensives
   - call_action_list,name=defensives,if=config.use_defensives
-  # Enrage removal
-  - call_action_list,name=dispel,if=config.use_dispel
   # Target check
   - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
   - return,if=!target.valid&config.auto_combat.has(0)

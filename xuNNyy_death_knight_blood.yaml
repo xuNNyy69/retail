@@ -144,7 +144,7 @@ lists:
   - potion,if=config.use_potions&(var.drw_up|health.pct<=config.defensive_hp)
 
   cooldowns:
-  - reapers_mark,if=var.has_deathbringer
+  - reapers_mark,if=var.has_deathbringer,delay=300,global_delay=400
   - dancing_rune_weapon,delay=500,global_delay=300
   - raise_dead,if=!pet.exists|pet.dead
   - vampiric_blood,if=var.drw_up|active_enemies>=config.aoe_threshold,delay=300
@@ -234,6 +234,7 @@ lists:
   - death_strike,if=var.ds_rp_dump
 
   fallback:
+  - outbreak,if=target.exists&target.enemy&target.alive&debuff.blood_plague.down,ignore_queue=true
   - deaths_caress,if=target.exists&target.enemy&target.alive&debuff.blood_plague.down,ignore_queue=true
   - death_and_decay,if=target.exists&target.enemy&target.alive&var.want_aoe&!var.dnd_active,ignore_queue=true
   - blood_boil,if=target.exists&target.enemy&target.alive,ignore_queue=true

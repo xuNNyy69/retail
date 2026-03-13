@@ -126,9 +126,6 @@ lists:
   # Power Infusion: align with Voidform
   - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
 
-  # Void Torrent: high-damage channel, use on CD
-  - void_torrent,delay=300
-
   # Void Volley: strong Insanity generator in Voidform window
   - void_volley,if=talent.void_volley
 
@@ -175,9 +172,6 @@ lists:
 
   # Shadow Word: Madness: spend Insanity
   - shadow_word_madness,if=!var.swm_active|buff.shadow_word_madness.remains<2|var.insanity_overcap
-
-  # Mind Flay: Insanity channel inside SWM window
-  - mind_flay_insanity,if=var.swm_active
 
   # Mind Blast
   - mind_blast

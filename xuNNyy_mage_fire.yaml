@@ -99,7 +99,6 @@ lists:
 
   # Frostfire build — outside Combustion
   ff_filler:
-  - shifting_power,if=cooldown.combustion.remains>=15,ignore_movement=true
   - fire_blast,if=!buff.hot_streak.up&buff.heating_up.up,ignore_movement=true
   - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
   - dragons_breath,if=talent.dragons_breath&usable.dragons_breath&var.in_melee,ignore_movement=true
@@ -131,7 +130,6 @@ lists:
   # Base / Sunfury build — outside Combustion
   sf_filler:
   - pyroblast,if=buff.hyperthermia.up,ignore_movement=true
-  - shifting_power,if=cooldown.combustion.remains>=15,ignore_movement=true
   - fire_blast,if=!buff.hot_streak.up&buff.heating_up.up,ignore_movement=true
   - living_bomb,if=talent.living_bomb&usable.living_bomb,ignore_movement=true
   - dragons_breath,if=talent.dragons_breath&usable.dragons_breath&var.in_melee,ignore_movement=true

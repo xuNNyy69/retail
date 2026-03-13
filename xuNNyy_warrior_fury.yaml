@@ -110,8 +110,6 @@ lists:
   cooldowns:
   - recklessness,if=buff.avatar.up|cooldown.avatar.remains>40|!talent.avatar,delay=300,global_delay=400
   - avatar,if=buff.recklessness.up|cooldown.recklessness.remains>40,delay=300,global_delay=400
-  - ravager,if=cooldown.recklessness.remains<=gcd|var.reckless_active,delay=300
-  - thunderous_roar,if=var.enraged&(var.in_cd_window|active_enemies>=2),delay=300
   - champions_spear,if=var.enraged&var.furious_bt_up,delay=300
   - odyns_fury,if=var.enraged&var.furious_bt_up,delay=300
   - bladestorm,if=var.enraged&(var.in_cd_window|cooldown.recklessness.remains>15|active_enemies>=config.aoe_threshold)
@@ -127,7 +125,6 @@ lists:
   - bloodthirst,if=var.need_enrage
   - execute,if=var.can_execute
   - execute,if=var.marked_ready
-  - onslaught,if=talent.onslaught&var.enraged
   - bloodthirst
   - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
   - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury
@@ -142,7 +139,6 @@ lists:
   - rampage,if=(var.need_enrage|var.raging_thirst_up)&var.rage_for_rampage
   - execute,if=buff.sudden_death.up
   - execute,if=var.in_execute
-  - onslaught,if=talent.onslaught&var.enraged
   - rampage,if=var.rage_high
   - bloodthirst,if=var.enrage_soon
   - bloodbath
@@ -173,7 +169,6 @@ lists:
   - rampage,if=var.reap_up&var.rage_for_rampage
   - rampage,if=var.need_enrage&var.rage_for_rampage
   - rampage,if=var.rage_for_rampage
-  - onslaught,if=talent.onslaught&var.enraged
   - execute,if=buff.sudden_death.up
   - execute,if=var.marked_ready
   - crushing_blow,if=talent.tenderize&debuff.tenderize.down
@@ -198,7 +193,6 @@ lists:
   - thunder_clap,if=var.thunder_blast_ready&var.in_melee
   - rampage,if=var.need_enrage&var.rage_for_rampage
   - rampage,if=var.meat_cleaver_up&var.rage_for_rampage
-  - onslaught,if=talent.onslaught&var.enraged
   - execute,if=buff.sudden_death.up&var.meat_cleaver_up
   - crushing_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury&var.meat_cleaver_up
   - raging_blow,if=cooldown.raging_blow.charges>1&talent.wrath_and_fury&var.meat_cleaver_up
@@ -217,7 +211,6 @@ lists:
   - thunder_clap,if=var.thunder_blast_ready&var.in_melee
   - rampage,if=var.need_enrage&var.rage_for_rampage
   - rampage,if=var.meat_cleaver_up&var.rage_for_rampage
-  - onslaught,if=talent.onslaught&var.enraged
   - execute,if=(buff.sudden_death.up|var.marked_ready)&var.meat_cleaver_up
   - crushing_blow,if=talent.tenderize&debuff.tenderize.down
   - raging_blow,if=talent.tenderize&debuff.tenderize.down

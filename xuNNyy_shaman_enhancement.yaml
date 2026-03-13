@@ -65,25 +65,20 @@ variables:
   want_cleave: state.aoe&active_enemies>=2&active_enemies<config.aoe_threshold
   has_totemic: talent.surging_totem
   has_stormbringer: talent.tempest
-  has_ascendance: talent.ascendance
   maelstrom_5: buff.maelstrom_weapon.stack>=5
   maelstrom_8: buff.maelstrom_weapon.stack>=8
   maelstrom_10: buff.maelstrom_weapon.stack>=10
   doom_winds_up: buff.doom_winds.up
-  ascendance_up: buff.ascendance.up
   hot_hand_up: buff.hot_hand.up
   stormbringer_up: buff.stormbringer.up
-  feral_spirit_up: buff.feral_spirit.up
   fs_up: dot.flame_shock.up
   fs_low: dot.flame_shock.remains<3
   tempest_ready: buff.tempest.stack>=2
   voltaic_blaze_up: buff.voltaic_blaze.up
   surging_totem_up: buff.surging_totem.up
   dre_up: buff.deeply_rooted_elements.up
-  in_burst: buff.doom_winds.up|buff.ascendance.up|buff.feral_spirit.up
-  hailstorm_up: buff.hailstorm.up
+  in_burst: buff.doom_winds.up
   lava_surge_up: buff.lava_surge.up
-  eb_ready: talent.elemental_blast&buff.maelstrom_weapon.stack>=5
 
 lists:
   interrupts:
@@ -108,9 +103,7 @@ lists:
   - trinket2,use_off_gcd=1,if=var.in_burst
 
   cooldowns:
-  - feral_spirit,delay=500,global_delay=300
   - doom_winds,if=talent.doom_winds,use_off_gcd=1,delay=300
-  - ascendance,if=talent.ascendance&(cooldown.feral_spirit.remains>30|var.feral_spirit_up),delay=500,global_delay=300
 
   racials:
   - blood_fury,if=var.in_burst,use_off_gcd=1
@@ -152,11 +145,8 @@ lists:
   - stormstrike
   - windstrike
   - voltaic_blaze,if=var.voltaic_blaze_up
-  - elemental_blast,if=var.eb_ready
   - lightning_bolt,if=var.maelstrom_5
   - flame_shock,if=var.fs_low|!var.fs_up
-  - frost_shock,if=var.hailstorm_up
-  - ice_strike,if=talent.ice_strike
   - frost_shock
 
   aoe:
@@ -175,8 +165,7 @@ lists:
   - lava_lash
   - stormstrike
   - windstrike
-  - frost_shock,if=var.hailstorm_up
-  - ice_strike,if=talent.ice_strike
+  - frost_shock
 
   fallback:
   - tempest,if=target.exists&target.enemy&target.alive&var.tempest_ready,ignore_queue=true
@@ -206,10 +195,10 @@ lists:
   - return,if=!target.valid&config.auto_combat.has(0)
   - return,if=player.casting|player.channeling
   - auto_attack
+  - call_action_list,name=totemic_call,if=var.has_totemic
   - call_action_list,name=cooldowns,if=config.use_cooldowns
   - call_action_list,name=racials,if=config.use_cooldowns
   - call_action_list,name=items,if=config.use_trinkets
-  - call_action_list,name=totemic_call,if=var.has_totemic
   - call_action_list,name=burst,if=var.in_burst
   - call_action_list,name=aoe,if=var.want_aoe&!config.funnel_mode
   - call_action_list,name=single

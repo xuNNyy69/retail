@@ -92,7 +92,6 @@ lists:
   - arcane_surge,if=usable.arcane_surge&arcane_charges=4&mana.pct>=70,delay=300,global_delay=400,ignore_movement=true
 
   spellslinger:
-  - shifting_power,if=!buff.arcane_surge.up&!debuff.touch_of_the_magi.up&!buff.presence_of_mind.up&cooldown.arcane_surge.remains>=12,ignore_movement=true
   - nether_tempest,if=talent.nether_tempest&(debuff.nether_tempest.down|debuff.nether_tempest.remains<3),ignore_movement=true
   - presence_of_mind,if=debuff.touch_of_the_magi.remains<=4&buff.nether_precision.up&arcane_charges=4,ignore_movement=true
   - presence_of_mind,if=debuff.touch_of_the_magi.remains<=2&arcane_charges=4,ignore_movement=true
@@ -115,7 +114,6 @@ lists:
   - arcane_barrage,ignore_movement=true
 
   sunfury:
-  - shifting_power,if=!buff.arcane_surge.up&!debuff.touch_of_the_magi.up&!buff.arcane_soul.up&!buff.presence_of_mind.up&cooldown.arcane_surge.remains>=15,ignore_movement=true
   - nether_tempest,if=talent.nether_tempest&(debuff.nether_tempest.down|debuff.nether_tempest.remains<3),ignore_movement=true
   - presence_of_mind,if=debuff.touch_of_the_magi.remains<=4&buff.nether_precision.up&arcane_charges=4,ignore_movement=true
   - presence_of_mind,if=buff.arcane_soul.up&arcane_charges=4&buff.nether_precision.up,ignore_movement=true

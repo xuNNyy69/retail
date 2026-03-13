@@ -191,6 +191,7 @@ lists:
   sm_healing:
   - vivify,target=lowest,if=var.need_emergency
   - enveloping_mist,target=lowest,if=var.tft_up&var.need_major_heal
+  - vivify,target=lowest,if=var.tft_up&var.need_major_heal
   - enveloping_mist,target=lowest,if=var.need_major_heal
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready&var.need_major_heal
@@ -207,7 +208,7 @@ lists:
   - renewing_mist,target=lowest,if=cooldown.renewing_mist.charges>=1
 
   cooldowns:
-  - thunder_focus_tea,use_off_gcd=1,if=!var.tft_up&(var.rmist_overcap|var.need_major_heal|var.safe_to_fistweave&cooldown.rising_sun_kick.remains<gcd)
+  - thunder_focus_tea,use_off_gcd=1,if=!var.tft_up&(var.rmist_needed|var.rmist_overcap|var.need_major_heal|var.safe_to_fistweave&cooldown.rising_sun_kick.remains<gcd)
   - invoke_chi_ji_the_red_crane,if=var.has_chi_ji&(var.need_emergency|var.major_window|var.want_aoe),delay=500,global_delay=300
   - invoke_yulon_the_jade_serpent,if=var.has_yulon&!var.has_chi_ji&(var.major_window|var.want_aoe),delay=500,global_delay=300
   - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready&!var.need_emergency&(var.invoke_up|var.safe_to_fistweave),delay=300,global_delay=250
@@ -229,6 +230,7 @@ lists:
 
   healing:
   - renewing_mist,target=lowest,if=var.tft_up&(var.rmist_needed|var.rmist_overcap)
+  - vivify,target=lowest,if=var.tft_up&var.need_major_heal
   - renewing_mist,target=lowest,if=var.rmist_overcap
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_capped
   - life_cocoon,target=lowest,if=group.lowest.health.pct<config.life_cocoon_hp

@@ -119,18 +119,18 @@ lists:
   # ===========================================================
   dr_st:
   - return,if=!var.is_dr
-  # Trueshot: use on CD — triggers Withering Fire, Deathblow, Double Tap
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Black Arrow: Deathblow / execute / high-health (replaces Kill Shot for DR)
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
+  # Rapid Fire: Withering Fire window
+  - rapid_fire,if=var.withering_fire_up
+  # Trueshot: use on CD — triggers Withering Fire, Deathblow, Double Tap
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Wailing Arrow: consume proc
   - wailing_arrow,if=buff.wailing_arrow.up
   # Lock and Load: instant free Aimed Shot — high priority when proc is up
   - aimed_shot,if=var.lock_and_load
   # Aimed Shot: overcap prevention (Double Tap benefits first Aimed after Trueshot)
   - aimed_shot,if=cooldown.aimed_shot.charges>=2
-  # Rapid Fire: Withering Fire window
-  - rapid_fire,if=var.withering_fire_up
   # Arcane Shot: consume Precise Shots
   - arcane_shot,if=var.precise_shots_up
   # Volley: maintains Trick Shots passively
@@ -149,20 +149,20 @@ lists:
   # ===========================================================
   dr_aoe:
   - return,if=!var.is_dr
-  # Trueshot: use on CD
-  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Black Arrow: Deathblow / execute (replaces Kill Shot for DR)
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
   # Multi-Shot: maintain Trick Shots or consume Precise Shots
   - multishot,if=var.precise_shots_up|!var.trick_shots_up
+  # Rapid Fire: keep Bulletstorm / Withering Fire rolling before burst spenders
+  - rapid_fire,if=var.withering_fire_up|!buff.bulletstorm.up|buff.bulletstorm.remains<2
+  # Trueshot: use on CD
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Wailing Arrow: AoE burst
   - wailing_arrow,if=buff.wailing_arrow.up
   # Volley: if talented
   - volley,if=talent.volley
   # Lock and Load: instant free Aimed Shot with Trick Shots active
   - aimed_shot,if=var.lock_and_load&var.trick_shots_up
-  # Rapid Fire: Withering Fire + Trick Shots
-  - rapid_fire,if=var.trick_shots_up&var.withering_fire_up
   # Aimed Shot: with Trick Shots (cleaves)
   - aimed_shot,if=var.trick_shots_up
   # Rapid Fire: with Trick Shots

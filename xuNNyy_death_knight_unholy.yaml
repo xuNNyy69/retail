@@ -118,13 +118,13 @@ lists:
   - army_of_the_dead,use_off_gcd=1,delay=500,global_delay=300
   - dark_transformation,use_off_gcd=1,delay=300
   # Putrefy at 2 charges (Wowhead #4)
-  - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2
+  - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2,delay=300
   # Soul Reaper on CD (Wowhead #5)
   - soul_reaper,if=var.sr_ready
   - summon_gargoyle,if=talent.summon_gargoyle&runic_power>=60,delay=500,global_delay=300
-  - raise_abomination,if=talent.raise_abomination
-  - unholy_blight,if=talent.unholy_blight
-  - apocalypse,if=debuff.festering_wound.stack>=4,delay=300
+  - raise_abomination,if=talent.raise_abomination,delay=300
+  - unholy_blight,if=talent.unholy_blight,delay=300
+  - apocalypse,if=debuff.festering_wound.stack>=4,delay=300,global_delay=400
   - vile_contagion,if=debuff.festering_wound.stack>=4&active_enemies>=2
   - defile,if=talent.defile
   - death_and_decay,if=!talent.defile&active_enemies>=2
@@ -237,6 +237,7 @@ lists:
   - arcane_pulse,if=rune<2&runic_power<20
 
   fallback:
+  - outbreak,if=target.exists&target.enemy&target.alive&var.vp_refresh,ignore_queue=true
   - deaths_caress,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - epidemic,if=target.exists&target.enemy&target.alive&var.epidemic_mode&runic_power>=40,ignore_queue=true
   - scourge_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true

@@ -93,7 +93,6 @@ lists:
   - ravager,delay=300
   - demoralizing_shout,delay=300
   - champions_spear,if=talent.champions_spear,delay=300
-  - thunderous_roar,delay=300
   - shield_charge,delay=300
 
   aoe:

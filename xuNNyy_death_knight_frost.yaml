@@ -295,6 +295,7 @@ lists:
   # -------------------------------------------------------------------------
   fallback:
   - chains_of_ice,if=target.exists&target.enemy&target.alive&var.cold_heart_ready,ignore_queue=true
+  - glacial_advance,if=target.exists&target.enemy&target.alive&talent.glacial_advance&var.want_aoe&runic_power>=30,ignore_queue=true
   - frost_strike,if=target.exists&target.enemy&target.alive&runic_power>=25,ignore_queue=true
   - howling_blast,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
