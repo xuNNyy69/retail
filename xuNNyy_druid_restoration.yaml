@@ -202,7 +202,7 @@ lists:
   - regrowth,target=lowest,if=group.lowest.health.pct<config.regrowth_hp&group.count(cycle.health.pct<config.regrowth_hp)<=1
 
   catweave:
-  - cat_form,if=!buff.cat_form.up&target.range<=8
+  - cat_form,if=!buff.cat_form.up
   - tigers_fury,use_off_gcd=1,if=energy<=35
   - rake,if=dot.rake.refreshable&target.time_to_die>6
   - swipe,if=active_enemies>=config.aoe_threshold
@@ -212,7 +212,6 @@ lists:
 
   fallback:
   - shred,if=buff.cat_form.up&target.exists&target.enemy&target.alive,ignore_queue=true
-  - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue
@@ -242,6 +241,5 @@ lists:
   - regrowth,target=lowest,if=var.natures_swiftness_up
   - moonfire,if=!config.heal_only&var.safe_to_dps&target.exists&target.enemy&dot.moonfire.refreshable&target.time_to_die>4
   - sunfire,if=!config.heal_only&var.safe_to_dps&target.exists&target.enemy&dot.sunfire.refreshable&target.time_to_die>4
-  - call_action_list,name=catweave,if=!config.heal_only&var.safe_to_dps&target.range<=8
-  - starsurge,if=!config.heal_only&var.safe_to_dps&talent.starsurge&target.exists&target.enemy
+  - call_action_list,name=catweave,if=!config.heal_only&var.safe_to_dps&target.exists&target.enemy
   - call_action_list,name=fallback,if=!config.heal_only

@@ -30,6 +30,19 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -61,6 +74,7 @@ config:
 
 variables:
   want_aoe: state.aoe&active_enemies>=config.aoe_threshold
+  major_window: target.boss|health.pct<=85|var.want_aoe
 
   in_bear: buff.bear_form.up
 
@@ -124,15 +138,15 @@ lists:
 
   cooldowns:
   # EC (Elune's Chosen): Lunar Beam as close to on CD as possible (Lunation CDR from Thrash + Moonfire)
-  - lunar_beam,if=var.has_lunation
+  - lunar_beam,if=var.has_lunation&(var.want_aoe|!var.incarnation_up)
   # Non-EC (DotC): align with Incarn/Berserk burst window
   - lunar_beam,if=!var.has_lunation&(cooldown.incarnation_guardian_of_ursoc.ready|cooldown.berserk.ready)
   - lunar_beam,if=!var.has_lunation&(cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)
-  - incarnation_guardian_of_ursoc,if=talent.incarnation_guardian_of_ursoc&!var.has_kotg
-  - wild_guardian,if=var.has_kotg
-  - berserk,if=!talent.incarnation_guardian_of_ursoc
-  - convoke_the_spirits,if=talent.convoke_the_spirits
-  - rage_of_the_sleeper,if=talent.rage_of_the_sleeper
+  - incarnation_guardian_of_ursoc,if=talent.incarnation_guardian_of_ursoc&!var.has_kotg&!var.incarnation_up&var.major_window,delay=500,global_delay=300
+  - wild_guardian,if=var.has_kotg&!var.incarnation_up&var.major_window,delay=500,global_delay=300
+  - berserk,if=!talent.incarnation_guardian_of_ursoc&!var.incarnation_up&var.major_window,delay=500,global_delay=300
+  - convoke_the_spirits,if=talent.convoke_the_spirits&(var.incarnation_up|health.pct<=65),delay=300,global_delay=250
+  - rage_of_the_sleeper,if=talent.rage_of_the_sleeper&(var.incarnation_up|health.pct<=65|var.want_aoe),delay=300
   - sundering_roar,if=talent.sundering_roar&debuff.thrash.stack<5
   - bristling_fur,if=var.has_bristling&cooldown.mangle.remains>0&cooldown.thrash.remains>0&var.bristling_rage&!var.ravage_up,use_off_gcd=1
   - barkskin,if=var.incarnation_up&health.pct>(config.defensive_hp+15),use_off_gcd=1
@@ -211,7 +225,9 @@ lists:
 
   fallback:
   - moonfire,if=target.exists&target.enemy&target.alive&target.range>8,ignore_queue=true
-  - mangle,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - thrash,if=target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
+  - mangle,if=target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
+  - swipe,if=target.exists&target.enemy&target.alive&target.range<=8,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue
@@ -237,7 +253,7 @@ lists:
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
   - call_action_list,name=cooldowns,if=config.use_cooldowns&state.cds
   - call_action_list,name=racials,if=config.use_cooldowns&state.cds
-  - call_action_list,name=rage_spenders
   - call_action_list,name=aoe,if=var.want_aoe
   - call_action_list,name=st
+  - call_action_list,name=rage_spenders
   - call_action_list,name=fallback

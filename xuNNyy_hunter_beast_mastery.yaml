@@ -36,6 +36,19 @@ config:
     label: "Use Tranq Shot"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
 
 variables:
   in_bw: buff.bestial_wrath.up
@@ -47,6 +60,7 @@ variables:
   frenzy_3: buff.frenzy.stack>=3
   beast_cleave_up: buff.beast_cleave.up
   focus_high: focus>=80
+  barbed_capping: cooldown.barbed_shot.charges_fractional>=1.8
 
   # Pet management
   pet_hurt: pet.exists&pet.alive&pet.health.pct<75
@@ -75,6 +89,8 @@ lists:
   - mend_pet,range_check=none,if=var.pet_hurt
 
   cooldowns:
+  - call_of_the_wild,if=config.use_cooldowns
+  - bestial_wrath,if=config.use_cooldowns
   - bloodshed,if=talent.bloodshed&var.in_bw
   - stampede,if=talent.stampede&var.in_bw
 
@@ -90,60 +106,65 @@ lists:
   - potion,if=config.use_potions&var.in_bw
 
   st:
-  - bestial_wrath,if=config.use_cooldowns
+  - kill_shot,if=target.health.pct<=20
+  - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - kill_command,if=var.howl_active
   - kill_command
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
-  - cobra_shot,if=var.focus_high
+  - kill_shot,if=var.in_bw
+  - cobra_shot,if=var.focus_high&cooldown.kill_command.remains>gcd
   - cobra_shot
 
   cleave:
-  - bestial_wrath,if=config.use_cooldowns
   - multishot,if=!var.beast_cleave_up|buff.beast_cleave.remains<2
+  - kill_shot,if=target.health.pct<=20
+  - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - kill_command
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
-  - multishot,if=var.focus_high
+  - kill_shot,if=var.in_bw
+  - multishot,if=var.focus_high&buff.beast_cleave.remains<gcd*2
   - cobra_shot
 
   drst:
-  - bestial_wrath,if=config.use_cooldowns
+  - kill_shot,if=target.health.pct<=20
+  - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - kill_command,if=cooldown.bestial_wrath.remains>gcd*3
   - black_arrow,if=buff.withering_fire.up
   - wailing_arrow,if=buff.wailing_arrow.up
   - cobra_shot,if=talent.killer_cobra&var.in_bw&cooldown.barbed_shot.charges_fractional<2
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
   - black_arrow
-  - cobra_shot,if=var.focus_high
+  - kill_shot,if=var.in_bw
+  - cobra_shot,if=var.focus_high&cooldown.kill_command.remains>gcd
   - cobra_shot
 
   drcleave:
-  - bestial_wrath,if=config.use_cooldowns
   - multishot,if=!var.beast_cleave_up|buff.beast_cleave.remains<2
+  - kill_shot,if=target.health.pct<=20
+  - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - wailing_arrow,if=buff.wailing_arrow.up
   - kill_command
   - black_arrow,if=buff.withering_fire.up
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
   - wailing_arrow
   - black_arrow
+  - kill_shot,if=var.in_bw
   - cobra_shot
 
   plst:
-  - bestial_wrath,if=config.use_cooldowns
+  - kill_shot,if=target.health.pct<=20
+  - barbed_shot,if=var.barbed_capping
   - barbed_shot,if=cooldown.bestial_wrath.remains<gcd
-  - kill_shot,if=target.health.pct<=20|var.in_bw
   - howl_of_the_pack_leader,if=var.in_bw
   - kill_command,if=var.howl_active
   - kill_command
   - barbed_shot,if=var.frenzy_low|!var.frenzy_3
-  - cobra_shot,if=var.focus_high
+  - kill_shot,if=var.in_bw
+  - cobra_shot,if=var.focus_high&cooldown.kill_command.remains>gcd
   - cobra_shot
 
   fallback:

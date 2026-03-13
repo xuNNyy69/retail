@@ -36,6 +36,19 @@ config:
     label: "Use Tranq Shot"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
 
 variables:
 
@@ -53,11 +66,12 @@ variables:
   howl_active: "buff.howl_of_the_pack_leader_wyvern.up|buff.howl_of_the_pack_leader_boar.up|buff.howl_of_the_pack_leader_bear.up"
   # Takedown active (after cast)
   takedown_active: buff.takedown.up
+  boomstick_buff_up: buff.tip_of_the_spear_boomstick.up
 
   # Wildfire Bomb charge management
   bomb_capping: cooldown.wildfire_bomb.charges>=2
 
-  want_aoe: active_enemies>=config.aoe_threshold
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
 
   # Pet management
   pet_hurt: pet.exists&pet.alive&pet.health.pct<75
@@ -106,14 +120,16 @@ lists:
   st:
   # Pack Leader: Howl beast ability highest priority
   - kill_command,if=var.is_pl&var.howl_active
+  - kill_shot,if=target.health.pct<=20
   # Sentinel: Moonlight Chakram (replaces Takedown keybind)
-  - moonlight_chakram,if=talent.moonlight_chakram&var.is_sentinel
+  - moonlight_chakram,if=talent.moonlight_chakram&var.is_sentinel&(var.takedown_active|!config.use_cooldowns)
   # KC before Takedown: generate TotS so Takedown window starts strong
   - kill_command,if=cooldown.takedown.ready&!var.tip_of_spear_up
   # Takedown: primary CD (Twin Fangs self-generates 3 TotS)
   - takedown,if=config.use_cooldowns
+  - wildfire_bomb,if=var.takedown_active&cooldown.wildfire_bomb.charges>=1
   # Boomstick: use with TotS stack, prioritize during Takedown window
-  - boomstick,if=var.tip_of_spear_up
+  - boomstick,if=var.tip_of_spear_up|var.boomstick_buff_up
   # Wildfire Bomb: charge cap prevention
   - wildfire_bomb,if=var.bomb_capping
   # Pack Leader: Wyvernmaxxing — 2 bombs per Wyvern proc to extend Fury of the Wyvern
@@ -121,11 +137,11 @@ lists:
   - wildfire_bomb,if=var.is_pl&var.howl_wyvern_up&cooldown.wildfire_bomb.charges>=1
   # Sentinel: Wildfire Bomb with Sentinel's Mark + TotS
   - wildfire_bomb,if=var.is_sentinel&var.sentinels_mark_up&var.tip_of_spear_up
-  # Kill Shot: execute range
-  - kill_shot,if=target.health.pct<=20
   # Flamefang Pitch: short-CD rotational ability
-  - flamefang_pitch,if=talent.flamefang_pitch
+  - flamefang_pitch,if=talent.flamefang_pitch&(var.takedown_active|var.tip_of_spear_up)
   # Raptor Swipe: with TotS (morph of raptor_strike when talented)
+  - raptor_swipe,if=var.takedown_active
+  - raptor_strike,if=var.takedown_active
   - raptor_swipe,if=var.tip_of_spear_up
   - raptor_strike,if=var.tip_of_spear_up
   # Kill Command: TotS generator — must sit above unconditional filler
@@ -143,25 +159,26 @@ lists:
   # Same core with Wildfire Bomb prioritized more for spread damage
   # ===========================================================
   aoe:
-  # Boomstick: AoE cone is #1 priority in multi-target
-  - boomstick,if=var.tip_of_spear_up
-  # Pack Leader: Howl beast ability
   - kill_command,if=var.is_pl&var.howl_active
+  - kill_shot,if=target.health.pct<=20
+  # Boomstick: AoE cone is #1 priority in multi-target
+  - boomstick,if=var.tip_of_spear_up|var.boomstick_buff_up
   # Sentinel: Moonlight Chakram
-  - moonlight_chakram,if=talent.moonlight_chakram&var.is_sentinel
+  - moonlight_chakram,if=talent.moonlight_chakram&var.is_sentinel&(var.takedown_active|!config.use_cooldowns)
   # Wildfire Bomb: charge cap prevention
   - wildfire_bomb,if=var.bomb_capping
   # Takedown: AoE via Flanked talent (Twin Fangs self-generates TotS)
   - takedown,if=config.use_cooldowns
+  - wildfire_bomb,if=var.takedown_active&cooldown.wildfire_bomb.charges>=1
   # Pack Leader: Wyvernmaxxing — bombs into Wyvern
   - wildfire_bomb,if=var.is_pl&var.howl_wyvern_up&cooldown.wildfire_bomb.charges>=1
   # Sentinel: Wildfire Bomb with Sentinel's Mark + TotS
   - wildfire_bomb,if=var.is_sentinel&var.sentinels_mark_up&var.tip_of_spear_up
   # Flamefang Pitch: AoE burst
-  - flamefang_pitch,if=talent.flamefang_pitch
-  # Kill Shot: execute
-  - kill_shot,if=target.health.pct<=20
+  - flamefang_pitch,if=talent.flamefang_pitch&(var.takedown_active|var.tip_of_spear_up)
   # Raptor Swipe with TotS (morph pair)
+  - raptor_swipe,if=var.takedown_active
+  - raptor_strike,if=var.takedown_active
   - raptor_swipe,if=var.tip_of_spear_up
   - raptor_strike,if=var.tip_of_spear_up
   # Kill Command: TotS generator — above unconditional filler
