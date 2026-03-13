@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   use_dispel:
     label: "Use Dispel (Cleanse)"
     type: checkbox
@@ -122,12 +135,12 @@ lists:
   - beacon_of_light,cycle=tanks,if=cycle.buff.beacon_of_light.down
 
   cooldowns:
-  - avenging_wrath,if=usable.avenging_wrath&talent.avenging_wrath
-  - avenging_crusader,if=usable.avenging_crusader&talent.avenging_crusader
-  - divine_toll,if=usable.divine_toll&holy_power<=2
+  - avenging_wrath,if=usable.avenging_wrath&talent.avenging_wrath,delay=300,global_delay=400
+  - avenging_crusader,if=usable.avenging_crusader&talent.avenging_crusader,delay=300,global_delay=400
+  - divine_toll,if=usable.divine_toll&holy_power<=2,delay=300
   - holy_avenger,if=talent.holy_avenger&var.aw_up
-  - beacon_of_virtue,if=talent.beacon_of_virtue&var.need_aoe_heal
-  - tyrs_deliverance,if=talent.tyrs_deliverance&(var.need_aoe_heal|var.need_emergency|var.need_major_heal)
+  - beacon_of_virtue,if=talent.beacon_of_virtue&var.need_aoe_heal,delay=300
+  - tyrs_deliverance,if=talent.tyrs_deliverance&(var.need_aoe_heal|var.need_emergency|var.need_major_heal),delay=300,global_delay=400
   - daybreak,if=talent.daybreak&(var.need_aoe_heal|var.in_burst)
   - aura_mastery,if=talent.aura_mastery&var.need_aoe_heal,use_off_gcd=1
   - blessing_of_sacrifice,cycle=tanks,if=cycle.health.pct<config.bos_hp&cooldown.blessing_of_sacrifice.ready,use_off_gcd=1
@@ -193,6 +206,8 @@ lists:
   - consecration,if=var.safe_to_damage
 
   fallback:
+  - holy_shock,target=lowest,if=group.lowest.health.pct<100,ignore_queue=true
+  - flash_of_light,target=lowest,if=var.iol_up&group.lowest.health.pct<100,ignore_queue=true
   - holy_light,target=lowest,ignore_queue=true
 
   main:

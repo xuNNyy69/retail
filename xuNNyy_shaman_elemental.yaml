@@ -30,6 +30,19 @@ config:
     label: "Use Purge/Dispel"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
 
 variables:
   # mael_cap base is 100; swelling_maelstrom/primordial_capacity add 50/25 respectively.
@@ -57,9 +70,9 @@ lists:
 
   cooldowns:
   - return,if=!config.use_cooldowns
-  - fire_elemental,if=talent.fire_elemental&cooldown.fire_elemental.ready
-  - stormkeeper,if=talent.stormkeeper&cooldown.stormkeeper.ready
-  - ascendance,if=talent.ascendance&cooldown.ascendance.ready
+  - fire_elemental,if=talent.fire_elemental&cooldown.fire_elemental.ready,delay=500,global_delay=300
+  - stormkeeper,if=talent.stormkeeper&cooldown.stormkeeper.ready,delay=300
+  - ascendance,if=talent.ascendance&cooldown.ascendance.ready,delay=500,global_delay=300
   - natures_swiftness,if=talent.natures_swiftness&cooldown.natures_swiftness.ready
   - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready
 
@@ -93,6 +106,7 @@ lists:
 
   fallback:
   - spiritwalkers_grace,if=player.moving,use_off_gcd=1
+  - lava_burst,if=target.exists&target.enemy&target.alive&dot.flame_shock.up,ignore_queue=true
   - lightning_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

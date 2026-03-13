@@ -253,7 +253,7 @@ lists:
   - chi_burst,if=var.has_chi_burst
   - blackout_kick,if=var.has_teachings&var.teachings_stack>=1&cooldown.rising_sun_kick.remains>gcd
   - spinning_crane_kick,if=var.has_dance&var.dance_up
-  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
+  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready,delay=300,global_delay=250
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready
   - tiger_palm
 
@@ -266,7 +266,7 @@ lists:
   - rushing_wind_kick,if=var.has_rwk
   - jadefire_stomp,if=var.has_jadefire
   - chi_burst,if=var.has_chi_burst
-  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready
+  - celestial_conduit,if=var.has_cotc&cooldown.celestial_conduit.ready,delay=300,global_delay=250
   - spinning_crane_kick,if=var.want_aoe
   - blackout_kick,if=var.has_teachings&var.teachings_stack>=1&cooldown.rising_sun_kick.remains>gcd
   - sheiluns_gift,if=var.has_sheilun&var.sheilun_ready

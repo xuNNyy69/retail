@@ -26,6 +26,19 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -86,11 +99,11 @@ lists:
   - shield_of_vengeance,if=usable.shield_of_vengeance&!debuff.execution_sentence.up,ignore_movement=true
   # Execution Sentence: fire inside AW/Crusade (guide: always pair with AW);
   # allow on CD only when BOTH burst CDs are >5s away to avoid wasting right before the window.
-  - execution_sentence,if=usable.execution_sentence&(holy_power>=4|buff.divine_resonance.up)&(var.in_avenging_wrath|var.in_crusade|(cooldown.avenging_wrath.remains>5&cooldown.crusade.remains>5)),ignore_movement=true
+  - execution_sentence,if=usable.execution_sentence&(holy_power>=4|buff.divine_resonance.up)&(var.in_avenging_wrath|var.in_crusade|(cooldown.avenging_wrath.remains>5&cooldown.crusade.remains>5)),delay=300,global_delay=400,ignore_movement=true
   # Avenging Wrath: gated by !talent.radiant_glory -- Radiant Glory auto-triggers AW from finishers.
-  - avenging_wrath,if=usable.avenging_wrath&!talent.radiant_glory&((holy_power>=4&combat.time<5)|(holy_power>=3&combat.time>=5)|(holy_power>=2&talent.divine_auxiliary)),ignore_movement=true
-  - crusade,if=usable.crusade&((holy_power>=5&combat.time<5)|(holy_power>=3&combat.time>=5)),ignore_movement=true
-  - final_reckoning,if=usable.final_reckoning&(holy_power>=4|buff.divine_resonance.up)&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up),ignore_movement=true
+  - avenging_wrath,if=usable.avenging_wrath&!talent.radiant_glory&((holy_power>=4&combat.time<5)|(holy_power>=3&combat.time>=5)|(holy_power>=2&talent.divine_auxiliary)),delay=300,global_delay=400,ignore_movement=true
+  - crusade,if=usable.crusade&((holy_power>=5&combat.time<5)|(holy_power>=3&combat.time>=5)),delay=300,global_delay=400,ignore_movement=true
+  - final_reckoning,if=usable.final_reckoning&(holy_power>=4|buff.divine_resonance.up)&(var.in_avenging_wrath|var.in_crusade|debuff.execution_sentence.up),delay=300,global_delay=400,ignore_movement=true
 
   finishers:
   - hammer_of_light,if=usable.hammer_of_light&(var.hammer_ready|!talent.divine_hammer|var.divine_hammer_up|cooldown.divine_hammer.remains>10),ignore_movement=true
@@ -129,6 +142,9 @@ lists:
   - bag_of_tricks,if=usable.bag_of_tricks,ignore_movement=true
 
   fallback:
+  - hammer_of_wrath,if=usable.hammer_of_wrath&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
+  - judgment,if=usable.judgment&target.exists&target.enemy&target.alive,ignore_queue=true,ignore_movement=true
+  - blade_of_justice,if=usable.blade_of_justice&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
   - crusader_strike,if=usable.crusader_strike&target.exists&target.enemy&target.alive&var.in_melee,ignore_queue=true,ignore_movement=true
 
   main:

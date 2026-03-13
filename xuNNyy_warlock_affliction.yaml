@@ -109,6 +109,8 @@ lists:
   - shadow_bolt
 
   fallback:
+  - seed_of_corruption,if=target.exists&target.enemy&target.alive&active_enemies>=config.aoe_threshold&soul_shards>=3,ignore_queue=true
+  - haunt,if=target.exists&target.enemy&target.alive&cooldown.haunt.ready,ignore_queue=true
   - unstable_affliction,if=target.exists&target.enemy&target.alive&soul_shards>=4,ignore_queue=true
   - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

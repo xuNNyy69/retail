@@ -30,6 +30,19 @@ config:
     label: "Use Dispel"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -126,9 +139,9 @@ lists:
   # Power Infusion: external haste to top DPS; Twins of Sun Priestess applies to self
   # ===========================================================
   cooldowns:
-  - apotheosis,if=cooldown.apotheosis.ready&var.multi_injured
-  - divine_hymn,if=cooldown.divine_hymn.ready&var.multi_injured
-  - power_infusion,if=cooldown.power_infusion.ready,use_off_gcd=1
+  - apotheosis,if=cooldown.apotheosis.ready&var.multi_injured,delay=300,global_delay=400
+  - divine_hymn,if=cooldown.divine_hymn.ready&var.multi_injured,delay=300,global_delay=400
+  - power_infusion,if=cooldown.power_infusion.ready,use_off_gcd=1,delay=300
   - guardian_spirit,target=tanks.lowest,if=cooldown.guardian_spirit.ready&var.tank_low,use_off_gcd=1
 
   racials:
@@ -189,7 +202,7 @@ lists:
   # ===========================================================
   archon_heal:
   - return,if=!var.is_archon
-  - halo,if=config.use_cooldowns&cooldown.halo.ready&var.multi_injured
+  - halo,if=config.use_cooldowns&cooldown.halo.ready&var.multi_injured,delay=300
 
   # ===========================================================
   # DPS filler when group is healthy
@@ -204,6 +217,8 @@ lists:
   - smite
 
   fallback:
+  - holy_fire,if=target.exists&target.enemy&target.alive&talent.holy_fire,ignore_queue=true
+  - holy_word_chastise,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

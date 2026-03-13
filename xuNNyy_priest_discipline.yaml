@@ -30,6 +30,19 @@ config:
     label: "Use Dispel"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -150,7 +163,7 @@ lists:
   - power_word_radiance,if=cooldown.power_word_radiance.charges>=1
   - power_word_radiance,if=cooldown.power_word_radiance.charges>=2
   # Ultimate Penitence: cast; Mind Blast at end of channel while falling
-  - ultimate_penitence,if=config.use_cooldowns
+  - ultimate_penitence,if=config.use_cooldowns,delay=300,global_delay=400
   - mind_blast
   - penance
   - power_word_shield
@@ -188,6 +201,8 @@ lists:
   - power_word_radiance,if=var.multi_injured&cooldown.power_word_radiance.charges>=1
 
   fallback:
+  - mind_blast,if=target.exists&target.enemy&target.alive&usable.mind_blast,ignore_queue=true
+  - penance,if=target.exists&target.enemy&target.alive&usable.penance,ignore_queue=true
   - smite,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
@@ -209,7 +224,7 @@ lists:
   - return,if=player.casting|player.channeling
   - call_action_list,name=dispel,if=config.use_dispel
   - call_action_list,name=items,if=config.use_trinkets|config.use_potions
-  - power_infusion,if=config.use_cooldowns&cooldown.power_infusion.ready,use_off_gcd=1
+  - power_infusion,if=config.use_cooldowns&cooldown.power_infusion.ready,use_off_gcd=1,delay=300
   # Emergency direct heals bypass all rotation logic
   - call_action_list,name=emergency,if=var.anyone_emergency
   # Ultimate Penitence ramp (higher value CD fires first)

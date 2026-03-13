@@ -30,6 +30,19 @@ config:
     label: "Auto Taunt"
     type: checkbox
     default: false
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -132,11 +145,11 @@ lists:
 
   cooldowns:
   - reapers_mark,if=var.has_deathbringer
-  - dancing_rune_weapon
+  - dancing_rune_weapon,delay=500,global_delay=300
   - raise_dead,if=!pet.exists|pet.dead
-  - vampiric_blood,if=var.drw_up|active_enemies>=config.aoe_threshold
+  - vampiric_blood,if=var.drw_up|active_enemies>=config.aoe_threshold,delay=300
   - empower_rune_weapon,if=var.rune_low&runic_power<40
-  - abomination_limb,if=talent.abomination_limb
+  - abomination_limb,if=talent.abomination_limb,delay=300
   - consumption,if=talent.consumption
   - mark_of_blood,if=talent.mark_of_blood&!debuff.mark_of_blood.up
   - blood_tap,if=var.has_blood_tap&var.rune_low&var.bone_ok
@@ -221,6 +234,8 @@ lists:
   - death_strike,if=var.ds_rp_dump
 
   fallback:
+  - deaths_caress,if=target.exists&target.enemy&target.alive&debuff.blood_plague.down,ignore_queue=true
+  - death_and_decay,if=target.exists&target.enemy&target.alive&var.want_aoe&!var.dnd_active,ignore_queue=true
   - blood_boil,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - heart_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - vampiric_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true

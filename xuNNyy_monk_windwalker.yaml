@@ -131,9 +131,9 @@ lists:
   # CotC opener: TP -> Invoke Xuen -> Slicing Winds -> Zenith -> FoF -> RSK -> FoF(Battlegear reset) -> SotW -> WDP
   cotc_opener:
   - tiger_palm,if=chi<5
-  - invoke_xuen_the_white_tiger,if=var.has_cotc
+  - invoke_xuen_the_white_tiger,if=var.has_cotc,delay=500,global_delay=300
   - slicing_winds,if=var.has_slicing
-  - zenith
+  - zenith,delay=500,global_delay=300
   - fists_of_fury,if=var.chi_for_fof
   - rising_sun_kick,if=var.chi_for_rsk
   - fists_of_fury,if=var.chi_for_fof
@@ -143,7 +143,7 @@ lists:
   # Shado-Pan opener: TP -> Zenith -> Slicing Winds -> FoF -> RSK -> FoF(Battlegear reset) -> SotW
   shado_opener:
   - tiger_palm,if=chi<5
-  - zenith
+  - zenith,delay=500,global_delay=300
   - slicing_winds,if=var.has_slicing
   - fists_of_fury,if=var.chi_for_fof
   - rising_sun_kick,if=var.chi_for_rsk

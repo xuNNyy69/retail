@@ -100,6 +100,7 @@ lists:
   fallback:
   - implosion,if=target.exists&target.enemy&target.alive&var.want_aoe&buff.wild_imps.stack>=6,ignore_queue=true
   - call_dreadstalkers,if=target.exists&target.enemy&target.alive&cooldown.call_dreadstalkers.ready,ignore_queue=true
+  - power_siphon,if=target.exists&target.enemy&target.alive&talent.power_siphon&buff.wild_imps.stack>=2,ignore_queue=true
   - demonbolt,if=target.exists&target.enemy&target.alive&buff.demonic_core.up,ignore_queue=true,ignore_movement=true
   - hand_of_guldan,if=target.exists&target.enemy&target.alive&soul_shards>=4,ignore_queue=true
   - shadow_bolt,if=target.exists&target.enemy&target.alive,ignore_queue=true,ignore_movement=true

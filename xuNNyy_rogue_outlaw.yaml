@@ -30,6 +30,19 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -62,9 +75,9 @@ lists:
   - keep_it_rolling,if=talent.keep_it_rolling&var.rtb_stage>=2
 
   cds:
-  - adrenaline_rush,if=!buff.adrenaline_rush.up&combo_points<=2,use_off_gcd=1
-  - blade_rush,if=talent.blade_rush
-  - vanish,if=combo_points<5&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
+  - adrenaline_rush,if=!buff.adrenaline_rush.up&combo_points<=2,use_off_gcd=1,delay=300,global_delay=400
+  - blade_rush,if=talent.blade_rush,delay=300
+  - vanish,if=combo_points<5&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up,delay=300
   - potion,if=config.use_potions&buff.adrenaline_rush.up,use_off_gcd=1
   - blood_fury,if=buff.adrenaline_rush.up,use_off_gcd=1
   - berserking,if=buff.adrenaline_rush.up,use_off_gcd=1
@@ -94,6 +107,8 @@ lists:
   - sinister_strike
 
   fallback:
+  - ambush,if=target.exists&target.enemy&target.alive&talent.hidden_opportunity&buff.audacity.up,ignore_queue=true
+  - pistol_shot,if=target.exists&target.enemy&target.alive&buff.opportunity.up,ignore_queue=true
   - sinister_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

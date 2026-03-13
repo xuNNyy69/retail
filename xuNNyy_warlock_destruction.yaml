@@ -103,6 +103,7 @@ lists:
   - incinerate
 
   fallback:
+  - havoc,if=target.exists&target.enemy&target.alive&active_enemies>=2,ignore_queue=true
   - conflagrate,if=target.exists&target.enemy&target.alive&cooldown.conflagrate.charges>=1,ignore_queue=true
   - chaos_bolt,if=target.exists&target.enemy&target.alive&soul_shards>=4,ignore_queue=true
   - incinerate,if=target.exists&target.enemy&target.alive,ignore_queue=true

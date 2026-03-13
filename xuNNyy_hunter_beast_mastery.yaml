@@ -89,10 +89,10 @@ lists:
   - mend_pet,range_check=none,if=var.pet_hurt
 
   cooldowns:
-  - call_of_the_wild,if=config.use_cooldowns
-  - bestial_wrath,if=config.use_cooldowns
-  - bloodshed,if=talent.bloodshed&var.in_bw
-  - stampede,if=talent.stampede&var.in_bw
+  - call_of_the_wild,if=config.use_cooldowns,delay=500,global_delay=300
+  - bestial_wrath,if=config.use_cooldowns,delay=300
+  - bloodshed,if=talent.bloodshed&var.in_bw,delay=300
+  - stampede,if=talent.stampede&var.in_bw,delay=500,global_delay=300
 
   racials:
   - berserking,use_off_gcd=1,if=var.in_bw
@@ -168,6 +168,7 @@ lists:
   - cobra_shot
 
   fallback:
+  - multishot,if=target.exists&target.enemy&target.alive&var.want_aoe&(!var.beast_cleave_up|buff.beast_cleave.remains<2),ignore_queue=true
   - kill_command,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - barbed_shot,if=target.exists&target.enemy&target.alive&cooldown.barbed_shot.charges_fractional>=1.5,ignore_queue=true
   - cobra_shot,if=target.exists&target.enemy&target.alive,ignore_queue=true

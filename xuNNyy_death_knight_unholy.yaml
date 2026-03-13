@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -102,22 +115,22 @@ lists:
   - raise_dead,if=var.pet_missing,use_off_gcd=1
   - outbreak,if=var.vp_refresh
   # Army and DT are top priority CDs (Wowhead #2, #3)
-  - army_of_the_dead,use_off_gcd=1
-  - dark_transformation,use_off_gcd=1
+  - army_of_the_dead,use_off_gcd=1,delay=500,global_delay=300
+  - dark_transformation,use_off_gcd=1,delay=300
   # Putrefy at 2 charges (Wowhead #4)
   - putrefy,if=talent.putrefy&cooldown.putrefy.charges>=2
   # Soul Reaper on CD (Wowhead #5)
   - soul_reaper,if=var.sr_ready
-  - summon_gargoyle,if=talent.summon_gargoyle&runic_power>=60
+  - summon_gargoyle,if=talent.summon_gargoyle&runic_power>=60,delay=500,global_delay=300
   - raise_abomination,if=talent.raise_abomination
   - unholy_blight,if=talent.unholy_blight
-  - apocalypse,if=debuff.festering_wound.stack>=4
+  - apocalypse,if=debuff.festering_wound.stack>=4,delay=300
   - vile_contagion,if=debuff.festering_wound.stack>=4&active_enemies>=2
   - defile,if=talent.defile
   - death_and_decay,if=!talent.defile&active_enemies>=2
   - unholy_assault,if=talent.unholy_assault&var.wounds_low
   - empower_rune_weapon,if=rune<2&runic_power<40
-  - abomination_limb,if=talent.abomination_limb
+  - abomination_limb,if=talent.abomination_limb,delay=300
 
   burst:
   - return,if=!var.dt_up&!var.gargoyle_window
@@ -225,6 +238,7 @@ lists:
 
   fallback:
   - deaths_caress,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - epidemic,if=target.exists&target.enemy&target.alive&var.epidemic_mode&runic_power>=40,ignore_queue=true
   - scourge_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - vampiric_strike,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - death_coil,if=target.exists&target.enemy&target.alive&runic_power>=40,ignore_queue=true

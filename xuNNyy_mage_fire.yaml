@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -66,8 +79,8 @@ lists:
   - potion,if=config.use_potions&buff.combustion.up,ignore_movement=true
 
   cooldowns:
-  - combustion,if=usable.combustion&!buff.combustion.up,ignore_movement=true
-  - mirror_image,if=usable.mirror_image,ignore_movement=true
+  - combustion,if=usable.combustion&!buff.combustion.up,delay=300,global_delay=400,ignore_movement=true
+  - mirror_image,if=usable.mirror_image,delay=300,ignore_movement=true
 
   # Frostfire build — Combustion window
   ff_combustion:
@@ -139,6 +152,9 @@ lists:
   - ancestral_call,if=usable.ancestral_call&buff.combustion.up,use_off_gcd=1,ignore_movement=true
 
   fallback:
+  - flamestrike,if=target.exists&target.enemy&target.alive&var.in_ranged&var.hot_streak_react&var.want_aoe&active_enemies>=3,ignore_queue=true,ignore_movement=true
+  - pyroblast,if=target.exists&target.enemy&target.alive&var.in_ranged&(var.hot_streak_react|buff.fury_of_the_sun_king.up),ignore_queue=true,ignore_movement=true
+  - scorch,if=target.exists&target.enemy&target.alive&var.in_ranged&(player.moving|target.health.pct<=30),ignore_queue=true,ignore_movement=true
   - fireball,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
   - scorch,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
 

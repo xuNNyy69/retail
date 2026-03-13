@@ -27,6 +27,19 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -73,9 +86,9 @@ lists:
   - ancestral_call,if=var.in_dr,use_off_gcd=1
 
   cooldowns:
-  - dragonrage,if=!var.in_dr
-  - deep_breath,if=var.is_sc
-  - tip_the_scales,use_off_gcd=1
+  - dragonrage,if=!var.in_dr,delay=500,global_delay=300
+  - deep_breath,if=var.is_sc,delay=500,global_delay=300
+  - tip_the_scales,use_off_gcd=1,delay=300
 
   st_fs:
   - fire_breath,empower_to=1,if=var.fb_refresh|cooldown.fire_breath.charges>=2
@@ -120,6 +133,7 @@ lists:
   - azure_strike
 
   fallback:
+  - disintegrate,if=target.exists&target.enemy&target.alive&var.eb_burst,ignore_queue=true
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

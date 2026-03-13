@@ -26,6 +26,19 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -90,17 +103,17 @@ lists:
   - charge
   - bloodthirst,if=var.need_enrage
   - bloodbath,if=var.need_enrage
-  - recklessness,if=usable.recklessness
-  - avatar,if=usable.avatar
+  - recklessness,if=usable.recklessness,delay=300,global_delay=400
+  - avatar,if=usable.avatar,delay=300,global_delay=400
   - call_action_list,name=cooldowns,if=config.use_cooldowns
 
   cooldowns:
-  - recklessness,if=buff.avatar.up|cooldown.avatar.remains>40|!talent.avatar
-  - avatar,if=buff.recklessness.up|cooldown.recklessness.remains>40
-  - ravager,if=cooldown.recklessness.remains<=gcd|var.reckless_active
-  - thunderous_roar,if=var.enraged&(var.in_cd_window|active_enemies>=2)
-  - champions_spear,if=var.enraged&var.furious_bt_up
-  - odyns_fury,if=var.enraged&var.furious_bt_up
+  - recklessness,if=buff.avatar.up|cooldown.avatar.remains>40|!talent.avatar,delay=300,global_delay=400
+  - avatar,if=buff.recklessness.up|cooldown.recklessness.remains>40,delay=300,global_delay=400
+  - ravager,if=cooldown.recklessness.remains<=gcd|var.reckless_active,delay=300
+  - thunderous_roar,if=var.enraged&(var.in_cd_window|active_enemies>=2),delay=300
+  - champions_spear,if=var.enraged&var.furious_bt_up,delay=300
+  - odyns_fury,if=var.enraged&var.furious_bt_up,delay=300
   - bladestorm,if=var.enraged&(var.in_cd_window|cooldown.recklessness.remains>15|active_enemies>=config.aoe_threshold)
 
   burst:
@@ -228,6 +241,8 @@ lists:
 
   fallback:
   - heroic_throw
+  - bloodthirst,if=target.exists&target.enemy&target.alive&usable.bloodthirst,ignore_queue=true
+  - raging_blow,if=target.exists&target.enemy&target.alive&usable.raging_blow,ignore_queue=true
   - slam,if=talent.annihilator&target.exists&target.enemy&target.alive,ignore_queue=true
   - whirlwind,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

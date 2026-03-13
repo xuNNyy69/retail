@@ -26,6 +26,19 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -65,11 +78,11 @@ lists:
 
   cooldowns:
   - return,if=!config.use_cooldowns
-  - avatar
-  - colossus_smash
-  - ravager
+  - avatar,delay=300,global_delay=400
+  - colossus_smash,delay=300,global_delay=400
+  - ravager,delay=300
   - bladestorm,if=var.cs_active|cooldown.colossus_smash.remains>5
-  - demolish,if=talent.demolish&var.cs_active&buff.colossal_might.stack>=1
+  - demolish,if=talent.demolish&var.cs_active&buff.colossal_might.stack>=1,delay=300
 
   colossus_aoe:
   - heroic_strike,use_off_gcd=1,if=buff.master_of_warfare_proc.up
@@ -157,6 +170,8 @@ lists:
 
   fallback:
   - heroic_throw,if=target.exists&target.enemy&target.alive
+  - mortal_strike,if=target.exists&target.enemy&target.alive&usable.mortal_strike,ignore_queue=true
+  - overpower,if=target.exists&target.enemy&target.alive&usable.overpower,ignore_queue=true
   - slam,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

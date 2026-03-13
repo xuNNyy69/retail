@@ -28,6 +28,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -91,7 +104,7 @@ lists:
   - arcane_torrent,use_off_gcd=1,if=var.burst_window
 
   cooldowns:
-  - icy_veins,if=usable.icy_veins&!buff.icy_veins.up,ignore_movement=true
+  - icy_veins,if=usable.icy_veins&!buff.icy_veins.up,delay=300,global_delay=400,ignore_movement=true
   - potion,if=config.use_potions&(prev_gcd.1.icy_veins|buff.icy_veins.up),ignore_movement=true
   - comet_storm,if=var.is_frostfire
   - frozen_orb,if=var.want_aoe&var.fof_low&debuff.winters_chill.down
@@ -174,9 +187,10 @@ lists:
   - frostbolt,if=var.is_spellslinger&buff.ice_floes.up&player.moving
 
   fallback:
+  - ice_lance,if=target.exists&target.enemy&target.alive&(var.shatterable|player.moving),ignore_queue=true
+  - glacial_spike,if=target.exists&target.enemy&target.alive&var.icicles_full,ignore_queue=true
   - frostfire_bolt,if=var.is_frostfire&target.exists&target.enemy&target.alive,ignore_queue=true
   - frostbolt,if=var.is_spellslinger&target.exists&target.enemy&target.alive,ignore_queue=true
-  - ice_lance,if=target.exists&target.enemy&target.alive&player.moving,ignore_queue=true
 
   main:
   - call_action_list,name=spell_queue

@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -126,7 +139,7 @@ lists:
   - raise_dead,if=var.pet_missing
   - howling_blast,if=var.ff_refresh
   - remorseless_winter,if=active_enemies>1|talent.gathering_storm
-  - pillar_of_frost
+  - pillar_of_frost,delay=500,global_delay=300
 
   # -------------------------------------------------------------------------
   # COOLDOWNS
@@ -139,13 +152,13 @@ lists:
   # ERW: fire at 2 full charges to avoid cap (Wowhead #1)
   - empower_rune_weapon,use_off_gcd=1,if=cooldown.empower_rune_weapon.charges_fractional>=2
   # Reaper's Mark on CD (Wowhead #2)
-  - reapers_mark,if=var.has_deathbringer
+  - reapers_mark,if=var.has_deathbringer,delay=300
   # Pillar of Frost (Wowhead #3) — pool 3+ runes for Obliteration
-  - pillar_of_frost,if=!talent.obliteration|rune>=3
+  - pillar_of_frost,if=!talent.obliteration|rune>=3,delay=500,global_delay=300
   # Breath of Sindragosa: start inside pillar window (Wowhead #4)
-  - breath_of_sindragosa,use_off_gcd=1,if=talent.breath_of_sindragosa&!var.breath_up&var.pillar_up
+  - breath_of_sindragosa,use_off_gcd=1,if=talent.breath_of_sindragosa&!var.breath_up&var.pillar_up,delay=300,global_delay=250
   # Frostwyrm's Fury: only when no active RM or Exterminate (Wowhead #5)
-  - frostwyrms_fury,if=var.pillar_up&(!var.has_deathbringer|(!var.exterminate_ready&cooldown.reapers_mark.remains>gcd))
+  - frostwyrms_fury,if=var.pillar_up&(!var.has_deathbringer|(!var.exterminate_ready&cooldown.reapers_mark.remains>gcd)),delay=300
   # ERW: sustain during active Breath — avoid dropping channel
   - empower_rune_weapon,use_off_gcd=1,if=var.breath_up&(rune<2|runic_power<50)
   # ERW: BoS prep — 1 charge when BoS ready and RP low
@@ -155,7 +168,7 @@ lists:
   # Chill Streak: AoE burst cooldown
   - chill_streak,if=active_enemies>=2&var.in_melee
   # Abomination Limb: AoE grip + damage
-  - abomination_limb,if=var.in_melee
+  - abomination_limb,if=var.in_melee,delay=300
   # Absolute Zero: AoE stun + damage
   - absolute_zero,if=active_enemies>=2&var.in_melee
   # Horn of Winter as rune/RP recovery
@@ -281,6 +294,7 @@ lists:
   # FALLBACK
   # -------------------------------------------------------------------------
   fallback:
+  - chains_of_ice,if=target.exists&target.enemy&target.alive&var.cold_heart_ready,ignore_queue=true
   - frost_strike,if=target.exists&target.enemy&target.alive&runic_power>=25,ignore_queue=true
   - howling_blast,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

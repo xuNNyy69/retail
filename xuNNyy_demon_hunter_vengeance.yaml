@@ -26,6 +26,19 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   auto_taunt:
     label: "Auto Taunt"
     type: checkbox
@@ -125,7 +138,7 @@ lists:
 
   ar_cooldowns:
   # Guide #2: Sigil of Spite � high-priority, permissive fragment cap (detonates after delay)
-  - sigil_of_spite,if=soul_fragments<=4
+  - sigil_of_spite,if=soul_fragments<=4,delay=300
   # Guide #3: Fiery Brand � before charge cap / fiery_demise alignment
   - fiery_brand,if=dot.fiery_brand.down&(cooldown.fiery_brand.charges>=2|!talent.fiery_demise)
   - fiery_brand,if=talent.fiery_demise&dot.fiery_brand.down&(cooldown.soul_carver.remains<8|cooldown.sigil_of_spite.remains<8)
@@ -134,13 +147,13 @@ lists:
   # Charred flesh: keep immolation_aura rolling inside fiery brand window
   - immolation_aura,if=var.fiery_demise_active&talent.charred_flesh
   # Guide #6: Soul Carver � Fiery Brand on target with 3s+ remaining
-  - soul_carver,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=3
+  - soul_carver,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=3,delay=300
   # Guide #11: Fel Devastation � outside glaive empowered windows, Fiery Brand 2s+
   - fel_devastation,if=buff.rending_strike.down&buff.glaive_flurry.down&dot.fiery_brand.ticking&dot.fiery_brand.remains>=2
   # IA refresh in fiery demise window when charred_flesh is not talented
   - immolation_aura,if=var.fiery_demise_active
   # The Hunt: movement + heal
-  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss)
+  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss),delay=300
 
   ar_fillers:
   # Spirit Bomb at stepped thresholds (fiery_demise=3, meta=4, baseline=6)
@@ -181,15 +194,15 @@ lists:
   - fiery_brand,if=dot.fiery_brand.down&(cooldown.fiery_brand.charges>=2|!talent.fiery_demise)
   - fiery_brand,if=talent.fiery_demise&dot.fiery_brand.down&(cooldown.soul_carver.remains<8|cooldown.sigil_of_spite.remains<8)
   # Guide #2: Metamorphosis after Fiery Brand
-  - metamorphosis,if=!var.in_meta&(target.time_to_die>10|target.boss)
+  - metamorphosis,if=!var.in_meta&(target.time_to_die>10|target.boss),delay=300,global_delay=400
   # Fragment guard before sigil_of_spite to prevent overcap
-  - sigil_of_spite,if=talent.sigil_of_spite&soul_fragments<=3
+  - sigil_of_spite,if=talent.sigil_of_spite&soul_fragments<=3,delay=300
   # Guide #7: Soul Carver � Fiery Brand on target with 3s+ remaining
-  - soul_carver,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=3
+  - soul_carver,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=3,delay=300
   # Guide #10: Fel Devastation � Fiery Brand on target with 2s+ remaining
   - fel_devastation,if=dot.fiery_brand.ticking&dot.fiery_brand.remains>=2
   # The Hunt: movement + heal
-  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss)
+  - the_hunt,if=talent.the_hunt&(target.time_to_die>4|target.boss),delay=300
 
   anni_meta:
   # Fiery demise window: amplified Spirit Bomb at threshold 3
@@ -237,6 +250,7 @@ lists:
   - sigil_of_doom
 
   fallback:
+  - soul_cleave,if=target.exists&target.enemy&target.alive&soul_fragments>=1,ignore_queue=true
   - shear,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - throw_glaive,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

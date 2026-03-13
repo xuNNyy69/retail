@@ -26,6 +26,19 @@ config:
     label: Use Cooldowns
     type: checkbox
     default: true
+  auto_combat:
+    label: Auto Combat
+    type: multi_select
+    options:
+      - label: Off
+        value: 0
+      - label: Quest
+        value: 1
+      - label: Combat
+        value: 2
+      - label: Defensive
+        value: 3
+    default: [0]
   aoe_threshold:
     label: AoE Threshold
     type: slider
@@ -61,6 +74,7 @@ variables:
   burst_ready: "var.eclipse_any|var.ap_ready"
   # CD pooling: hold AP when CA/Incarn is about to come off CD
   pool_for_cd: "astral_power<30&cooldown.celestial_alignment.remains<gcd*4"
+  cd_condition: "!var.pool_for_cd|var.ca_active"
   boat_stacks: "buff.balance_of_all_things_arcane.stack+buff.balance_of_all_things_nature.stack"
   # Cooldown state: built-in CDs toggle plus per-rotation checkbox
   use_cds: "state.cds&config.use_cooldowns"
@@ -220,6 +234,8 @@ lists:
   - wrath
 
   fallback:
+  - moonfire,if=target.exists&target.enemy&target.alive&dot.moonfire.refreshable&target.time_to_die>4,ignore_queue=true
+  - sunfire,if=target.exists&target.enemy&target.alive&dot.sunfire.refreshable&target.time_to_die>4,ignore_queue=true
   - wrath,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

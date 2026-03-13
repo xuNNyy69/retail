@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -200,6 +213,8 @@ lists:
   - felblade,if=fury<60
 
   fallback:
+  - consume,if=target.exists&target.enemy&target.alive,ignore_queue=true
+  - devour,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - throw_glaive
   - felblade,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

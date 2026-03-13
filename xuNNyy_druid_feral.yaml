@@ -26,6 +26,19 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -109,8 +122,8 @@ lists:
   # Cooldowns: Berserk pairs with TF; fire both together
   # TF first if energy is low (guide: be at low energy when TF comes up)
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
-  - berserk,if=config.use_cooldowns&var.tigers_fury_up&(target.time_to_die>15|target.boss)
-  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up&(target.time_to_die>15|target.boss)
+  - berserk,if=config.use_cooldowns&var.tigers_fury_up&(target.time_to_die>15|target.boss),delay=500,global_delay=300
+  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up&(target.time_to_die>15|target.boss),delay=500,global_delay=300
   # TF on CD even without Berserk pairing
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
 
@@ -133,7 +146,7 @@ lists:
   - frantic_frenzy,if=talent.frantic_frenzy&config.use_cooldowns&var.cp_low
 
   # Convoke: inside Berserk+TF window for maximum value
-  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&target.time_to_die>4
+  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&target.time_to_die>4,delay=300,global_delay=250
 
   # Ferocious Bite: 5 CPs; pool energy for bonus damage
   # With Sabertooth: FB extends Rip, so always safe to bite; without: don't bite if Rip is refreshable
@@ -162,8 +175,8 @@ lists:
 
   # Cooldowns: Berserk + TF together
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up&var.energy_low
-  - berserk,if=config.use_cooldowns&var.tigers_fury_up&(target.time_to_die>15|target.boss)
-  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up&(target.time_to_die>15|target.boss)
+  - berserk,if=config.use_cooldowns&var.tigers_fury_up&(target.time_to_die>15|target.boss),delay=500,global_delay=300
+  - incarnation_avatar_of_ashamane,if=config.use_cooldowns&talent.incarnation_avatar_of_ashamane&var.tigers_fury_up&(target.time_to_die>15|target.boss),delay=500,global_delay=300
   - tigers_fury,if=config.use_cooldowns&!var.tigers_fury_up
 
   # Primal Wrath: maintain Rip on all targets; upgrade snapshot if TF active
@@ -171,7 +184,7 @@ lists:
   - primal_wrath,if=var.cp_high&dot.rip.remains<5
 
   # Convoke: confirm Rip will outlast the full 3s channel
-  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&dot.rip.remains>4&target.time_to_die>4
+  - convoke_the_spirits,if=talent.convoke_the_spirits&config.use_cooldowns&var.berserk_up&var.tigers_fury_up&dot.rip.remains>4&target.time_to_die>4,delay=300,global_delay=250
 
   # Frenzy at low CPs
   - feral_frenzy,if=talent.feral_frenzy&config.use_cooldowns&var.cp_low
@@ -202,6 +215,8 @@ lists:
   - moonfire,cycle_targets=1,if=talent.lunar_inspiration&dot.moonfire.refreshable
 
   fallback:
+  - ferocious_bite,if=target.exists&target.enemy&target.alive&var.cp_high&var.energy_fb,ignore_queue=true
+  - swipe,if=target.exists&target.enemy&target.alive&var.want_aoe,ignore_queue=true
   - shred,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

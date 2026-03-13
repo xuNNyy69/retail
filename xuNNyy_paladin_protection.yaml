@@ -26,6 +26,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   auto_taunt:
     label: "Auto Taunt"
     type: checkbox
@@ -74,13 +87,13 @@ lists:
   # Major cooldowns — Avenging Wrath synced to Divine Toll window,
   # Divine Toll held for AW or used as Righteous Protector filler
   cooldowns:
-  - avenging_wrath,if=usable.avenging_wrath
+  - avenging_wrath,if=usable.avenging_wrath,delay=300,global_delay=400
   - potion,if=config.use_potions&var.in_aw
   - fireblood,if=var.in_aw,use_off_gcd=1
   - blood_fury,if=var.in_aw,use_off_gcd=1
   - berserking,if=var.in_aw,use_off_gcd=1
   - ancestral_call,if=var.in_aw,use_off_gcd=1
-  - divine_toll,if=usable.divine_toll&holy_power<=2
+  - divine_toll,if=usable.divine_toll&holy_power<=2,delay=300,global_delay=400
 
   # Generic fallback — used when neither Lightsmith nor Templar is detected
   standard:
@@ -141,6 +154,8 @@ lists:
   - consecration,if=usable.consecration
 
   fallback:
+  - judgment,if=usable.judgment&target.exists&target.enemy&target.alive,ignore_queue=true
+  - blessed_hammer,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - hammer_of_the_righteous,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

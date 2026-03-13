@@ -30,6 +30,19 @@ config:
     label: "Use Enrage Removal"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -71,11 +84,11 @@ lists:
   - ancestral_call,if=debuff.deathmark.up,use_off_gcd=1
 
   cds:
-  - deathmark,if=dot.garrote.up&dot.rupture.up&(cooldown.kingsbane.remains<=gcd|!talent.kingsbane)
+  - deathmark,if=dot.garrote.up&dot.rupture.up&(cooldown.kingsbane.remains<=gcd|!talent.kingsbane),delay=300,global_delay=400
   - shiv,if=talent.shiv&(debuff.deathmark.up|cooldown.deathmark.remains<=5)&debuff.shiv.down
   - call_action_list,name=items,if=config.use_trinkets
   - call_action_list,name=misc_cds
-  - kingsbane,if=(dot.garrote.up&dot.rupture.up&debuff.deathmark.up)|(cooldown.deathmark.remains>52)
+  - kingsbane,if=(dot.garrote.up&dot.rupture.up&debuff.deathmark.up)|(cooldown.deathmark.remains>52),delay=300,global_delay=400
   - call_action_list,name=vanish
 
   # Apply/refresh Garrote (stealth/improved_garrote window first) then Rupture
@@ -99,6 +112,8 @@ lists:
   - envenom,if=combo_points>=5
 
   fallback:
+  - envenom,if=target.exists&target.enemy&target.alive&combo_points>=5,ignore_queue=true
+  - fan_of_knives,if=target.exists&target.enemy&target.alive&active_enemies>=2,ignore_queue=true
   - mutilate,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

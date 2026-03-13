@@ -120,7 +120,7 @@ lists:
   dr_st:
   - return,if=!var.is_dr
   # Trueshot: use on CD — triggers Withering Fire, Deathblow, Double Tap
-  - trueshot,if=config.use_cooldowns
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Black Arrow: Deathblow / execute / high-health (replaces Kill Shot for DR)
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
   # Wailing Arrow: consume proc
@@ -150,7 +150,7 @@ lists:
   dr_aoe:
   - return,if=!var.is_dr
   # Trueshot: use on CD
-  - trueshot,if=config.use_cooldowns
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Black Arrow: Deathblow / execute (replaces Kill Shot for DR)
   - black_arrow,if=var.deathblow_up|var.in_execute|target.health.pct>=80
   # Multi-Shot: maintain Trick Shots or consume Precise Shots
@@ -180,7 +180,7 @@ lists:
   sentinel_st:
   - return,if=!var.is_sentinel
   # Trueshot: main cooldown
-  - trueshot,if=config.use_cooldowns
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Kill Shot: Deathblow proc or execute range
   - kill_shot,if=var.deathblow_up|var.in_execute
   # Moonlight Chakram: if talented
@@ -208,7 +208,7 @@ lists:
   sentinel_aoe:
   - return,if=!var.is_sentinel
   # Trueshot: main cooldown
-  - trueshot,if=config.use_cooldowns
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   # Kill Shot: Deathblow proc or execute range
   - kill_shot,if=var.deathblow_up|var.in_execute
   # Multi-Shot: maintain Trick Shots or consume Precise Shots
@@ -264,7 +264,7 @@ lists:
   - call_action_list,name=sentinel_aoe,if=var.is_sentinel&var.want_aoe
   - call_action_list,name=sentinel_st,if=var.is_sentinel
   # Generic fallback (no specific hero talent detected)
-  - trueshot,if=config.use_cooldowns
+  - trueshot,if=config.use_cooldowns,delay=500,global_delay=300
   - kill_shot,if=var.deathblow_up|var.in_execute
   - aimed_shot,if=var.lock_and_load
   - aimed_shot,if=cooldown.aimed_shot.charges>=2

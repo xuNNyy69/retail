@@ -22,6 +22,19 @@ config:
     label: "Use Interrupts"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -65,18 +78,18 @@ lists:
   - call_action_list,name=cd_opener
 
   cd_opener:
-  - touch_of_the_magi,if=usable.touch_of_the_magi&buff.arcane_surge.up&var.is_spellslinger,ignore_movement=true
-  - touch_of_the_magi,if=usable.touch_of_the_magi&buff.arcane_surge.up&buff.arcane_surge.remains<=5,ignore_movement=true
-  - touch_of_the_magi,if=usable.touch_of_the_magi&!buff.arcane_surge.up&arcane_charges=4,ignore_movement=true
+  - touch_of_the_magi,if=usable.touch_of_the_magi&buff.arcane_surge.up&var.is_spellslinger,delay=300,global_delay=400,ignore_movement=true
+  - touch_of_the_magi,if=usable.touch_of_the_magi&buff.arcane_surge.up&buff.arcane_surge.remains<=5,delay=300,global_delay=400,ignore_movement=true
+  - touch_of_the_magi,if=usable.touch_of_the_magi&!buff.arcane_surge.up&arcane_charges=4,delay=300,global_delay=400,ignore_movement=true
   - arcane_blast,if=buff.presence_of_mind.up,ignore_movement=true
   - arcane_orb,if=talent.high_voltage&combat.time<5&arcane_charges<4,ignore_movement=true
   - arcane_barrage,if=buff.arcane_tempo.up&usable.evocation&buff.arcane_tempo.remains<=gcd,ignore_movement=true
-  - evocation,if=cooldown.arcane_surge.remains<=4&!buff.arcane_surge.up&mana.pct<=60,ignore_movement=true
-  - evocation,if=!buff.arcane_surge.up&mana.pct<=35,ignore_movement=true
+  - evocation,if=cooldown.arcane_surge.remains<=4&!buff.arcane_surge.up&mana.pct<=60,delay=300,global_delay=400,ignore_movement=true
+  - evocation,if=!buff.arcane_surge.up&mana.pct<=35,delay=300,global_delay=400,ignore_movement=true
   - arcane_missiles,if=buff.clearcasting.up&buff.nether_precision.up&var.in_cd_window,ignore_movement=true
   - arcane_missiles,if=buff.clearcasting.up&buff.arcane_harmony.stack>=30&var.in_cd_window,ignore_movement=true
-  - arcane_surge,if=usable.arcane_surge&arcane_charges=4&(!talent.evocation|cooldown.evocation.remains<=gcd|buff.arcane_surge.up),ignore_movement=true
-  - arcane_surge,if=usable.arcane_surge&arcane_charges=4&mana.pct>=70,ignore_movement=true
+  - arcane_surge,if=usable.arcane_surge&arcane_charges=4&(!talent.evocation|cooldown.evocation.remains<=gcd|buff.arcane_surge.up),delay=300,global_delay=400,ignore_movement=true
+  - arcane_surge,if=usable.arcane_surge&arcane_charges=4&mana.pct>=70,delay=300,global_delay=400,ignore_movement=true
 
   spellslinger:
   - shifting_power,if=!buff.arcane_surge.up&!debuff.touch_of_the_magi.up&!buff.presence_of_mind.up&cooldown.arcane_surge.remains>=12,ignore_movement=true
@@ -133,6 +146,8 @@ lists:
   - ancestral_call,if=usable.ancestral_call&buff.arcane_surge.up,use_off_gcd=1,ignore_movement=true
 
   fallback:
+  - arcane_missiles,if=target.exists&target.enemy&target.alive&var.in_ranged&buff.clearcasting.up,ignore_queue=true,ignore_movement=true
+  - arcane_barrage,if=target.exists&target.enemy&target.alive&var.in_ranged&arcane_charges=4,ignore_queue=true,ignore_movement=true
   - arcane_blast,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
   - arcane_barrage,if=target.exists&target.enemy&target.alive&var.in_ranged,ignore_queue=true,ignore_movement=true
 

@@ -31,6 +31,19 @@ config:
     label: "Use Dispel"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   heal_only:
     label: "Heal Only (No DPS)"
     type: checkbox
@@ -140,9 +153,9 @@ lists:
   # Stasis: load then release at next damage event
   # ===========================================================
   cooldowns:
-  - rewind,if=var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2
-  - tip_the_scales,if=var.tip_scales_ready&var.multi_injured
-  - stasis,if=var.stasis_ready&var.multi_injured
+  - rewind,if=var.rewind_ready&group.count(cycle.health.pct<config.emergency_hp)>=2,delay=500,global_delay=300
+  - tip_the_scales,if=var.tip_scales_ready&var.multi_injured,delay=300
+  - stasis,if=var.stasis_ready&var.multi_injured,delay=500,global_delay=300
   - zephyr,if=talent.zephyr&cooldown.zephyr.ready&var.multi_injured,use_off_gcd=1
 
   racials:
@@ -214,6 +227,7 @@ lists:
   - chrono_flame
 
   fallback:
+  - reversion,target=lowest,if=var.anyone_injured&cooldown.reversion.charges>=1,ignore_queue=true
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - chrono_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

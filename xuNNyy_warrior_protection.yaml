@@ -26,6 +26,19 @@ config:
     label: "Use Cooldowns"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   auto_taunt:
     label: "Auto Taunt"
     type: checkbox
@@ -76,12 +89,12 @@ lists:
 
   cooldowns:
   - charge,if=!player.combat
-  - avatar
-  - ravager
-  - demoralizing_shout
-  - champions_spear,if=talent.champions_spear
-  - thunderous_roar
-  - shield_charge
+  - avatar,delay=300,global_delay=400
+  - ravager,delay=300
+  - demoralizing_shout,delay=300
+  - champions_spear,if=talent.champions_spear,delay=300
+  - thunderous_roar,delay=300
+  - shield_charge,delay=300
 
   aoe:
   - thunder_blast,if=talent.lightning_strikes&dot.rend.remains<=1
@@ -126,6 +139,8 @@ lists:
 
   fallback:
   - heroic_throw,if=target.exists&target.enemy&target.alive
+  - shield_slam,if=target.exists&target.enemy&target.alive&usable.shield_slam,ignore_queue=true
+  - thunder_clap,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - devastate,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:

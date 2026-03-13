@@ -27,6 +27,19 @@ config:
     label: "Use Potions"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -76,10 +89,10 @@ lists:
   - blistering_scales,target=tanks.lowest,if=talent.blistering_scales&cooldown.blistering_scales.ready
 
   cooldowns:
-  - breath_of_eons,if=var.have_em
-  - deep_breath,if=!talent.breath_of_eons
-  - tip_the_scales,use_off_gcd=1,if=var.have_em&(cooldown.fire_breath.ready|cooldown.upheaval.ready)
-  - time_skip,if=talent.time_skip&var.have_em
+  - breath_of_eons,if=var.have_em,delay=500,global_delay=300
+  - deep_breath,if=!talent.breath_of_eons,delay=500,global_delay=300
+  - tip_the_scales,use_off_gcd=1,if=var.have_em&(cooldown.fire_breath.ready|cooldown.upheaval.ready),delay=300
+  - time_skip,if=talent.time_skip&var.have_em,delay=300
 
   fb:
   - fire_breath,empower_to=1,if=var.have_em
@@ -120,6 +133,7 @@ lists:
   - bag_of_tricks
 
   fallback:
+  - ebon_might,if=target.exists&target.enemy&target.alive&(!var.have_em|var.ebon_might_low),ignore_queue=true
   - living_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
   - chrono_flame,if=target.exists&target.enemy&target.alive,ignore_queue=true
 

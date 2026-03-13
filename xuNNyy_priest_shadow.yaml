@@ -30,6 +30,19 @@ config:
     label: "Use Purge/Dispel"
     type: checkbox
     default: true
+  auto_combat:
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest"
+        value: 1
+      - label: "Combat"
+        value: 2
+      - label: "Defensive"
+        value: 3
+    default: [0]
   aoe_threshold:
     label: "AoE Threshold"
     type: slider
@@ -60,7 +73,7 @@ variables:
   vt_refreshable: dot.vampiric_touch.refreshable
 
   # AoE routing
-  want_aoe: active_enemies>=config.aoe_threshold
+  want_aoe: state.aoe&active_enemies>=config.aoe_threshold
 
 lists:
   interrupts:
@@ -105,16 +118,16 @@ lists:
   - vampiric_touch,if=var.vt_refreshable
 
   # Halo: Archon's signature; high priority, uses Insanity
-  - halo,if=config.use_cooldowns
+  - halo,if=config.use_cooldowns,delay=300,global_delay=400
 
   # Void Eruption: major DPS cooldown (enters Voidform)
-  - void_eruption,if=config.use_cooldowns
+  - void_eruption,if=config.use_cooldowns,delay=300,global_delay=400
 
   # Power Infusion: align with Voidform
   - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
 
   # Void Torrent: high-damage channel, use on CD
-  - void_torrent
+  - void_torrent,delay=300
 
   # Void Volley: strong Insanity generator in Voidform window
   - void_volley,if=talent.void_volley
@@ -149,13 +162,13 @@ lists:
   - vampiric_touch,if=var.vt_refreshable
 
   # Void Eruption: main cooldown (enters Voidform)
-  - void_eruption,if=config.use_cooldowns
+  - void_eruption,if=config.use_cooldowns,delay=300,global_delay=400
 
   # Power Infusion: align with Voidform
   - power_infusion,if=config.use_cooldowns&var.voidform_up,use_off_gcd=1
 
   # Void Torrent: high-damage channel, use on CD
-  - void_torrent
+  - void_torrent,delay=300
 
   # Void Volley: Insanity builder
   - void_volley,if=talent.void_volley
@@ -194,6 +207,8 @@ lists:
   - shadow_word_pain,cycle_targets=1,if=dot.shadow_word_pain.refreshable&(var.voidform_up|active_enemies<=5)
 
   fallback:
+  - shadow_word_death,if=target.exists&target.enemy&target.alive&var.in_execute,ignore_queue=true
+  - mind_blast,if=target.exists&target.enemy&target.alive&usable.mind_blast,ignore_queue=true
   - mind_flay,if=target.exists&target.enemy&target.alive,ignore_queue=true
 
   main:
