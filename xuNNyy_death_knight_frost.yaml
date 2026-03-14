@@ -100,10 +100,10 @@ lists:
   # INTERRUPTS
   # -------------------------------------------------------------------------
   interrupts:
-  - mind_freeze,if=target.casting.interruptible,use_off_gcd=1
-  - mind_freeze.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
-  - mind_freeze.focus,if=focus.casting.interruptible,use_off_gcd=1
-  - blinding_sleet,if=target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
+  - mind_freeze,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
+  - mind_freeze.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
+  - mind_freeze.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - blinding_sleet,if=target.exists&target.enemy&target.alive&target.casting.interruptible&cooldown.mind_freeze.remains>0,use_off_gcd=1
 
   # -------------------------------------------------------------------------
   # DEFENSIVES

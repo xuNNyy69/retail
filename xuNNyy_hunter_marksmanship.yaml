@@ -88,7 +88,7 @@ variables:
 
 lists:
   interrupts:
-  - counter_shot,if=target.casting.interruptible,use_off_gcd=1
+  - counter_shot,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
   - counter_shot.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
   - counter_shot.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
 

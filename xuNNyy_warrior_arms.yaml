@@ -58,10 +58,10 @@ variables:
 
 lists:
   interrupts:
-  - pummel,if=target.casting.interruptible,use_off_gcd=1
-  - pummel.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
-  - pummel.focus,if=focus.casting.interruptible,use_off_gcd=1
-  - storm_bolt,if=target.casting.interruptible,use_off_gcd=1
+  - pummel,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
+  - pummel.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
+  - pummel.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - storm_bolt,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
 
   defensives:
   - die_by_the_sword,if=health.pct<=35

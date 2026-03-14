@@ -91,17 +91,17 @@ variables:
 
 lists:
   interrupts:
-  - solar_beam,if=target.casting.interruptible&var.in_lunar
-  - skull_bash,if=target.casting.interruptible
-  - skull_bash.mouseover,if=mouseover.casting.interruptible
-  - skull_bash.focus,if=focus.casting.interruptible
+  - solar_beam,if=target.exists&target.enemy&target.alive&target.casting.interruptible&var.in_lunar
+  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible
+  - skull_bash.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible
+  - skull_bash.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible
 
   defensives:
   - barkskin,if=health.pct<=40&buff.barkskin.down
   - renewal,if=health.pct<=30
 
   dispel:
-  - soothe,if=target.purgeable.enrage
+  - soothe,if=target.exists&target.enemy&target.alive&target.purgeable.enrage
   - soothe.mouseover,if=mouseover.purgeable.enrage
   - remove_corruption,if=player.has_curse|player.has_poison
 

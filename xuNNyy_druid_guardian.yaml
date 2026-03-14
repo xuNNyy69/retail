@@ -119,7 +119,7 @@ lists:
   - growl,if=config.auto_taunt&player.combat&target.threat<3,use_off_gcd=1
 
   interrupts:
-  - skull_bash,if=target.casting.interruptible,use_off_gcd=1
+  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
   - skull_bash.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
   - skull_bash.focus,if=interrupt.focus.check,use_off_gcd=1
 
@@ -128,7 +128,7 @@ lists:
   - barkskin,if=health.pct<=(config.defensive_hp+15),use_off_gcd=1
 
   dispel:
-  - soothe,if=target.purgeable.enrage
+  - soothe,if=target.exists&target.enemy&target.alive&target.purgeable.enrage
   - soothe.mouseover,if=mouseover.purgeable.enrage
   - remove_corruption,if=player.has_curse|player.has_poison
 

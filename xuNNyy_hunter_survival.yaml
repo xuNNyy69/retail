@@ -84,9 +84,9 @@ variables:
 
 lists:
   interrupts:
-  - muzzle,if=target.casting.interruptible,use_off_gcd=1
-  - muzzle.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1
-  - muzzle.focus,if=focus.casting.interruptible,use_off_gcd=1
+  - muzzle,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
+  - muzzle.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
+  - muzzle.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
 
   defensives:
   - exhilaration,if=health.pct<=55
@@ -94,8 +94,8 @@ lists:
   - aspect_of_the_turtle,if=health.pct<=20
 
   dispel:
-  - tranquilizing_shot,if=target.purgeable.enrage|target.purgeable.magic
-  - tranquilizing_shot.mouseover,if=mouseover.purgeable.enrage|mouseover.purgeable.magic
+  - tranquilizing_shot,if=target.exists&target.enemy&target.alive&(target.purgeable.enrage|target.purgeable.magic)
+  - tranquilizing_shot.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&(mouseover.purgeable.enrage|mouseover.purgeable.magic)
 
   pet_care:
   # Revive dead pet (10s anti-spam)

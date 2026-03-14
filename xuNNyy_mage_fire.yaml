@@ -67,15 +67,15 @@ variables:
 
 lists:
   interrupts:
-  - counterspell,if=target.casting.interruptible&var.in_ranged,use_off_gcd=1,ignore_movement=true
-  - counterspell.mouseover,if=mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
-  - counterspell.focus,if=focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - counterspell,if=target.exists&target.enemy&target.alive&target.casting.interruptible&var.in_ranged,use_off_gcd=1,ignore_movement=true
+  - counterspell.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - counterspell.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
 
   dispel:
-  - spellsteal,if=target.has_stealable
+  - spellsteal,if=target.exists&target.enemy&target.alive&target.has_stealable
   - spellsteal.mouseover,if=mouseover.has_stealable
   - remove_curse,if=player.has_curse
 

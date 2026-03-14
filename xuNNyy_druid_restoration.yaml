@@ -150,12 +150,12 @@ variables:
 lists:
 
   interrupts:
-  - skull_bash,if=target.casting.interruptible,use_off_gcd=1
+  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
   - skull_bash.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
   - skull_bash.focus,if=interrupt.focus.check,use_off_gcd=1
 
   dispel:
-  - soothe,if=target.purgeable.enrage
+  - soothe,if=target.exists&target.enemy&target.alive&target.purgeable.enrage
   - soothe.mouseover,if=mouseover.purgeable.enrage
   - nature_dispel,cycle_targets=1,if=cycle.dispelable
 
