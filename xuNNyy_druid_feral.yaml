@@ -87,9 +87,9 @@ variables:
 
 lists:
   interrupts:
-  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible
-  - skull_bash.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible
-  - skull_bash.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible
+  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important
+  - skull_bash.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important
+  - skull_bash.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important
 
   defensives:
   - barkskin,if=health.pct<=40,use_off_gcd=1

@@ -74,10 +74,10 @@ variables:
 
 lists:
   interrupts:
-  - pummel,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - pummel.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - pummel.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
-  - storm_bolt,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
+  - pummel,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - pummel.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - pummel.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
+  - storm_bolt,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
 
   defensives:
   - shield_block,if=(var.shield_block_low|!buff.shield_block.up|cooldown.shield_block.charges>=2)&health.pct<=config.shield_block_hp

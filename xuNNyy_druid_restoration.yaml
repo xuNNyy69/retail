@@ -150,7 +150,7 @@ variables:
 lists:
 
   interrupts:
-  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
+  - skull_bash,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
   - skull_bash.mouseover,if=interrupt.mouseover.check,use_off_gcd=1
   - skull_bash.focus,if=interrupt.focus.check,use_off_gcd=1
 

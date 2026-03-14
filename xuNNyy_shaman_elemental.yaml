@@ -58,9 +58,9 @@ variables:
 
 lists:
   interrupts:
-  - wind_shear,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - wind_shear.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - wind_shear.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - wind_shear,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - wind_shear.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - wind_shear.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
 
   defensives:
   - astral_shift,if=health.pct<=35

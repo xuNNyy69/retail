@@ -61,9 +61,9 @@ variables:
 
 lists:
   interrupts:
-  - kick,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - kick.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - kick.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - kick,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - kick.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - kick.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
 
   defensives:
   - cloak_of_shadows,if=health.pct<=40

@@ -62,9 +62,9 @@ variables:
 
 lists:
   interrupts:
-  - counterspell,if=target.exists&target.enemy&target.alive&target.casting.interruptible&var.in_ranged,use_off_gcd=1,ignore_movement=true
-  - counterspell.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
-  - counterspell.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - counterspell,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important&var.in_ranged,use_off_gcd=1,ignore_movement=true
+  - counterspell.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1,ignore_movement=true
+  - counterspell.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - ice_block,if=health.pct<=15&!buff.hypothermia.up,ignore_movement=true
@@ -180,3 +180,4 @@ lists:
   - call_action_list,name=spellslinger,if=var.is_spellslinger
   - call_action_list,name=sunfury,if=var.is_sunfury
   - call_action_list,name=fallback
+

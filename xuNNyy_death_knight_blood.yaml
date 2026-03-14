@@ -127,9 +127,9 @@ lists:
   - dark_command,if=config.auto_taunt&player.combat&target.threat<3,use_off_gcd=1
 
   interrupts:
-  - mind_freeze,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - mind_freeze.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - mind_freeze.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - mind_freeze,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - mind_freeze.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - mind_freeze.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
 
   defensives:
   - anti_magic_shell,if=dangerous_debuff.magic.up|nameplate.casting.magic,use_off_gcd=1

@@ -79,9 +79,9 @@ variables:
 lists:
   interrupts:
   - return,if=!config.use_interrupts
-  - rebuke,if=target.exists&target.enemy&target.alive&target.casting.interruptible&var.in_melee,use_off_gcd=1,ignore_movement=true
-  - rebuke.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1,ignore_movement=true
-  - rebuke.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1,ignore_movement=true
+  - rebuke,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important&var.in_melee,use_off_gcd=1,ignore_movement=true
+  - rebuke.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1,ignore_movement=true
+  - rebuke.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1,ignore_movement=true
 
   defensives:
   - return,if=!config.use_defensives

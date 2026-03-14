@@ -69,9 +69,9 @@ lists:
   - taunt,if=config.auto_taunt&player.combat&target.threat<3
 
   interrupts:
-  - rebuke,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - rebuke.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - rebuke.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - rebuke,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - rebuke.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - rebuke.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
 
   # Tank defensives: emergency cooldowns + active mitigation heal
   defensives:
@@ -147,7 +147,7 @@ lists:
   - shield_of_the_righteous,if=usable.shield_of_the_righteous&(holy_power>=3|buff.divine_purpose.up)
   - hammer_of_wrath,if=cooldown.hammer_of_wrath.charges>=2
   # Interrupt with Punishment talent OR Glory of the Vanguard proc
-  - avengers_shield,if=usable.avengers_shield&((target.exists&target.enemy&target.alive&target.casting.interruptible&talent.punishment)|buff.vanguard.up)
+  - avengers_shield,if=usable.avengers_shield&((target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important&!target.casting.important&talent.punishment)|buff.vanguard.up)
   - hammer_of_wrath
   # Shake the Heavens buff guard — maintain via Blessed Hammer
   - blessed_hammer,if=var.shake_up
@@ -188,3 +188,4 @@ lists:
   - call_action_list,name=templar,if=talent.templar
   - call_action_list,name=standard
   - call_action_list,name=fallback
+

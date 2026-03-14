@@ -125,9 +125,9 @@ lists:
   - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
   - return,if=!player.combat&config.auto_combat.has(0)
   # Interrupts
-  - kick,if=config.use_interrupts&target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - kick.mouseover,if=config.use_interrupts&mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - kick.focus,if=config.use_interrupts&focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - kick,if=config.use_interrupts&target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - kick.mouseover,if=config.use_interrupts&mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - kick.focus,if=config.use_interrupts&focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
   # Defensives
   - call_action_list,name=defensives,if=config.use_defensives
   # Enrage removal

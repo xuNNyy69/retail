@@ -109,9 +109,9 @@ lists:
   - provoke,if=config.auto_taunt&player.combat&target.exists&target.enemy&target.alive&target.threat<3,use_off_gcd=1
 
   interrupts:
-  - spear_hand_strike,if=target.exists&target.enemy&target.alive&target.casting.interruptible,use_off_gcd=1
-  - spear_hand_strike.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible,use_off_gcd=1
-  - spear_hand_strike.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible,use_off_gcd=1
+  - spear_hand_strike,if=target.exists&target.enemy&target.alive&target.casting.interruptible&!target.casting.important,use_off_gcd=1
+  - spear_hand_strike.mouseover,if=mouseover.exists&mouseover.enemy&mouseover.alive&mouseover.casting.interruptible&!mouseover.casting.important,use_off_gcd=1
+  - spear_hand_strike.focus,if=focus.exists&focus.enemy&focus.alive&focus.casting.interruptible&!focus.casting.important,use_off_gcd=1
 
   defensives:
   # Diffuse Magic is now a passive on Fortifying Brew in Midnight
